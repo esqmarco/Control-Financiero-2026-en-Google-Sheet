@@ -1,6 +1,6 @@
 # PLAN MAESTRO: Sistema de Control Financiero 2026
 ## NeuroTEA & Familia - Google Sheets + Web App
-### Versión 2.1 - Con Liquidez, Conciliación Bancaria y Aclaraciones
+### Versión 2.2 - Con GASTOS_FIJOS Completo
 
 ---
 
@@ -471,14 +471,184 @@ Los fondos de NeuroTEA (Utilidad, Fondo Emergencia, Fondo Inversión) son **VIRT
 
 ---
 
-## 5. HOJA CARGA_FAMILIA - SISTEMA "ANTI-BURRO"
+## 5. HOJA GASTOS_FIJOS - LISTA MAESTRA
 
-### 5.1 Estructura de la Hoja
+### 5.1 Propósito
+Centralizar todos los gastos fijos de FAMILIA y NEUROTEA con:
+- Monto BASE que se arrastra mes a mes
+- Posibilidad de actualizar el monto en cualquier mes
+- Día de vencimiento (DÍA) para cálculo de liquidez
+
+### 5.2 Estructura de la Hoja
+
+```
+| CONCEPTO | ENTIDAD | CATEGORÍA | FRECUENCIA | DÍA | BASE | ENE | FEB | MAR | ABR | MAY | JUN | JUL | AGO | SEP | OCT | NOV | DIC |
+```
+
+| Columna | Descripción |
+|---------|-------------|
+| **CONCEPTO** | Nombre del gasto fijo |
+| **ENTIDAD** | FAMILIA o NEUROTEA |
+| **CATEGORÍA** | Categoría del gasto (GASTOS FIJOS, CUOTAS, etc.) |
+| **FRECUENCIA** | Fijo/Mensual o Fijo/Anual |
+| **DÍA** | Día del mes en que vence (1-31) |
+| **BASE** | Monto base inicial |
+| **ENE-DIC** | Celdas opcionales para sobrescribir el BASE |
+
+### 5.3 Lógica de Actualización de Montos
+
+**Regla Principal:** El sistema siempre usa el **VALOR MÁS RECIENTE** (último mes con dato hacia atrás).
+
+```
+ALGORITMO para obtener MONTO_EFECTIVO del mes M:
+
+1. Buscar desde el mes M hacia atrás (M, M-1, M-2, ..., ENE)
+2. SI encuentra un valor en algún mes → Usar ese valor
+3. SI NO encuentra ningún valor → Usar BASE
+
+Ejemplo:
+BASE = 400.000
+FEB = 500.000
+MAY = 700.000
+
+Resultado por mes:
+- ENE: 400.000 (usa BASE, no hay valores previos)
+- FEB: 500.000 (usa FEB)
+- MAR: 500.000 (usa FEB, último valor)
+- ABR: 500.000 (usa FEB, último valor)
+- MAY: 700.000 (usa MAY)
+- JUN: 700.000 (usa MAY, último valor)
+- ... hasta DIC: 700.000
+```
+
+### 5.4 Fórmula Sugerida para Google Sheets
+
+Para la celda del mes de MARZO (columna I), por ejemplo:
+```
+=SI(I3<>""; I3; SI(H3<>""; H3; SI(G3<>""; G3; F3)))
+```
+
+O más elegante con BUSCAR:
+```
+=INDICE(F3:I3; MAX(SI(F3:I3<>""; COLUMNA(F3:I3)-COLUMNA(F3)+1)))
+```
+
+### 5.5 Diseño Visual - Separación FAMILIA / NEUROTEA
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    GASTOS FIJOS - LISTA MAESTRA                                  │
+│  DIA = día del mes que vence. Si un mes está vacío, usa el MONTO BASE.          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+│ ▓▓▓                    🟢 GASTOS FIJOS FAMILIA 🟢                          ▓▓▓ │
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ CONCEPTO              │ENTIDAD │CATEGORÍA      │FREC    │DÍA│ BASE    │ENE│... │
+├───────────────────────┼────────┼───────────────┼────────┼───┼─────────┼───┼────┤
+│ Salario Lili          │FAMILIA │GASTOS FIJOS   │Fijo/Mes│ 5 │2.500.000│   │    │
+│ Salario Laura         │FAMILIA │GASTOS FIJOS   │Fijo/Mes│ 5 │1.800.000│   │    │
+│ Escuela Fabián/Brenda │FAMILIA │GASTOS FIJOS   │Fijo/Mes│10 │1.200.000│   │    │
+│ Robótica Niños        │FAMILIA │GASTOS FIJOS   │Fijo/Mes│15 │  350.000│   │    │
+│ Expensa Casa          │FAMILIA │GASTOS FIJOS   │Fijo/Mes│ 1 │  450.000│   │    │
+│ ...                   │        │               │        │   │         │   │    │
+├───────────────────────┼────────┼───────────────┼────────┼───┼─────────┼───┼────┤
+│ Préstamo Lizzi        │FAMILIA │CUOTAS/PRÉST.  │Fijo/Mes│20 │  800.000│   │    │
+│ Cajubi Marco          │FAMILIA │CUOTAS/PRÉST.  │Fijo/Mes│ 5 │  450.000│   │    │
+│ Cuota ITAU            │FAMILIA │CUOTAS/PRÉST.  │Fijo/Mes│15 │1.500.000│   │    │
+│ ...                   │        │               │        │   │         │   │    │
+├───────────────────────┼────────┼───────────────┼────────┼───┼─────────┼───┼────┤
+│ Giganet               │FAMILIA │SUSCRIPCIONES  │Fijo/Mes│ 1 │  180.000│   │    │
+│ Tigo Familiar         │FAMILIA │SUSCRIPCIONES  │Fijo/Mes│28 │  250.000│   │    │
+│ ChatGPT               │FAMILIA │SUSCRIPCIONES  │Fijo/Mes│15 │  120.000│   │    │
+│ Claude Marco          │FAMILIA │SUSCRIPCIONES  │Fijo/Mes│15 │  120.000│   │    │
+│ ...                   │        │               │        │   │         │   │    │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+│ ▓▓▓                    🔵 GASTOS FIJOS NEUROTEA 🔵                         ▓▓▓ │
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ CONCEPTO              │ENTIDAD │CATEGORÍA      │FREC    │DÍA│ BASE    │ENE│... │
+├───────────────────────┼────────┼───────────────┼────────┼───┼─────────┼───┼────┤
+│ Alquiler 1 (Principal)│NEUROTEA│CLÍNICA        │Fijo/Mes│ 5 │3.500.000│   │    │
+│ Alquiler 2 (Secundar.)│NEUROTEA│CLÍNICA        │Fijo/Mes│ 5 │1.800.000│   │    │
+│ ...                   │        │               │        │   │         │   │    │
+├───────────────────────┼────────┼───────────────┼────────┼───┼─────────┼───┼────┤
+│ Sueldo Aracely        │NEUROTEA│SUELDOS/HONOR. │Fijo/Mes│30 │2.800.000│   │    │
+│ Sueldo Fátima         │NEUROTEA│SUELDOS/HONOR. │Fijo/Mes│30 │2.500.000│   │    │
+│ Salario Admin (Marco) │NEUROTEA│SUELDOS/HONOR. │Fijo/Mes│30 │5.000.000│   │    │
+│ Honorario Contador    │NEUROTEA│SUELDOS/HONOR. │Fijo/Mes│10 │  800.000│   │    │
+│ ...                   │        │               │        │   │         │   │    │
+├───────────────────────┼────────┼───────────────┼────────┼───┼─────────┼───┼────┤
+│ Celular Tigo NT       │NEUROTEA│TELEFONÍA      │Fijo/Mes│28 │  150.000│   │    │
+│ Internet NT           │NEUROTEA│TELEFONÍA      │Fijo/Mes│15 │  200.000│   │    │
+│ WhatsFlow             │NEUROTEA│TELEFONÍA      │Fijo/Mes│15 │  180.000│   │    │
+│ ...                   │        │               │        │   │         │   │    │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 5.6 Colores para Diferenciación Visual
+
+| Sección | Color Fondo | Color Texto | Código Hex Fondo |
+|---------|-------------|-------------|------------------|
+| Encabezado FAMILIA | Verde oscuro | Blanco | #166534 |
+| Filas FAMILIA | Verde claro | Negro | #dcfce7 |
+| Encabezado NEUROTEA | Azul oscuro | Blanco | #1e40af |
+| Filas NEUROTEA | Azul claro | Negro | #dbeafe |
+| Separador | Gris | - | #9ca3af |
+
+### 5.7 Uso del DÍA de Vencimiento
+
+El campo **DÍA** es crucial para:
+1. **Cálculo de LIQUIDEZ 3 SEMANAS** - Determina en qué semana cae cada gasto
+2. **Alertas de vencimiento** - Avisar cuando se acerca la fecha
+3. **Ordenamiento** - Mostrar gastos en orden de vencimiento
+
+```
+Ejemplo de uso en LIQUIDEZ:
+HOY = 3 de Enero
+
+Gastos con DÍA entre 3-9 → SEMANA 1
+Gastos con DÍA entre 10-16 → SEMANA 2
+Gastos con DÍA entre 17-23 → SEMANA 3
+```
+
+### 5.8 Gastos Fijos Anuales
+
+Para gastos que se pagan **una vez al año** (Ej: Antivirus, Impuesto Renta):
+- FRECUENCIA = "Fijo/Anual"
+- Solo se coloca valor en el MES que corresponde
+- Los demás meses quedan vacíos (no se arrastran)
+
+```
+Ejemplo: Antivirus Clara (se paga en Marzo)
+
+| CONCEPTO        | FREC       | BASE    | ENE | FEB | MAR     | ABR | ... |
+|-----------------|------------|---------|-----|-----|---------|-----|-----|
+| Antivirus Clara | Fijo/Anual | 350.000 |     |     | 350.000 |     |     |
+```
+
+### 5.9 Relación con Otras Hojas
+
+```
+GASTOS_FIJOS ─────┬────► MOVIMIENTO (columna REAL para gastos fijos)
+                  │
+                  ├────► LIQUIDEZ 3 SEMANAS (según DÍA VENC)
+                  │
+                  └────► PRESUPUESTO (validar que coincidan conceptos)
+```
+
+---
+
+## 6. HOJA CARGA_FAMILIA - SISTEMA "ANTI-BURRO"
+
+### 6.1 Estructura de la Hoja
 ```
 | FECHA | TIPO | CATEGORÍA | SUBCATEGORÍA | DESCRIPCIÓN | MONTO | CUENTA | ESTADO | NOTAS |
 ```
 
-### 5.2 Lógica "Anti-Burro" (Validación Inteligente)
+### 6.2 Lógica "Anti-Burro" (Validación Inteligente)
 
 El sistema debe ser inteligente para evitar errores de carga:
 
@@ -515,7 +685,7 @@ SI CATEGORÍA = "GASTOS FIJOS", "CUOTAS Y PRÉSTAMOS", etc.:
 | Egreso Familiar | VARIABLES | Supermercado, Combustible, etc. |
 | Egreso Familiar | GASTOS FIJOS | - (deshabilitado) |
 
-### 5.3 Tipos de Ingreso Familia (Desplegable completo)
+### 6.3 Tipos de Ingreso Familia (Desplegable completo)
 1. Salario Marco
 2. **Salario Marco NeuroTEA**
 3. Vacaciones Marco
@@ -530,10 +700,10 @@ SI CATEGORÍA = "GASTOS FIJOS", "CUOTAS Y PRÉSTAMOS", etc.:
 12. Préstamo NeuroTEA
 13. Préstamo Otros Bancos
 
-### 5.4 Tipo de Egreso Familia
+### 6.4 Tipo de Egreso Familia
 - **Egreso Familiar** (único tipo que habilita CATEGORÍA y SUBCATEGORÍA)
 
-### 5.5 Subcategorías Variables Familia (cuando CATEGORÍA = VARIABLES)
+### 6.5 Subcategorías Variables Familia (cuando CATEGORÍA = VARIABLES)
 1. Supermercado
 2. Combustible
 3. Mantenimiento / Reparaciones Auto Clara
@@ -545,7 +715,7 @@ SI CATEGORÍA = "GASTOS FIJOS", "CUOTAS Y PRÉSTAMOS", etc.:
 9. Gastos no identificados
 10. **Devolución Familia → NT** (para devolver préstamos a NeuroTEA)
 
-### 5.6 Ejemplo de Carga Correcta
+### 6.6 Ejemplo de Carga Correcta
 
 | FECHA | TIPO | CATEGORÍA | SUBCATEGORÍA | DESCRIPCIÓN | MONTO | CUENTA |
 |-------|------|-----------|--------------|-------------|-------|--------|
@@ -555,21 +725,21 @@ SI CATEGORÍA = "GASTOS FIJOS", "CUOTAS Y PRÉSTAMOS", etc.:
 | 05/01/26 | Egreso Familiar | VARIABLES | Combustible | Nafta | 200.000 | Tarjeta ITAU Marco |
 | 10/01/26 | Egreso Familiar | VARIABLES | Devolución Familia → NT | Devuelvo préstamo | 500.000 | ITAU Marco |
 
-### 5.7 Filtro por Mes
+### 6.7 Filtro por Mes
 - Desplegable en celda fija que OCULTA filas de otros meses
 - Muestra solo las transacciones del mes seleccionado
 - Resumen automático al final: Total Ingresos | Total Egresos | Balance
 
 ---
 
-## 6. HOJA CARGA_NT - SISTEMA "ANTI-BURRO"
+## 7. HOJA CARGA_NT - SISTEMA "ANTI-BURRO"
 
-### 6.1 Estructura de la Hoja
+### 7.1 Estructura de la Hoja
 ```
 | FECHA | TIPO | CATEGORÍA | SUBCATEGORÍA/EVENTO | DESCRIPCIÓN | MONTO | CUENTA | ESTADO | NOTAS |
 ```
 
-### 6.2 Lógica "Anti-Burro" para NeuroTEA
+### 7.2 Lógica "Anti-Burro" para NeuroTEA
 
 #### Regla 1: TIPO determina si es INGRESO o EGRESO
 ```
@@ -595,16 +765,16 @@ SI TIPO = "Egreso NT":
 | **EVENTOS** | Lista de eventos (Día del Niño, San Juan, etc.) |
 | **VARIABLES** | Lista de variables (Insumos, Reparaciones, etc.) |
 
-### 6.3 Tipos de Ingreso NT (Desplegable)
+### 7.3 Tipos de Ingreso NT (Desplegable)
 1. Aporte NeuroTEA Terapeutas
 2. Cursos NeuroTEA
 3. Otros
 4. **Devolución Familia → NT** (cuando Familia devuelve préstamo)
 
-### 6.4 Tipo de Egreso NT
+### 7.4 Tipo de Egreso NT
 - **Egreso NT** (único tipo que habilita CATEGORÍA y SUBCATEGORÍA)
 
-### 6.5 Subcategorías EVENTOS NT (cuando CATEGORÍA = EVENTOS)
+### 7.5 Subcategorías EVENTOS NT (cuando CATEGORÍA = EVENTOS)
 1. Día del Niño
 2. San Juan
 3. Día del Autismo
@@ -612,7 +782,7 @@ SI TIPO = "Egreso NT":
 5. Navidad Papá Noel
 6. Cena Fin de Año
 
-### 6.6 Subcategorías VARIABLES NT (cuando CATEGORÍA = VARIABLES)
+### 7.6 Subcategorías VARIABLES NT (cuando CATEGORÍA = VARIABLES)
 1. Insumos y Papelería
 2. Reparaciones Clínica
 3. Mantenimiento Aire
@@ -620,7 +790,7 @@ SI TIPO = "Egreso NT":
 5. Gastos Varios Cumple
 6. **Préstamo NT → Familia** (cuando NT presta dinero a Familia)
 
-### 6.7 Ejemplo de Carga Correcta
+### 7.7 Ejemplo de Carga Correcta
 
 | FECHA | TIPO | CATEGORÍA | SUBCATEGORÍA | DESCRIPCIÓN | MONTO | CUENTA |
 |-------|------|-----------|--------------|-------------|-------|--------|
@@ -630,7 +800,7 @@ SI TIPO = "Egreso NT":
 | 15/01/26 | Egreso NT | VARIABLES | Préstamo NT → Familia | Marco necesita | 3.000.000 | Atlas NT |
 | 20/01/26 | Devolución Familia → NT | - | - | Marco devuelve | 500.000 | Atlas NT |
 
-### 6.8 TRATAMIENTO ESPECIAL DE EVENTOS
+### 7.8 TRATAMIENTO ESPECIAL DE EVENTOS
 
 **En CARGA_NT:**
 - Se registra cada evento con su nombre específico (Día del Niño, San Juan, etc.)
@@ -655,14 +825,14 @@ Donde REAL = Suma de:
 
 ---
 
-## 7. HOJA MOVIMIENTO - CONTROL MENSUAL
+## 8. HOJA MOVIMIENTO - CONTROL MENSUAL
 
-### 7.1 Estructura
+### 8.1 Estructura
 - Selector de mes en celda fija
 - Vista lado a lado: FAMILIA | NEUROTEA
 - Columnas: CONCEPTO | TIPO | FRECUENCIA | PRESUPUESTO | REAL | DIFERENCIA | % | ESTADO
 
-### 7.2 Lógica de Datos REAL
+### 8.2 Lógica de Datos REAL
 
 | Tipo de Gasto | Fuente del dato REAL |
 |---------------|---------------------|
@@ -672,14 +842,14 @@ Donde REAL = Suma de:
 | Variable/Anual | SUMA de CARGA_FAMILIA o CARGA_NT filtrado por mes y subcategoría |
 | **EVENTOS (NT)** | SUMA de todos los registros con CATEGORÍA = "EVENTOS" del mes |
 
-### 7.3 Estados y Contabilización
+### 8.3 Estados y Contabilización
 - **Pendiente:** No suma a "Egresos Pagados", sí suma a "Egresos Pendientes"
 - **Pagado:** Suma a "Egresos Pagados", resta de "Egresos Pendientes"
 - **Cancelado:** No suma a ninguno
 
 ---
 
-## 8. FLUJO DE DATOS COMPLETO
+## 9. FLUJO DE DATOS COMPLETO
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -719,9 +889,9 @@ Donde REAL = Suma de:
 
 ---
 
-## 9. BALANCE CRUZADO NT ↔ FAMILIA
+## 10. BALANCE CRUZADO NT ↔ FAMILIA
 
-### 9.1 Registro de Préstamos
+### 10.1 Registro de Préstamos
 
 **Cuando NeuroTEA presta a Familia:**
 
@@ -737,7 +907,7 @@ Donde REAL = Suma de:
 | CARGA_FAMILIA | Egreso Familiar | VARIABLES | Devolución Familia → NT | EGRESO |
 | CARGA_NT | Devolución Familia → NT | - | - | INGRESO |
 
-### 9.2 Cálculo del Saldo Neto
+### 10.2 Cálculo del Saldo Neto
 ```
 PRÉSTAMOS NT→FAM = SUMA(CARGA_NT donde SUBCATEGORÍA = "Préstamo NT → Familia")
 DEVOLUCIONES FAM→NT = SUMA(CARGA_NT donde TIPO = "Devolución Familia → NT")
@@ -751,12 +921,12 @@ SI SALDO = 0 → "FINANZAS EQUILIBRADAS" 🟢
 
 ---
 
-## 10. LIQUIDEZ 3 SEMANAS - FLUJO DE CAJA
+## 11. LIQUIDEZ 3 SEMANAS - FLUJO DE CAJA
 
-### 10.1 Propósito
+### 11.1 Propósito
 Prever si habrá dinero suficiente en las próximas 3 semanas para cubrir los gastos que vencen. Esto permite tomar decisiones anticipadas (postergar un gasto, buscar ingreso extra, etc.).
 
-### 10.2 Conceptos Clave
+### 11.2 Conceptos Clave
 
 | Concepto | Definición | Fórmula |
 |----------|------------|---------|
@@ -764,7 +934,7 @@ Prever si habrá dinero suficiente en las próximas 3 semanas para cubrir los ga
 | **GASTOS POR VENCER** | Compromisos próximos | Suma de gastos con estado "Pendiente" que vencen en las próximas semanas |
 | **LIQUIDEZ SEMANA X** | Proyección de caja | CAJA DISPONIBLE - GASTOS POR VENCER (acumulado hasta esa semana) |
 
-### 10.3 Cálculo Detallado
+### 11.3 Cálculo Detallado
 
 #### Paso 1: Calcular CAJA DISPONIBLE (hoy)
 ```
@@ -789,7 +959,7 @@ LIQUIDEZ_SEM2 = LIQUIDEZ_SEM1 - VENCER_SEM2
 LIQUIDEZ_SEM3 = LIQUIDEZ_SEM2 - VENCER_SEM3
 ```
 
-### 10.4 Semáforo de Liquidez
+### 11.4 Semáforo de Liquidez
 
 | Condición | Color | Significado | Acción |
 |-----------|-------|-------------|--------|
@@ -797,7 +967,7 @@ LIQUIDEZ_SEM3 = LIQUIDEZ_SEM2 - VENCER_SEM3
 | 0 ≤ LIQUIDEZ_SEMX < 500.000 | 🟡 AMARILLO | Margen ajustado | Monitorear de cerca |
 | LIQUIDEZ_SEMX ≥ 500.000 | 🟢 VERDE | Liquidez saludable | Continuar normalmente |
 
-### 10.5 Visualización en Dashboard
+### 11.5 Visualización en Dashboard
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -818,7 +988,7 @@ LIQUIDEZ_SEM3 = LIQUIDEZ_SEM2 - VENCER_SEM3
 └───────────────┴───────────────┴───────────────┴────────────┘
 ```
 
-### 10.6 Notas Importantes
+### 11.6 Notas Importantes
 - Este cálculo se realiza para FAMILIA y NEUROTEA por separado
 - Los gastos variables estimados del mes también deben considerarse
 - Si la LIQUIDEZ_SEM3 es negativa, el sistema debe alertar ANTES de que llegue esa semana
@@ -826,12 +996,12 @@ LIQUIDEZ_SEM3 = LIQUIDEZ_SEM2 - VENCER_SEM3
 
 ---
 
-## 11. SALDOS EN CUENTAS - CONCILIACIÓN BANCARIA
+## 12. SALDOS EN CUENTAS - CONCILIACIÓN BANCARIA
 
-### 11.1 Propósito
+### 12.1 Propósito
 Comparar el saldo CALCULADO (según los movimientos cargados) con el saldo REAL (lo que se ve en la app del banco). La diferencia revela gastos no registrados o errores de carga.
 
-### 11.2 Tipos de Saldo
+### 12.2 Tipos de Saldo
 
 | Tipo | Fuente | Descripción |
 |------|--------|-------------|
@@ -839,13 +1009,13 @@ Comparar el saldo CALCULADO (según los movimientos cargados) con el saldo REAL 
 | **REAL** | Manual | Lo que el usuario ve en la app del banco |
 | **DIFERENCIA** | Calculado | REAL - ESPERADO |
 
-### 11.3 Estructura de la Sección
+### 12.3 Estructura de la Sección
 
 ```
 | CUENTA | SALDO INICIAL | INGRESOS | EGRESOS | ESPERADO | REAL | DIFERENCIA | ESTADO |
 ```
 
-### 11.4 Cálculo del Saldo ESPERADO
+### 12.4 Cálculo del Saldo ESPERADO
 
 Para cada cuenta (Ej: "ITAU Marco"):
 ```
@@ -863,13 +1033,13 @@ EGRESOS_CUENTA = Suma de todos los registros en CARGA_FAMILIA donde:
 SALDO_ESPERADO = SALDO_INICIAL + INGRESOS_CUENTA - EGRESOS_CUENTA
 ```
 
-### 11.5 Ingreso del Saldo REAL
+### 12.5 Ingreso del Saldo REAL
 
 - El usuario ingresa MANUALMENTE el saldo que ve en la app del banco
 - Se recomienda actualizar al menos 1 vez por semana
 - Campo editable en TABLERO o sección dedicada
 
-### 11.6 Interpretación de la DIFERENCIA
+### 12.6 Interpretación de la DIFERENCIA
 
 | Diferencia | Significado | Acción |
 |------------|-------------|--------|
@@ -877,7 +1047,7 @@ SALDO_ESPERADO = SALDO_INICIAL + INGRESOS_CUENTA - EGRESOS_CUENTA
 | DIFERENCIA > 0 (REAL > ESPERADO) | 🟢 Hay más dinero del esperado | Posible ingreso no registrado |
 | DIFERENCIA < 0 (REAL < ESPERADO) | 🔴 Hay menos dinero del esperado | Posible gasto no registrado |
 
-### 11.7 Ejemplo Práctico
+### 12.7 Ejemplo Práctico
 
 ```
 CUENTA: ITAU Marco - Enero 2026
@@ -898,7 +1068,7 @@ DIFERENCIA:                Gs. -350.000 🔴
 → Acción: Revisar extracto bancario y cargar los gastos faltantes
 ```
 
-### 11.8 Visualización en Dashboard
+### 12.8 Visualización en Dashboard
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -915,14 +1085,14 @@ DIFERENCIA:                Gs. -350.000 🔴
 └─────────────────┴────────────┴────────────┴────────────┴───────────────┘
 ```
 
-### 11.9 Frecuencia de Actualización Recomendada
+### 12.9 Frecuencia de Actualización Recomendada
 - **Semanal:** Actualizar REAL de cuentas principales (ITAU, Coop)
 - **Quincenal:** Actualizar tarjetas de crédito
 - **Fin de mes:** Conciliación completa de todas las cuentas
 
 ---
 
-## 12. COLORES DEL SISTEMA
+## 13. COLORES DEL SISTEMA
 
 | Uso | Color | Código Hex |
 |-----|-------|------------|
@@ -939,7 +1109,7 @@ DIFERENCIA:                Gs. -350.000 🔴
 
 ---
 
-## 13. RESUMEN DE CAMBIOS POR VERSIÓN
+## 14. RESUMEN DE CAMBIOS POR VERSIÓN
 
 ### Versión 2.0
 | # | Corrección | Estado |
@@ -964,17 +1134,27 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 14 | Aclaración: Fondos NT son VIRTUALES (no cuentas bancarias) | ✅ |
 | 15 | Visualizaciones de dashboard para Liquidez y Conciliación | ✅ |
 
+### Versión 2.2
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 16 | Nueva sección GASTOS_FIJOS completa con estructura y lógica | ✅ |
+| 17 | Lógica de arrastre de monto BASE (último valor prevalece) | ✅ |
+| 18 | Diseño visual con separación clara FAMILIA / NEUROTEA | ✅ |
+| 19 | Columna DÍA VENC para cálculo de liquidez | ✅ |
+| 20 | Fórmulas sugeridas para Google Sheets | ✅ |
+| 21 | Tratamiento de gastos fijos anuales | ✅ |
+
 ---
 
-## 14. PENDIENTES PARA PRÓXIMA VERSIÓN
+## 15. PENDIENTES PARA PRÓXIMA VERSIÓN
 
 | # | Tema | Descripción |
 |---|------|-------------|
-| 1 | GASTOS_FIJOS | Estructura detallada con columna DÍA VENC |
-| 2 | WEB APP | Especificación técnica de Google Apps Script |
-| 3 | Fórmulas | Documentar fórmulas exactas de Google Sheets |
+| 1 | WEB APP | Especificación técnica de Google Apps Script |
+| 2 | Fórmulas | Documentar fórmulas exactas de Google Sheets |
+| 3 | TABLERO | Estructura detallada de KPIs en hoja |
 
 ---
 
 *Documento actualizado el 30 de diciembre de 2025*
-*Versión: 2.1 - Con Liquidez, Conciliación Bancaria y Aclaraciones*
+*Versión: 2.2 - Con GASTOS_FIJOS Completo*
