@@ -1,6 +1,6 @@
 # PLAN MAESTRO: Sistema de Control Financiero 2026
 ## NeuroTEA & Familia - Google Sheets + Web App
-### Versión 2.0 - Revisada y Corregida
+### Versión 2.1 - Con Liquidez, Conciliación Bancaria y Aclaraciones
 
 ---
 
@@ -90,6 +90,14 @@ FAMILIA, NEUROTEA
 | 2 | Cursos NeuroTEA | Ingresos por capacitaciones |
 | 3 | Otros | Otros ingresos varios |
 | 4 | Devolución Familia → NT | Cuando Familia devuelve préstamo a NT |
+
+**ACLARACIÓN IMPORTANTE - FLUJO DE HONORARIOS CLARA:**
+- Los terapeutas entregan su aporte a la clínica
+- **Clara retira su parte ANTES** de que el dinero entre a NeuroTEA
+- Lo que se registra en "Aporte NeuroTEA Terapeutas" ya viene **NETO** (sin la parte de Clara)
+- Por lo tanto, **NO existe** un egreso en NT llamado "Honorarios Clara"
+- En FAMILIA, Clara registra su ingreso como "Honorarios Clara NeuroTEA"
+- Este flujo evita duplicación: Clara ya tomó su parte, no se descuenta de NT
 
 ### 3.5 CUENTAS FAMILIA (para desplegable)
 | # | Cuenta |
@@ -191,6 +199,14 @@ FAMILIA, NEUROTEA
 | Distribución Utilidad Dueño | **33.33%** | Tercio de la ganancia para Marco |
 | Distribución Fondo Emergencia | **33.33%** | Tercio para contingencias |
 | Distribución Fondo Inversión | **33.33%** | Tercio para crecimiento |
+
+**ACLARACIÓN IMPORTANTE - FONDOS VIRTUALES:**
+Los fondos de NeuroTEA (Utilidad, Fondo Emergencia, Fondo Inversión) son **VIRTUALES**:
+- Se CALCULAN automáticamente basados en la ganancia
+- **NO son cuentas bancarias separadas**
+- El dinero físico permanece en las cuentas NT (Atlas, Caja Chica, Efectivo)
+- Los fondos son una **asignación contable** para saber cuánto hay disponible para cada propósito
+- Ayudan a tomar decisiones: "¿Puedo hacer esta inversión?" → Mirar Fondo Inversión
 
 ---
 
@@ -735,7 +751,178 @@ SI SALDO = 0 → "FINANZAS EQUILIBRADAS" 🟢
 
 ---
 
-## 10. COLORES DEL SISTEMA
+## 10. LIQUIDEZ 3 SEMANAS - FLUJO DE CAJA
+
+### 10.1 Propósito
+Prever si habrá dinero suficiente en las próximas 3 semanas para cubrir los gastos que vencen. Esto permite tomar decisiones anticipadas (postergar un gasto, buscar ingreso extra, etc.).
+
+### 10.2 Conceptos Clave
+
+| Concepto | Definición | Fórmula |
+|----------|------------|---------|
+| **CAJA DISPONIBLE** | Dinero "libre" después de pagar | Ingresos del mes - Egresos PAGADOS |
+| **GASTOS POR VENCER** | Compromisos próximos | Suma de gastos con estado "Pendiente" que vencen en las próximas semanas |
+| **LIQUIDEZ SEMANA X** | Proyección de caja | CAJA DISPONIBLE - GASTOS POR VENCER (acumulado hasta esa semana) |
+
+### 10.3 Cálculo Detallado
+
+#### Paso 1: Calcular CAJA DISPONIBLE (hoy)
+```
+INGRESOS_MES = Suma de todos los ingresos del mes actual (de CARGA_FAMILIA o CARGA_NT)
+EGRESOS_PAGADOS = Suma de gastos donde ESTADO = "Pagado" del mes actual
+
+CAJA_DISPONIBLE = INGRESOS_MES - EGRESOS_PAGADOS
+```
+
+#### Paso 2: Identificar GASTOS POR VENCER (según DÍA VENC de GASTOS_FIJOS)
+```
+Para cada gasto fijo en GASTOS_FIJOS:
+  - SI DÍA_VENC está entre HOY y FIN_SEMANA_1 → Sumar a VENCER_SEM1
+  - SI DÍA_VENC está entre FIN_SEMANA_1 y FIN_SEMANA_2 → Sumar a VENCER_SEM2
+  - SI DÍA_VENC está entre FIN_SEMANA_2 y FIN_SEMANA_3 → Sumar a VENCER_SEM3
+```
+
+#### Paso 3: Calcular LIQUIDEZ por Semana
+```
+LIQUIDEZ_SEM1 = CAJA_DISPONIBLE - VENCER_SEM1
+LIQUIDEZ_SEM2 = LIQUIDEZ_SEM1 - VENCER_SEM2
+LIQUIDEZ_SEM3 = LIQUIDEZ_SEM2 - VENCER_SEM3
+```
+
+### 10.4 Semáforo de Liquidez
+
+| Condición | Color | Significado | Acción |
+|-----------|-------|-------------|--------|
+| LIQUIDEZ_SEMX < 0 | 🔴 ROJO | Déficit proyectado | Buscar ingreso o postergar gasto |
+| 0 ≤ LIQUIDEZ_SEMX < 500.000 | 🟡 AMARILLO | Margen ajustado | Monitorear de cerca |
+| LIQUIDEZ_SEMX ≥ 500.000 | 🟢 VERDE | Liquidez saludable | Continuar normalmente |
+
+### 10.5 Visualización en Dashboard
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  LIQUIDEZ 3 SEMANAS - FAMILIA                               │
+├─────────────────────────────────────────────────────────────┤
+│  Caja Disponible Hoy:           Gs. 2.500.000              │
+├───────────────┬───────────────┬───────────────┬────────────┤
+│    SEMANA 1   │    SEMANA 2   │    SEMANA 3   │   ESTADO   │
+│  (5-11 Ene)   │  (12-18 Ene)  │  (19-25 Ene)  │            │
+├───────────────┼───────────────┼───────────────┼────────────┤
+│ Por Vencer:   │ Por Vencer:   │ Por Vencer:   │            │
+│ - Alquiler    │ - Escuela     │ - ANDE        │            │
+│ - Cuota ITAU  │ - Seguro      │ - Tigo        │            │
+│ = 1.200.000   │ = 800.000     │ = 350.000     │            │
+├───────────────┼───────────────┼───────────────┼────────────┤
+│ Liquidez:     │ Liquidez:     │ Liquidez:     │            │
+│ 1.300.000 🟢  │ 500.000 🟡    │ 150.000 🔴    │  ⚠️ ALERTA │
+└───────────────┴───────────────┴───────────────┴────────────┘
+```
+
+### 10.6 Notas Importantes
+- Este cálculo se realiza para FAMILIA y NEUROTEA por separado
+- Los gastos variables estimados del mes también deben considerarse
+- Si la LIQUIDEZ_SEM3 es negativa, el sistema debe alertar ANTES de que llegue esa semana
+- El usuario puede marcar gastos como "Postergable" para simular escenarios
+
+---
+
+## 11. SALDOS EN CUENTAS - CONCILIACIÓN BANCARIA
+
+### 11.1 Propósito
+Comparar el saldo CALCULADO (según los movimientos cargados) con el saldo REAL (lo que se ve en la app del banco). La diferencia revela gastos no registrados o errores de carga.
+
+### 11.2 Tipos de Saldo
+
+| Tipo | Fuente | Descripción |
+|------|--------|-------------|
+| **ESPERADO** | Calculado | Saldo inicial + Ingresos a cuenta - Egresos de cuenta |
+| **REAL** | Manual | Lo que el usuario ve en la app del banco |
+| **DIFERENCIA** | Calculado | REAL - ESPERADO |
+
+### 11.3 Estructura de la Sección
+
+```
+| CUENTA | SALDO INICIAL | INGRESOS | EGRESOS | ESPERADO | REAL | DIFERENCIA | ESTADO |
+```
+
+### 11.4 Cálculo del Saldo ESPERADO
+
+Para cada cuenta (Ej: "ITAU Marco"):
+```
+SALDO_INICIAL = Valor configurado al inicio del mes (o arrastrado del mes anterior)
+
+INGRESOS_CUENTA = Suma de todos los registros en CARGA_FAMILIA donde:
+  - CUENTA = "ITAU Marco"
+  - TIPO está en lista de ingresos
+
+EGRESOS_CUENTA = Suma de todos los registros en CARGA_FAMILIA donde:
+  - CUENTA = "ITAU Marco"
+  - TIPO = "Egreso Familiar"
+  - ESTADO = "Pagado"
+
+SALDO_ESPERADO = SALDO_INICIAL + INGRESOS_CUENTA - EGRESOS_CUENTA
+```
+
+### 11.5 Ingreso del Saldo REAL
+
+- El usuario ingresa MANUALMENTE el saldo que ve en la app del banco
+- Se recomienda actualizar al menos 1 vez por semana
+- Campo editable en TABLERO o sección dedicada
+
+### 11.6 Interpretación de la DIFERENCIA
+
+| Diferencia | Significado | Acción |
+|------------|-------------|--------|
+| DIFERENCIA = 0 | ✅ Perfecto | Registros completos y correctos |
+| DIFERENCIA > 0 (REAL > ESPERADO) | 🟢 Hay más dinero del esperado | Posible ingreso no registrado |
+| DIFERENCIA < 0 (REAL < ESPERADO) | 🔴 Hay menos dinero del esperado | Posible gasto no registrado |
+
+### 11.7 Ejemplo Práctico
+
+```
+CUENTA: ITAU Marco - Enero 2026
+
+Saldo Inicial (01/01):     Gs. 500.000
++ Salario Marco:           Gs. 8.500.000
++ Salario Marco NT:        Gs. 5.000.000
+- Cuota ITAU:              Gs. 1.200.000
+- Nafta:                   Gs. 300.000
+─────────────────────────────────────────
+SALDO ESPERADO:            Gs. 12.500.000
+
+SALDO REAL (app banco):    Gs. 12.150.000
+
+DIFERENCIA:                Gs. -350.000 🔴
+
+→ Interpretación: Hay Gs. 350.000 de gastos NO registrados
+→ Acción: Revisar extracto bancario y cargar los gastos faltantes
+```
+
+### 11.8 Visualización en Dashboard
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  CONCILIACIÓN BANCARIA - FAMILIA                        [Enero 2026]   │
+├─────────────────┬────────────┬────────────┬────────────┬───────────────┤
+│     CUENTA      │  ESPERADO  │    REAL    │ DIFERENCIA │    ESTADO     │
+├─────────────────┼────────────┼────────────┼────────────┼───────────────┤
+│ ITAU Marco      │ 12.500.000 │ 12.150.000 │  -350.000  │ 🔴 Revisar    │
+│ Coop. Univ.     │  2.300.000 │  2.300.000 │      0     │ ✅ OK         │
+│ ITAU Clara      │  1.800.000 │  1.850.000 │   +50.000  │ 🟢 Ingreso?   │
+│ Efectivo        │    400.000 │    350.000 │   -50.000  │ 🟡 Menor      │
+├─────────────────┼────────────┼────────────┼────────────┼───────────────┤
+│ **TOTAL**       │ 17.000.000 │ 16.650.000 │  -350.000  │               │
+└─────────────────┴────────────┴────────────┴────────────┴───────────────┘
+```
+
+### 11.9 Frecuencia de Actualización Recomendada
+- **Semanal:** Actualizar REAL de cuentas principales (ITAU, Coop)
+- **Quincenal:** Actualizar tarjetas de crédito
+- **Fin de mes:** Conciliación completa de todas las cuentas
+
+---
+
+## 12. COLORES DEL SISTEMA
 
 | Uso | Color | Código Hex |
 |-----|-------|------------|
@@ -752,8 +939,9 @@ SI SALDO = 0 → "FINANZAS EQUILIBRADAS" 🟢
 
 ---
 
-## 11. RESUMEN DE CORRECCIONES V2.0
+## 13. RESUMEN DE CAMBIOS POR VERSIÓN
 
+### Versión 2.0
 | # | Corrección | Estado |
 |---|------------|--------|
 | 1 | Agregado "Salario Marco NeuroTEA" en TIPOS INGRESO FAM | ✅ |
@@ -767,7 +955,26 @@ SI SALDO = 0 → "FINANZAS EQUILIBRADAS" 🟢
 | 9 | Tratamiento especial de EVENTOS documentado | ✅ |
 | 10 | Relación Salario Administrador NT ↔ Ingreso Marco explicada | ✅ |
 
+### Versión 2.1
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 11 | Nueva sección LIQUIDEZ 3 SEMANAS con cálculo detallado | ✅ |
+| 12 | Nueva sección SALDOS EN CUENTAS (Esperado vs Real) | ✅ |
+| 13 | Aclaración: Flujo de Honorarios Clara (aportes vienen NETOS) | ✅ |
+| 14 | Aclaración: Fondos NT son VIRTUALES (no cuentas bancarias) | ✅ |
+| 15 | Visualizaciones de dashboard para Liquidez y Conciliación | ✅ |
+
+---
+
+## 14. PENDIENTES PARA PRÓXIMA VERSIÓN
+
+| # | Tema | Descripción |
+|---|------|-------------|
+| 1 | GASTOS_FIJOS | Estructura detallada con columna DÍA VENC |
+| 2 | WEB APP | Especificación técnica de Google Apps Script |
+| 3 | Fórmulas | Documentar fórmulas exactas de Google Sheets |
+
 ---
 
 *Documento actualizado el 30 de diciembre de 2025*
-*Versión: 2.0 - Revisada con observaciones del usuario*
+*Versión: 2.1 - Con Liquidez, Conciliación Bancaria y Aclaraciones*
