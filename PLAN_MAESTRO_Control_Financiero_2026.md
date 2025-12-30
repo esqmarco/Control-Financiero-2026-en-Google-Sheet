@@ -1,6 +1,6 @@
 # PLAN MAESTRO: Sistema de Control Financiero 2026
 ## NeuroTEA & Familia - Google Sheets + Web App
-### Versión 2.2 - Con GASTOS_FIJOS Completo
+### Versión 2.3 - Variables Recurrentes, Eventos con Reservas y Aclaraciones
 
 ---
 
@@ -167,14 +167,24 @@ FAMILIA, NEUROTEA
 ### 3.11 SUBCATEGORÍAS EVENTOS NEUROTEA (para desplegable cuando Categoría = EVENTOS)
 | # | Evento | Mes típico |
 |---|--------|------------|
-| 1 | Día del Niño | Agosto |
+| 1 | Día del Autismo | Abril |
 | 2 | San Juan | Junio |
-| 3 | Día del Autismo | Abril |
+| 3 | Día del Niño | Agosto |
 | 4 | Clausura Padres | Noviembre |
 | 5 | Navidad Papá Noel | Diciembre |
 | 6 | Cena Fin de Año | Diciembre |
+| 7 | Reserva 1 | (por definir) |
+| 8 | Reserva 2 | (por definir) |
+| 9 | Reserva 3 | (por definir) |
+| 10 | Reserva 4 | (por definir) |
+| 11 | Reserva 5 | (por definir) |
+| 12 | Reserva 6 | (por definir) |
+| 13 | Reserva 7 | (por definir) |
+| 14 | Reserva 8 | (por definir) |
+| 15 | Reserva 9 | (por definir) |
+| 16 | Reserva 10 | (por definir) |
 
-**NOTA IMPORTANTE EVENTOS:** Los eventos se cargan individualmente pero en MOVIMIENTO se comparan de forma GLOBAL contra el presupuesto total de "EVENTOS". No hay comparación individual por evento.
+**SISTEMA DE EVENTOS (Opción A):** Cada evento tiene su propio presupuesto individual. Las Reservas se renombran cuando se define el evento real (Ej: "Reserva 3" → "Cumple Empleados").
 
 ### 3.12 FRECUENCIA (para clasificar gastos)
 | # | Frecuencia | Descripción |
@@ -410,30 +420,35 @@ Los fondos de NeuroTEA (Utilidad, Fondo Emergencia, Fondo Inversión) son **VIRT
 | 7 | Reserva | - | - |
 | - | **TOTAL OBLIGACIONES LEGALES** | - | - |
 
-#### ► EGRESOS NT - EVENTOS (Tratamiento Especial)
-| # | Concepto | Tipo | Frecuencia |
-|---|----------|------|------------|
-| 1 | Día del Niño | Egreso | Variable/Anual |
-| 2 | San Juan | Egreso | Variable/Anual |
-| 3 | Día del Autismo | Egreso | Variable/Anual |
-| 4 | Clausura Padres | Egreso | Variable/Anual |
-| 5 | Navidad Papá Noel | Egreso | Variable/Anual |
-| 6 | Cena Fin de Año | Egreso | Variable/Anual |
-| 7 | Reserva | - | - |
-| 8 | Reserva | - | - |
-| 9 | Reserva | - | - |
-| 10 | Reserva | - | - |
-| 11 | Reserva | - | - |
-| 12 | Reserva | - | - |
-| 13 | Reserva | - | - |
-| 14 | Reserva | - | - |
-| - | **TOTAL GASTOS EVENTOS** | - | - |
+#### ► EGRESOS NT - EVENTOS (Tratamiento Especial - Opción A con Reservas)
+| # | Concepto | Mes Estimado | Tipo | Frecuencia | Presupuesto |
+|---|----------|--------------|------|------------|-------------|
+| 1 | Día del Autismo | Abril | Egreso | Variable/Anual | (definir) |
+| 2 | San Juan | Junio | Egreso | Variable/Anual | (definir) |
+| 3 | Día del Niño | Agosto | Egreso | Variable/Anual | (definir) |
+| 4 | Clausura Padres | Noviembre | Egreso | Variable/Anual | (definir) |
+| 5 | Navidad Papá Noel | Diciembre | Egreso | Variable/Anual | (definir) |
+| 6 | Cena Fin de Año | Diciembre | Egreso | Variable/Anual | (definir) |
+| 7 | Reserva 1 | (por definir) | Egreso | Variable/Anual | (definir) |
+| 8 | Reserva 2 | (por definir) | Egreso | Variable/Anual | (definir) |
+| 9 | Reserva 3 | (por definir) | Egreso | Variable/Anual | (definir) |
+| 10 | Reserva 4 | (por definir) | Egreso | Variable/Anual | (definir) |
+| 11 | Reserva 5 | (por definir) | Egreso | Variable/Anual | (definir) |
+| 12 | Reserva 6 | (por definir) | Egreso | Variable/Anual | (definir) |
+| 13 | Reserva 7 | (por definir) | Egreso | Variable/Anual | (definir) |
+| 14 | Reserva 8 | (por definir) | Egreso | Variable/Anual | (definir) |
+| 15 | Reserva 9 | (por definir) | Egreso | Variable/Anual | (definir) |
+| 16 | Reserva 10 | (por definir) | Egreso | Variable/Anual | (definir) |
+| - | **TOTAL GASTOS EVENTOS** | - | - | - | **SUMA** |
 
-**REGLA ESPECIAL EVENTOS:**
-- En CARGA_NT se registra cada evento específico (Ej: "Día del Niño")
-- En MOVIMIENTO se muestra como una sola línea "EVENTOS"
-- La comparación Presupuesto vs Real es GLOBAL (suma de todos los eventos vs presupuesto total de eventos)
-- NO hay comparación individual por evento
+**SISTEMA DE EVENTOS (Opción A - Reservas Numeradas):**
+- Cada evento tiene su **propio presupuesto individual**
+- Los eventos definidos tienen **MES ESTIMADO** asignado
+- Las **Reservas** son para eventos futuros no definidos aún
+- Cuando definas un evento, **renombra la Reserva** al nombre real (Ej: "Reserva 3" → "Cumple Empleados")
+- En **CARGA_NT** se registra cada gasto con el nombre específico del evento
+- En **MOVIMIENTO** se compara: Presupuesto del evento vs Real gastado en ese evento
+- El **TOTAL EVENTOS** permite ver si estás dentro del presupuesto global
 
 #### ► EGRESOS NT - VARIABLES
 | # | Concepto | Tipo | Frecuencia |
@@ -474,10 +489,15 @@ Los fondos de NeuroTEA (Utilidad, Fondo Emergencia, Fondo Inversión) son **VIRT
 ## 5. HOJA GASTOS_FIJOS - LISTA MAESTRA
 
 ### 5.1 Propósito
-Centralizar todos los gastos fijos de FAMILIA y NEUROTEA con:
+Centralizar **TODOS los gastos recurrentes** de FAMILIA y NEUROTEA:
+- Gastos Fijos (mismo monto cada período)
+- Gastos Variables Recurrentes (monto varía pero se repiten cada período)
 - Monto BASE que se arrastra mes a mes
 - Posibilidad de actualizar el monto en cualquier mes
 - Día de vencimiento (DÍA) para cálculo de liquidez
+
+**IMPORTANTE:** Si un gasto tiene frecuencia (Mensual o Anual), va en GASTOS_FIJOS.
+Las hojas CARGA_FAMILIA y CARGA_NT son SOLO para **variables puros** (compras puntuales no recurrentes).
 
 ### 5.2 Estructura de la Hoja
 
@@ -487,17 +507,28 @@ Centralizar todos los gastos fijos de FAMILIA y NEUROTEA con:
 
 | Columna | Descripción |
 |---------|-------------|
-| **CONCEPTO** | Nombre del gasto fijo |
+| **CONCEPTO** | Nombre del gasto |
 | **ENTIDAD** | FAMILIA o NEUROTEA |
-| **CATEGORÍA** | Categoría del gasto (GASTOS FIJOS, CUOTAS, etc.) |
-| **FRECUENCIA** | Fijo/Mensual o Fijo/Anual |
+| **CATEGORÍA** | Categoría del gasto (GASTOS FIJOS, CUOTAS, VARIABLES, etc.) |
+| **FRECUENCIA** | Fijo/Mensual, Fijo/Anual, Variable/Mensual, Variable/Anual |
 | **DÍA** | Día del mes en que vence (1-31) |
 | **BASE** | Monto base inicial |
 | **ENE-DIC** | Celdas opcionales para sobrescribir el BASE |
 
-### 5.3 Lógica de Actualización de Montos
+### 5.3 Tipos de Frecuencia en GASTOS_FIJOS
+
+| Frecuencia | Descripción | Ejemplo | Comportamiento |
+|------------|-------------|---------|----------------|
+| **Fijo/Mensual** | Mismo monto cada mes | Alquiler, Salarios | BASE se copia cada mes |
+| **Fijo/Anual** | Mismo monto una vez al año | Antivirus, Impuesto Renta | Solo el mes indicado |
+| **Variable/Mensual** | Monto varía pero es cada mes | ANDE, Combustible estimado | BASE estimado, se actualiza cada mes |
+| **Variable/Anual** | Monto varía, ocurre una vez | Mantenimiento Aire, Ministerio Salud | BASE estimado, se actualiza cuando ocurre |
+
+### 5.4 Lógica de Actualización de Montos
 
 **Regla Principal:** El sistema siempre usa el **VALOR MÁS RECIENTE** (último mes con dato hacia atrás).
+
+**Gasto Cancelado:** Si un gasto se termina de pagar o ya no aplica, poner **0** en el siguiente mes. El 0 se arrastra hacia adelante.
 
 ```
 ALGORITMO para obtener MONTO_EFECTIVO del mes M:
@@ -519,9 +550,18 @@ Resultado por mes:
 - MAY: 700.000 (usa MAY)
 - JUN: 700.000 (usa MAY, último valor)
 - ... hasta DIC: 700.000
+
+Ejemplo GASTO CANCELADO (Cuota que termina en Junio):
+BASE = 800.000
+JUL = 0
+
+Resultado por mes:
+- ENE a JUN: 800.000 (usa BASE)
+- JUL: 0 (cuota terminó)
+- AGO a DIC: 0 (se arrastra el 0)
 ```
 
-### 5.4 Fórmula Sugerida para Google Sheets
+### 5.5 Fórmula Sugerida para Google Sheets
 
 Para la celda del mes de MARZO (columna I), por ejemplo:
 ```
@@ -533,7 +573,7 @@ O más elegante con BUSCAR:
 =INDICE(F3:I3; MAX(SI(F3:I3<>""; COLUMNA(F3:I3)-COLUMNA(F3)+1)))
 ```
 
-### 5.5 Diseño Visual - Separación FAMILIA / NEUROTEA
+### 5.6 Diseño Visual - Separación FAMILIA / NEUROTEA
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -588,7 +628,7 @@ O más elegante con BUSCAR:
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.6 Colores para Diferenciación Visual
+### 5.7 Colores para Diferenciación Visual
 
 | Sección | Color Fondo | Color Texto | Código Hex Fondo |
 |---------|-------------|-------------|------------------|
@@ -598,7 +638,7 @@ O más elegante con BUSCAR:
 | Filas NEUROTEA | Azul claro | Negro | #dbeafe |
 | Separador | Gris | - | #9ca3af |
 
-### 5.7 Uso del DÍA de Vencimiento
+### 5.8 Uso del DÍA de Vencimiento
 
 El campo **DÍA** es crucial para:
 1. **Cálculo de LIQUIDEZ 3 SEMANAS** - Determina en qué semana cae cada gasto
@@ -614,7 +654,7 @@ Gastos con DÍA entre 10-16 → SEMANA 2
 Gastos con DÍA entre 17-23 → SEMANA 3
 ```
 
-### 5.8 Gastos Fijos Anuales
+### 5.9 Gastos Fijos Anuales
 
 Para gastos que se pagan **una vez al año** (Ej: Antivirus, Impuesto Renta):
 - FRECUENCIA = "Fijo/Anual"
@@ -629,7 +669,7 @@ Ejemplo: Antivirus Clara (se paga en Marzo)
 | Antivirus Clara | Fijo/Anual | 350.000 |     |     | 350.000 |     |     |
 ```
 
-### 5.9 Relación con Otras Hojas
+### 5.10 Relación con Otras Hojas
 
 ```
 GASTOS_FIJOS ─────┬────► MOVIMIENTO (columna REAL para gastos fijos)
@@ -642,6 +682,15 @@ GASTOS_FIJOS ─────┬────► MOVIMIENTO (columna REAL para gas
 ---
 
 ## 6. HOJA CARGA_FAMILIA - SISTEMA "ANTI-BURRO"
+
+**IMPORTANTE:** Esta hoja es SOLO para **VARIABLES PUROS** (compras puntuales, no recurrentes).
+- ✅ Supermercado (cada compra es diferente)
+- ✅ Combustible (cada carga es diferente)
+- ✅ Reparación inesperada
+- ❌ ANDE (es Variable/Mensual → va en GASTOS_FIJOS)
+- ❌ Alquiler (es Fijo/Mensual → va en GASTOS_FIJOS)
+
+**Usuarios:** Marco y Clara cargan de forma **independiente**. Ambos tienen acceso completo.
 
 ### 6.1 Estructura de la Hoja
 ```
@@ -734,6 +783,19 @@ SI CATEGORÍA = "GASTOS FIJOS", "CUOTAS Y PRÉSTAMOS", etc.:
 
 ## 7. HOJA CARGA_NT - SISTEMA "ANTI-BURRO"
 
+**IMPORTANTE:** Esta hoja es para:
+- **VARIABLES PUROS** (compras puntuales de la clínica)
+- **EVENTOS** (gastos de celebraciones y actividades especiales)
+- **INGRESOS** (aportes de terapeutas, cursos, devoluciones)
+
+- ✅ Insumos (cada compra es diferente)
+- ✅ Evento "Día del Niño" (gasto puntual)
+- ✅ Aporte Terapeutas (ingreso)
+- ❌ Alquiler (es Fijo/Mensual → va en GASTOS_FIJOS)
+- ❌ Sueldos (es Fijo/Mensual → va en GASTOS_FIJOS)
+
+**Usuarios:** Marco y Clara cargan de forma **independiente**. Ambos tienen acceso completo.
+
 ### 7.1 Estructura de la Hoja
 ```
 | FECHA | TIPO | CATEGORÍA | SUBCATEGORÍA/EVENTO | DESCRIPCIÓN | MONTO | CUENTA | ESTADO | NOTAS |
@@ -775,12 +837,24 @@ SI TIPO = "Egreso NT":
 - **Egreso NT** (único tipo que habilita CATEGORÍA y SUBCATEGORÍA)
 
 ### 7.5 Subcategorías EVENTOS NT (cuando CATEGORÍA = EVENTOS)
-1. Día del Niño
-2. San Juan
-3. Día del Autismo
-4. Clausura Padres
-5. Navidad Papá Noel
-6. Cena Fin de Año
+1. Día del Autismo (Abril)
+2. San Juan (Junio)
+3. Día del Niño (Agosto)
+4. Clausura Padres (Noviembre)
+5. Navidad Papá Noel (Diciembre)
+6. Cena Fin de Año (Diciembre)
+7. Reserva 1 (por definir)
+8. Reserva 2 (por definir)
+9. Reserva 3 (por definir)
+10. Reserva 4 (por definir)
+11. Reserva 5 (por definir)
+12. Reserva 6 (por definir)
+13. Reserva 7 (por definir)
+14. Reserva 8 (por definir)
+15. Reserva 9 (por definir)
+16. Reserva 10 (por definir)
+
+**Nota:** Las Reservas se renombran cuando se define el evento real.
 
 ### 7.6 Subcategorías VARIABLES NT (cuando CATEGORÍA = VARIABLES)
 1. Insumos y Papelería
@@ -1144,6 +1218,17 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 20 | Fórmulas sugeridas para Google Sheets | ✅ |
 | 21 | Tratamiento de gastos fijos anuales | ✅ |
 
+### Versión 2.3
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 22 | Variable/Mensual y Variable/Anual van en GASTOS_FIJOS (no en CARGA) | ✅ |
+| 23 | CARGA_FAMILIA y CARGA_NT son SOLO para variables PUROS | ✅ |
+| 24 | Lógica de gasto cancelado: poner 0, se arrastra | ✅ |
+| 25 | EVENTOS con 10 Reservas numeradas (Opción A) | ✅ |
+| 26 | Cada evento tiene presupuesto individual | ✅ |
+| 27 | Clara también carga variables (acceso independiente) | ✅ |
+| 28 | Ejemplos de qué va en CARGA vs GASTOS_FIJOS | ✅ |
+
 ---
 
 ## 15. PENDIENTES PARA PRÓXIMA VERSIÓN
@@ -1157,4 +1242,4 @@ DIFERENCIA:                Gs. -350.000 🔴
 ---
 
 *Documento actualizado el 30 de diciembre de 2025*
-*Versión: 2.2 - Con GASTOS_FIJOS Completo*
+*Versión: 2.3 - Variables Recurrentes, Eventos con Reservas y Aclaraciones*
