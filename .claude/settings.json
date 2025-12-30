@@ -1,0 +1,39 @@
+{
+  "project": {
+    "name": "Control Financiero 2026 - NeuroTEA & Familia",
+    "version": "1.0.0",
+    "description": "Sistema de control financiero para clínica NeuroTEA y finanzas familiares en Google Sheets"
+  },
+  "context": {
+    "mainDocument": "PLAN_MAESTRO_Control_Financiero_2026.md",
+    "codeFile": "Code.gs",
+    "language": "es",
+    "platform": "Google Apps Script"
+  },
+  "conventions": {
+    "currency": "Guaraníes (Gs.)",
+    "dateFormat": "dd/mm/yyyy",
+    "entities": ["FAMILIA", "NEUROTEA"],
+    "colorScheme": {
+      "familia": "#059669",
+      "neurotea": "#1d4ed8",
+      "alert": "#dc2626",
+      "warning": "#f59e0b",
+      "success": "#22c55e"
+    }
+  },
+  "validation": {
+    "beforeCommit": [
+      "Verificar que CONFIG contenga todas las listas actualizadas",
+      "Verificar lógica Anti-Burro en CARGA_FAMILIA y CARGA_NT",
+      "Verificar que GASTOS_FIJOS tenga lógica de arrastre BASE",
+      "Verificar fórmulas de PRESUPUESTO sumen correctamente"
+    ],
+    "testCases": [
+      "Crear nueva entrada en CARGA_FAMILIA con tipo Ingreso",
+      "Crear nueva entrada en CARGA_NT con tipo Egreso y categoría EVENTOS",
+      "Verificar que subcategorías se deshabiliten correctamente",
+      "Verificar cálculo de Ganancia NT >= 7%"
+    ]
+  }
+}
