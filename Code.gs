@@ -291,7 +291,7 @@ function crearHojaTABLERO() {
   });
   row++;
 
-  const cuentasFam = ['ITAU Marco', 'Coop. Univ. Marco', 'ITAU Clara', 'UENO Clara', 'Tarjeta Solar', 'Tarjeta ITAU Clara', 'Gourmed'];
+  const cuentasFam = ['ITAU Marco', 'Coop. Univ. Marco', 'ITAU Clara', 'UENO Clara', 'Tarjeta Solar Clara', 'Tarjeta ITAU Clara', 'Tarjeta ITAU Marco', 'Tarjeta Comecipar', 'Gourmed', 'Efectivo'];
   cuentasFam.forEach(cuenta => {
     sheet.getRange(row, 1).setValue(cuenta);
     sheet.getRange(row, 4).setFormula(`=C${row}-B${row}`); // Diferencia
@@ -1122,9 +1122,12 @@ function getWebAppHtml() {
             <tr><td>Coop. Univ. Marco</td><td class="text-right">1.200.000</td><td class="text-right text-blue font-bold">1.200.000</td><td class="text-right">-</td></tr>
             <tr><td>ITAU Clara</td><td class="text-right">800.000</td><td class="text-right text-blue font-bold">650.000</td><td class="text-right text-red">-150.000</td></tr>
             <tr><td>UENO Clara</td><td class="text-right">500.000</td><td class="text-right text-blue font-bold">520.000</td><td class="text-right text-green">+20.000</td></tr>
-            <tr><td>Tarjeta Solar</td><td class="text-right">-1.500.000</td><td class="text-right text-red font-bold">-1.800.000</td><td class="text-right text-red">-300.000</td></tr>
+            <tr><td>Tarjeta Solar Clara</td><td class="text-right">-1.500.000</td><td class="text-right text-red font-bold">-1.800.000</td><td class="text-right text-red">-300.000</td></tr>
             <tr><td>Tarjeta ITAU Clara</td><td class="text-right">-800.000</td><td class="text-right text-red font-bold">-950.000</td><td class="text-right text-red">-150.000</td></tr>
+            <tr><td>Tarjeta ITAU Marco</td><td class="text-right">0</td><td class="text-right text-blue font-bold">0</td><td class="text-right">-</td></tr>
+            <tr><td>Tarjeta Comecipar</td><td class="text-right">0</td><td class="text-right text-blue font-bold">0</td><td class="text-right">-</td></tr>
             <tr><td>Gourmed</td><td class="text-right">350.000</td><td class="text-right text-blue font-bold">280.000</td><td class="text-right text-red">-70.000</td></tr>
+            <tr><td>Efectivo</td><td class="text-right">0</td><td class="text-right text-blue font-bold">0</td><td class="text-right">-</td></tr>
           </tbody>
         </table>
         <small style="color:#6b7280">✏️ = Ingreso manual</small>
