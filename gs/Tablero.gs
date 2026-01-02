@@ -87,16 +87,16 @@ function crearHojaTABLERO() {
 
   // Total Ingresos Familia - busca en MOVIMIENTO la fila de Subtotal de INGRESOS FAMILIA
   sheet.getRange(rowFam, 1).setValue('Total Ingresos');
-  sheet.getRange(rowFam, 2).setFormula('=SUMIF(MOVIMIENTO!B:B,"Ingreso",MOVIMIENTO!D:D)/2').setNumberFormat('#,##0'); // Dividido por 2 porque hay subtotales
-  sheet.getRange(rowFam, 3).setFormula('=SUMIF(MOVIMIENTO!B:B,"Ingreso",MOVIMIENTO!E:E)/2').setNumberFormat('#,##0');
+  sheet.getRange(rowFam, 2).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B:B,"Ingreso",MOVIMIENTO!D:D)/2,0)').setNumberFormat('#,##0'); // Dividido por 2 porque hay subtotales
+  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B:B,"Ingreso",MOVIMIENTO!E:E)/2,0)').setNumberFormat('#,##0');
   sheet.getRange(rowFam, 4).setFormula(`=IF(C${rowFam}>=B${rowFam},"✓ OK","⚠")`);
   sheet.getRange(rowFam, 1, 1, 4).setBackground(C.VERDE_FONDO);
   rowFam++;
 
   // Total Egresos Familia
   sheet.getRange(rowFam, 1).setValue('Total Egresos');
-  sheet.getRange(rowFam, 2).setFormula('=SUMPRODUCT((MOVIMIENTO!B9:B100="Egreso")*(MOVIMIENTO!D9:D100))').setNumberFormat('#,##0');
-  sheet.getRange(rowFam, 3).setFormula('=SUMPRODUCT((MOVIMIENTO!B9:B100="Egreso")*(MOVIMIENTO!E9:E100))').setNumberFormat('#,##0');
+  sheet.getRange(rowFam, 2).setFormula('=IFERROR(SUMPRODUCT((MOVIMIENTO!B9:B100="Egreso")*(MOVIMIENTO!D9:D100)),0)').setNumberFormat('#,##0');
+  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMPRODUCT((MOVIMIENTO!B9:B100="Egreso")*(MOVIMIENTO!E9:E100)),0)').setNumberFormat('#,##0');
   sheet.getRange(rowFam, 4).setFormula(`=IF(C${rowFam}<=B${rowFam},"✓ OK","⚠")`);
   sheet.getRange(rowFam, 1, 1, 4).setBackground(C.ROJO_FONDO);
   rowFam++;
@@ -174,12 +174,12 @@ function crearHojaTABLERO() {
   // Ingresos del Mes
   sheet.getRange(rowNT, colNT).setValue('INGRESOS DEL MES').setFontSize(9).setFontColor(C.NT_HEADER);
   // Busca el subtotal de INGRESOS NEUROTEA en MOVIMIENTO
-  sheet.getRange(rowNT, colNT + 1).setFormula('=SUMIFS(MOVIMIENTO!E:E,MOVIMIENTO!B:B,"Ingreso",MOVIMIENTO!A:A,"<>Subtotal*")')
+  sheet.getRange(rowNT, colNT + 1).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!E:E,MOVIMIENTO!B:B,"Ingreso",MOVIMIENTO!A:A,"<>Subtotal*"),0)')
     .setNumberFormat('#,##0').setFontSize(14).setFontWeight('bold').setFontColor(C.NT_HEADER);
   sheet.getRange(rowNT, colNT, 1, 2).setBackground(C.NT_FONDO);
 
   sheet.getRange(rowNT, colNT + 2).setValue('GASTOS DEL MES').setFontSize(9);
-  sheet.getRange(rowNT, colNT + 3).setFormula('=SUMIFS(MOVIMIENTO!E:E,MOVIMIENTO!B:B,"Egreso",MOVIMIENTO!A:A,"<>Subtotal*")')
+  sheet.getRange(rowNT, colNT + 3).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!E:E,MOVIMIENTO!B:B,"Egreso",MOVIMIENTO!A:A,"<>Subtotal*"),0)')
     .setNumberFormat('#,##0').setFontSize(14).setFontWeight('bold');
   sheet.getRange(rowNT, colNT + 2, 1, 2).setBackground(C.GRIS_FONDO);
   rowNT++;
@@ -187,19 +187,19 @@ function crearHojaTABLERO() {
   // Ganancia Real
   const filaKPI = rowNT;
   sheet.getRange(rowNT, colNT).setValue('GANANCIA REAL').setFontSize(9).setFontColor(C.VERDE);
-  sheet.getRange(rowNT, colNT + 1).setFormula(`=K${rowNT-1}-L${rowNT-1}`)
+  sheet.getRange(rowNT, colNT + 1).setFormula(`=IFERROR(K${rowNT-1}-L${rowNT-1},0)`)
     .setNumberFormat('#,##0').setFontSize(14).setFontWeight('bold').setFontColor(C.VERDE);
   sheet.getRange(rowNT, colNT, 1, 2).setBackground(C.VERDE_FONDO);
 
   sheet.getRange(rowNT, colNT + 2).setValue('META 7%').setFontSize(9).setFontColor(C.GANANCIA);
-  sheet.getRange(rowNT, colNT + 3).setFormula(`=K${rowNT-1}*0.07`)
+  sheet.getRange(rowNT, colNT + 3).setFormula(`=IFERROR(K${rowNT-1}*0.07,0)`)
     .setNumberFormat('#,##0').setFontSize(14).setFontWeight('bold').setFontColor(C.GANANCIA);
   sheet.getRange(rowNT, colNT + 2, 1, 2).setBackground(C.GANANCIA_FONDO);
   rowNT++;
 
   // % Gastos sobre Ingresos
   sheet.getRange(rowNT, colNT, 1, 4).merge()
-    .setFormula(`="% Gastos sobre Ingresos: "&TEXT(IF(K${filaKPI-1}>0,L${filaKPI-1}/K${filaKPI-1},0),"0%")&" / 93% máx"`)
+    .setFormula(`="% Gastos sobre Ingresos: "&TEXT(IFERROR(IF(K${filaKPI-1}>0,L${filaKPI-1}/K${filaKPI-1},0),0),"0%")&" / 93% máx"`)
     .setHorizontalAlignment('center')
     .setBackground('#e0f2fe')
     .setFontSize(10);
@@ -207,7 +207,7 @@ function crearHojaTABLERO() {
 
   // Estado meta
   sheet.getRange(rowNT, colNT, 1, 4).merge()
-    .setFormula(`=IF(K${filaKPI}>=L${filaKPI},"✅ META CUMPLIDA - Superávit: "&TEXT(K${filaKPI}-L${filaKPI},"#,##0"),"⚠️ META NO CUMPLIDA - Falta: "&TEXT(L${filaKPI}-K${filaKPI},"#,##0"))`)
+    .setFormula(`=IFERROR(IF(K${filaKPI}>=L${filaKPI},"✅ META CUMPLIDA - Superávit: "&TEXT(K${filaKPI}-L${filaKPI},"#,##0"),"⚠️ META NO CUMPLIDA - Falta: "&TEXT(L${filaKPI}-K${filaKPI},"#,##0")),"⏳ Sin datos")`)
     .setHorizontalAlignment('center')
     .setFontWeight('bold')
     .setFontSize(10);
@@ -215,7 +215,7 @@ function crearHojaTABLERO() {
 
   // Distribución ganancia
   sheet.getRange(rowNT, colNT, 1, 4).merge()
-    .setFormula(`="Distribución de Ganancia (7% = "&TEXT(L${filaKPI},"#,##0")&")"`)
+    .setFormula(`="Distribución de Ganancia (7% = "&TEXT(IFERROR(L${filaKPI},0),"#,##0")&")"`)
     .setFontWeight('bold')
     .setFontSize(10)
     .setBackground(C.NT_FONDO);
@@ -227,9 +227,9 @@ function crearHojaTABLERO() {
   sheet.getRange(rowNT, colNT + 2).setValue('Fondo Inversión').setFontSize(9).setBackground('#cffafe');
   rowNT++;
 
-  sheet.getRange(rowNT, colNT).setFormula(`=K${filaKPI}*0.3333`).setNumberFormat('#,##0').setFontWeight('bold').setBackground('#f3e8ff');
-  sheet.getRange(rowNT, colNT + 1).setFormula(`=K${filaKPI}*0.3333`).setNumberFormat('#,##0').setFontWeight('bold').setBackground('#ffedd5');
-  sheet.getRange(rowNT, colNT + 2).setFormula(`=K${filaKPI}*0.3334`).setNumberFormat('#,##0').setFontWeight('bold').setBackground('#cffafe');
+  sheet.getRange(rowNT, colNT).setFormula(`=IFERROR(K${filaKPI}*0.3333,0)`).setNumberFormat('#,##0').setFontWeight('bold').setBackground('#f3e8ff');
+  sheet.getRange(rowNT, colNT + 1).setFormula(`=IFERROR(K${filaKPI}*0.3333,0)`).setNumberFormat('#,##0').setFontWeight('bold').setBackground('#ffedd5');
+  sheet.getRange(rowNT, colNT + 2).setFormula(`=IFERROR(K${filaKPI}*0.3334,0)`).setNumberFormat('#,##0').setFontWeight('bold').setBackground('#cffafe');
   rowNT += 2;
 
   // ─── SALDOS EN CUENTAS NT ───
@@ -272,24 +272,24 @@ function crearHojaTABLERO() {
 
   // Total Ingresos NT
   sheet.getRange(rowNT, colNT).setValue('Total Ingresos');
-  sheet.getRange(rowNT, colNT + 1).setFormula(`=K${filaKPI-1}`).setNumberFormat('#,##0');
-  sheet.getRange(rowNT, colNT + 2).setFormula(`=K${filaKPI-1}`).setNumberFormat('#,##0');
+  sheet.getRange(rowNT, colNT + 1).setFormula(`=IFERROR(K${filaKPI-1},0)`).setNumberFormat('#,##0');
+  sheet.getRange(rowNT, colNT + 2).setFormula(`=IFERROR(K${filaKPI-1},0)`).setNumberFormat('#,##0');
   sheet.getRange(rowNT, colNT + 3).setFormula(`=IF(J${rowNT}>=I${rowNT},"✓","⚠")`);
   sheet.getRange(rowNT, colNT, 1, 4).setBackground(C.VERDE_FONDO);
   rowNT++;
 
   // Total Egresos NT
   sheet.getRange(rowNT, colNT).setValue('Total Egresos');
-  sheet.getRange(rowNT, colNT + 1).setFormula(`=L${filaKPI-1}`).setNumberFormat('#,##0');
-  sheet.getRange(rowNT, colNT + 2).setFormula(`=L${filaKPI-1}`).setNumberFormat('#,##0');
+  sheet.getRange(rowNT, colNT + 1).setFormula(`=IFERROR(L${filaKPI-1},0)`).setNumberFormat('#,##0');
+  sheet.getRange(rowNT, colNT + 2).setFormula(`=IFERROR(L${filaKPI-1},0)`).setNumberFormat('#,##0');
   sheet.getRange(rowNT, colNT + 3).setFormula(`=IF(J${rowNT}<=I${rowNT},"✓","⚠")`);
   sheet.getRange(rowNT, colNT, 1, 4).setBackground(C.ROJO_FONDO);
   rowNT++;
 
   // Balance NT
   sheet.getRange(rowNT, colNT).setValue('BALANCE NEUROTEA').setFontWeight('bold');
-  sheet.getRange(rowNT, colNT + 1).setFormula(`=I${rowNT-2}-I${rowNT-1}`).setNumberFormat('#,##0').setFontWeight('bold');
-  sheet.getRange(rowNT, colNT + 2).setFormula(`=J${rowNT-2}-J${rowNT-1}`).setNumberFormat('#,##0').setFontWeight('bold');
+  sheet.getRange(rowNT, colNT + 1).setFormula(`=IFERROR(I${rowNT-2}-I${rowNT-1},0)`).setNumberFormat('#,##0').setFontWeight('bold');
+  sheet.getRange(rowNT, colNT + 2).setFormula(`=IFERROR(J${rowNT-2}-J${rowNT-1},0)`).setNumberFormat('#,##0').setFontWeight('bold');
   sheet.getRange(rowNT, colNT + 3).setFormula(`=IF(J${rowNT}>=0,"SUPERÁVIT","DÉFICIT")`).setFontWeight('bold');
   sheet.getRange(rowNT, colNT, 1, 4).setBackground(C.NT_SUBTOTAL);
 
@@ -314,16 +314,16 @@ function crearHojaTABLERO() {
 
   // Préstamo NT → Familia (busca en CARGA_NT)
   sheet.getRange(rowBalance + 2, 1).setValue('Préstamo NT → Familia');
-  sheet.getRange(rowBalance + 2, 2).setFormula(`=SUMIFS(CARGA_NT!F:F,CARGA_NT!D:D,"Préstamo NT → Familia",MONTH(CARGA_NT!A:A),MOVIMIENTO!K3,YEAR(CARGA_NT!A:A),${AÑO})`)
+  sheet.getRange(rowBalance + 2, 2).setFormula(`=IFERROR(SUMIFS(CARGA_NT!F:F,CARGA_NT!D:D,"Préstamo NT → Familia",MONTH(CARGA_NT!A:A),MOVIMIENTO!L3,YEAR(CARGA_NT!A:A),${AÑO}),0)`)
     .setNumberFormat('#,##0').setFontColor(C.ROJO);
-  sheet.getRange(rowBalance + 2, 3).setFormula(`=SUMIF(CARGA_NT!D:D,"Préstamo NT → Familia",CARGA_NT!F:F)`)
+  sheet.getRange(rowBalance + 2, 3).setFormula(`=IFERROR(SUMIF(CARGA_NT!D:D,"Préstamo NT → Familia",CARGA_NT!F:F),0)`)
     .setNumberFormat('#,##0').setFontColor(C.ROJO).setFontWeight('bold');
 
   // Devolución Familia → NT (busca en CARGA_FAMILIA)
   sheet.getRange(rowBalance + 3, 1).setValue('Devolución Familia → NT');
-  sheet.getRange(rowBalance + 3, 2).setFormula(`=SUMIFS(CARGA_FAMILIA!F:F,CARGA_FAMILIA!D:D,"Devolución Familia → NT",MONTH(CARGA_FAMILIA!A:A),MOVIMIENTO!K3,YEAR(CARGA_FAMILIA!A:A),${AÑO})`)
+  sheet.getRange(rowBalance + 3, 2).setFormula(`=IFERROR(SUMIFS(CARGA_FAMILIA!F:F,CARGA_FAMILIA!D:D,"Devolución Familia → NT",MONTH(CARGA_FAMILIA!A:A),MOVIMIENTO!L3,YEAR(CARGA_FAMILIA!A:A),${AÑO}),0)`)
     .setNumberFormat('#,##0').setFontColor(C.VERDE);
-  sheet.getRange(rowBalance + 3, 3).setFormula(`=SUMIF(CARGA_FAMILIA!D:D,"Devolución Familia → NT",CARGA_FAMILIA!F:F)`)
+  sheet.getRange(rowBalance + 3, 3).setFormula(`=IFERROR(SUMIF(CARGA_FAMILIA!D:D,"Devolución Familia → NT",CARGA_FAMILIA!F:F),0)`)
     .setNumberFormat('#,##0').setFontColor(C.VERDE).setFontWeight('bold');
 
   // Saldo Neto

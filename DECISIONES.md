@@ -42,14 +42,20 @@
 ---
 
 ### [2026-01-02] - Selector de mes en MOVIMIENTO controla todo
+**Estado**: 🔄 EVOLUCIONADA → ver v2 [2026-01-02b]
+
+---
+
+### [2026-01-02b] - Selector de mes en MOVIMIENTO controla todo (v2)
 **Estado**: ✅ APROBADO - NO REVERTIR
+**Evoluciona de**: [2026-01-02] Selector de mes en MOVIMIENTO
 **Descripción**:
 - Celda B3 de MOVIMIENTO tiene dropdown con meses
-- Celda K3 (oculta) tiene fórmula MATCH que convierte mes a número
-- Todas las fórmulas usan $K$3 para filtrar por mes
-- TABLERO sincroniza con MOVIMIENTO!B3
-**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs
-**Razón**: Un solo punto de control para cambiar el mes visualizado.
+- Celda **L3** (oculta) tiene fórmula MATCH que convierte mes a número (antes era K3)
+- Todas las fórmulas usan **$L$3** para filtrar por mes
+- TABLERO sincroniza con MOVIMIENTO!B3 y usa MOVIMIENTO!L3 para el número de mes
+**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs, CLAUDE.md
+**Razón del cambio**: Se agregó columna EST. PAGO (columna I), desplazando MES_NUM a columna L.
 
 ---
 
@@ -63,6 +69,53 @@
 - DECISIONES.md registra cambios aprobados
 **Archivos afectados**: CLAUDE.md, .claude/settings.json, .claude/commands/verificar.md, DECISIONES.md
 **Razón**: Evitar que Claude "olvide" o "alucine" cambios diferentes a los acordados.
+
+---
+
+### [2026-01-02c] - Columna EST. PAGO en MOVIMIENTO
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- MOVIMIENTO ahora tiene 10 columnas (antes 9)
+- Nueva columna I: EST. PAGO con dropdown (Pendiente, Pagado, Cancelado)
+- Permite trackear el estado de pago de cada concepto individualmente
+- Columnas K-L quedan ocultas (MES_NUM)
+**Archivos afectados**: gs/Sheets.gs, CLAUDE.md
+**Razón**: Requerimiento del usuario para control de pagos en la hoja MOVIMIENTO.
+
+---
+
+### [2026-01-02d] - Todas las fórmulas con IFERROR
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- TODAS las fórmulas INDEX, MATCH, SUMIFS, SUMIF deben estar envueltas en IFERROR(...,0)
+- Evita errores #VALUE!, #ERROR!, #N/A cuando no hay datos
+- Ejemplo: `=IFERROR(SUMIFS(...),0)` en lugar de `=SUMIFS(...)`
+**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs, CLAUDE.md
+**Razón**: El sistema mostraba #VALUE! en hojas vacías. Con IFERROR muestra 0.
+
+---
+
+### [2026-01-02e] - Nombres de conceptos unificados
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Los nombres en VARIABLES_PRESUP_FAM deben coincidir EXACTAMENTE con VARIABLES_FAMILIA
+- Los nombres en VARIABLES_PRESUP_NT deben coincidir EXACTAMENTE con VARIABLES_NT
+- Ejemplo: "Recreación (Pizza, hamburguesa, helados, etc)" NO "Recreación"
+- Ejemplo: "Mantenimiento / Reparaciones Auto Clara" NO "Mant. Auto Clara"
+**Archivos afectados**: gs/Config.gs
+**Razón**: Los SUMIFS fallan si los nombres no coinciden exactamente.
+
+---
+
+### [2026-01-02f] - Valores iniciales en cero
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Todos los `monto: 0` en Config.gs
+- Las hojas CARGA inician vacías
+- PRESUPUESTO se completa manualmente por el usuario
+- GASTOS_FIJOS tiene BASE=0 hasta que el usuario ingrese valores
+**Archivos afectados**: gs/Config.gs
+**Razón**: El usuario solicitó que el sistema inicie sin valores precargados.
 
 ---
 
@@ -159,4 +212,4 @@ La versión anterior se marca como:
 
 ---
 
-*Última actualización: 2026-01-02*
+*Última actualización: 2026-01-02 - Agregadas decisiones c, d, e, f*
