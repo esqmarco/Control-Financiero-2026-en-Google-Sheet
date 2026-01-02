@@ -191,38 +191,64 @@ CONFIG (listas maestras)
 
 ---
 
+## Estructura de Columnas en MOVIMIENTO
+
+| # | Columna | Descripción |
+|---|---------|-------------|
+| A | CONCEPTO | Nombre del ingreso/egreso |
+| B | TIPO | Ingreso / Egreso |
+| C | FREC. | Frecuencia del concepto |
+| D | PRESUPUESTO | Monto planeado (desde PRESUPUESTO) |
+| E | REAL | Monto real (desde GASTOS_FIJOS o CARGA) |
+| F | DIFERENCIA | REAL - PRESUPUESTO |
+| G | % | Porcentaje de ejecución |
+| H | ESTADO | ✓ (OK) o ⚠ (Alerta) |
+| I | EST. PAGO | Pendiente / Pagado / Cancelado |
+| J | 🚦 | Semáforo visual |
+| K | (oculta) | Etiqueta MES_NUM |
+| L | (oculta) | Número de mes calculado |
+
+---
+
 ## Fórmulas Clave en MOVIMIENTO
 
-### Celda K3 (número de mes oculto)
+### Celda L3 (número de mes oculto)
 ```
 =MATCH(B3,{"Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"},0)
 ```
 
 ### Columna PRESUPUESTO
 ```
-=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("concepto",PRESUPUESTO!$A:$A,0),$K$3),0)
+=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("concepto",PRESUPUESTO!$A:$A,0),$L$3),0)
 ```
 
 ### Columna REAL (para gastos fijos)
 ```
-=IFERROR(INDEX(GASTOS_FIJOS!$G:$R,MATCH("concepto",GASTOS_FIJOS!$A:$A,0),$K$3),
-  IFERROR(INDEX(GASTOS_FIJOS!$F:$F,MATCH("concepto",GASTOS_FIJOS!$A:$A,0)),0))
+=IFERROR(IF(INDEX(GASTOS_FIJOS!$G:$R,MATCH("concepto",GASTOS_FIJOS!$A:$A,0),$L$3)<>"",
+  INDEX(GASTOS_FIJOS!$G:$R,MATCH("concepto",GASTOS_FIJOS!$A:$A,0),$L$3),
+  INDEX(GASTOS_FIJOS!$F:$F,MATCH("concepto",GASTOS_FIJOS!$A:$A,0))),0)
 ```
 
 ### Columna REAL (para variables puros)
 ```
-=SUMIFS(CARGA_FAMILIA!$F:$F,CARGA_FAMILIA!$D:$D,"concepto",MONTH(CARGA_FAMILIA!$A:$A),$K$3,YEAR(CARGA_FAMILIA!$A:$A),2026)
+=IFERROR(SUMIFS(CARGA_FAMILIA!$F:$F,CARGA_FAMILIA!$D:$D,"concepto",MONTH(CARGA_FAMILIA!$A:$A),$L$3,YEAR(CARGA_FAMILIA!$A:$A),2026),0)
 ```
 
 ### Columna DIFERENCIA
 ```
-=REAL - PRESUPUESTO
+=E{row}-D{row}
 ```
 
 ### Columna ESTADO
 ```
-=SI(TIPO="Ingreso", SI(DIFERENCIA>=0,"✓","⚠"), SI(DIFERENCIA<=0,"✓","⚠"))
+=IF(E{row}>=D{row},"✓","⚠")  // Para Ingresos
+=IF(E{row}<=D{row},"✓","⚠")  // Para Egresos
 ```
+
+### Columna EST. PAGO (nueva)
+Dropdown con opciones: **Pendiente**, **Pagado**, **Cancelado**
+
+> **IMPORTANTE**: Todas las fórmulas usan `IFERROR(...,0)` para evitar errores #VALUE! cuando no hay datos.
 
 ---
 
@@ -319,4 +345,4 @@ CONFIG (listas maestras)
 ---
 
 *Última actualización: Enero 2026*
-*Versión: 2.0 - Sincronizado con PLAN_MAESTRO v2.3*
+*Versión: 2.1 - Agregada columna EST. PAGO, corregidas fórmulas con IFERROR*
