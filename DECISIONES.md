@@ -85,9 +85,77 @@ Claude agregará una nueva entrada con:
 ## Reglas para Claude
 
 1. **ANTES de modificar código**: Leer DECISIONES.md
-2. **Si un cambio contradice una decisión**: DETENER y preguntar al usuario
-3. **NUNCA revertir** una decisión marcada como APROBADA
+2. **Si un cambio contradice una decisión**: DETENER y mostrar ALERTA DE IMPACTO
+3. **NUNCA revertir silenciosamente** - siempre notificar
 4. **Si hay duda**: Preguntar antes de actuar
+
+---
+
+## Protocolo de Modificación de Decisiones
+
+Las decisiones pueden **evolucionar** cuando hay razones válidas. Cuando detecte un conflicto:
+
+### Paso 1: Mostrar Alerta de Impacto
+```
+⚠️ ALERTA: Este cambio afecta una decisión aprobada
+
+📋 Decisión afectada: [nombre]
+📅 Aprobada el: [fecha]
+📝 Dice actualmente: [descripción]
+
+🔄 Cambio propuesto: [nuevo comportamiento]
+
+📊 ANÁLISIS DE IMPACTO:
+- Archivos que cambiarían: [lista]
+- Funcionalidad afectada: [descripción]
+- Riesgo: [Bajo/Medio/Alto]
+
+❓ ¿Deseas:
+   A) Proceder con el cambio (evolucionará la decisión)
+   B) Cancelar y mantener la decisión actual
+   C) Discutir alternativas
+```
+
+### Paso 2: Si el usuario aprueba, registrar evolución
+La decisión original se marca como EVOLUCIONADA y se crea una nueva versión.
+
+---
+
+## Decisiones Evolucionadas (Historial)
+
+Cuando una decisión cambia, se registra así:
+
+```
+### [FECHA] - Título (v2)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Evoluciona de**: [referencia a versión anterior]
+**Descripción**: Nueva descripción
+**Razón del cambio**: Por qué se modificó
+**Archivos afectados**: Lista actualizada
+```
+
+La versión anterior se marca como:
+```
+**Estado**: 🔄 EVOLUCIONADA → ver v2
+```
+
+---
+
+## Ejemplo de Evolución
+
+### Antes:
+```
+### [2026-01-02] - Meta ganancia NT 7%
+**Estado**: 🔄 EVOLUCIONADA → ver v2 [2026-02-15]
+```
+
+### Después:
+```
+### [2026-02-15] - Meta ganancia NT 10% (v2)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Evoluciona de**: [2026-01-02] Meta ganancia NT 7%
+**Razón del cambio**: Análisis financiero mostró que 7% era insuficiente
+```
 
 ---
 
