@@ -879,8 +879,8 @@ function escribirSeccionMovimientoIngresos(sheet, row, titulo, items, entidad, c
     const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("${item.concepto}",PRESUPUESTO!$A:$A,0),$L$3),0)`;
     sheet.getRange(row, 4).setFormula(formulaPresup);
 
-    // REAL: SUMIFS desde CARGA según tipo y mes (con IFERROR)
-    const formulaReal = `=IFERROR(SUMIFS(${hojaCarga}!$F:$F,${hojaCarga}!$B:$B,"${item.concepto}",MONTH(${hojaCarga}!$A:$A),$L$3,YEAR(${hojaCarga}!$A:$A),${AÑO}),0)`;
+    // REAL: SUMPRODUCT desde CARGA según tipo y mes (SUMIFS no funciona con MONTH/YEAR)
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$B$4:$B$500="${item.concepto}")*(MONTH(${hojaCarga}!$A$4:$A$500)=$L$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500)),0)`;
     sheet.getRange(row, 5).setFormula(formulaReal);
 
     // DIFERENCIA
@@ -991,8 +991,8 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
     const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("${item.concepto}",PRESUPUESTO!$A:$A,0),$L$3),0)`;
     sheet.getRange(row, 4).setFormula(formulaPresup);
 
-    // REAL: SUMIFS desde CARGA según subcategoría y mes (con IFERROR)
-    const formulaReal = `=IFERROR(SUMIFS(${hojaCarga}!$F:$F,${hojaCarga}!$D:$D,"${item.concepto}",MONTH(${hojaCarga}!$A:$A),$L$3,YEAR(${hojaCarga}!$A:$A),${AÑO}),0)`;
+    // REAL: SUMPRODUCT desde CARGA según subcategoría y mes (SUMIFS no funciona con MONTH/YEAR)
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$D$4:$D$500="${item.concepto}")*(MONTH(${hojaCarga}!$A$4:$A$500)=$L$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500)),0)`;
     sheet.getRange(row, 5).setFormula(formulaReal);
 
     // DIFERENCIA
@@ -1046,8 +1046,8 @@ function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal)
       const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("${evento.nombre}",PRESUPUESTO!$A:$A,0),$L$3),0)`;
       sheet.getRange(row, 4).setFormula(formulaPresup);
 
-      // REAL: SUMIFS desde CARGA_NT según evento y mes (con IFERROR)
-      const formulaReal = `=IFERROR(SUMIFS(CARGA_NT!$F:$F,CARGA_NT!$D:$D,"${evento.nombre}",MONTH(CARGA_NT!$A:$A),$L$3,YEAR(CARGA_NT!$A:$A),${AÑO}),0)`;
+      // REAL: SUMPRODUCT desde CARGA_NT según evento y mes (SUMIFS no funciona con MONTH/YEAR)
+      const formulaReal = `=IFERROR(SUMPRODUCT((CARGA_NT!$D$4:$D$500="${evento.nombre}")*(MONTH(CARGA_NT!$A$4:$A$500)=$L$3)*(YEAR(CARGA_NT!$A$4:$A$500)=${AÑO})*(CARGA_NT!$F$4:$F$500)),0)`;
       sheet.getRange(row, 5).setFormula(formulaReal);
 
       sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);

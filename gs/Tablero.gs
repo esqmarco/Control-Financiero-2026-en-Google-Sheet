@@ -766,7 +766,7 @@ function crearHojaTABLERO() {
     .setBackground(UI.ROJO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 2, 3)
-    .setFormula(`=IFERROR(SUMIFS(CARGA_NT!F:F,CARGA_NT!D:D,"Préstamo NT → Familia",MONTH(CARGA_NT!A:A),MOVIMIENTO!L3,YEAR(CARGA_NT!A:A),${AÑO}),0)`)
+    .setFormula(`=IFERROR(SUMPRODUCT((CARGA_NT!D4:D500="Préstamo NT → Familia")*(MONTH(CARGA_NT!A4:A500)=MOVIMIENTO!L3)*(YEAR(CARGA_NT!A4:A500)=${AÑO})*(CARGA_NT!F4:F500)),0)`)
     .setNumberFormat('#,##0')
     .setFontColor(UI.ROJO)
     .setBackground(UI.ROJO_FONDO)
@@ -787,7 +787,7 @@ function crearHojaTABLERO() {
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 3, 3)
-    .setFormula(`=IFERROR(SUMIFS(CARGA_FAMILIA!F:F,CARGA_FAMILIA!D:D,"Devolución Familia → NT",MONTH(CARGA_FAMILIA!A:A),MOVIMIENTO!L3,YEAR(CARGA_FAMILIA!A:A),${AÑO}),0)`)
+    .setFormula(`=IFERROR(SUMPRODUCT((CARGA_FAMILIA!D4:D500="Devolución Familia → NT")*(MONTH(CARGA_FAMILIA!A4:A500)=MOVIMIENTO!L3)*(YEAR(CARGA_FAMILIA!A4:A500)=${AÑO})*(CARGA_FAMILIA!F4:F500)),0)`)
     .setNumberFormat('#,##0')
     .setFontColor(UI.VERDE)
     .setBackground(UI.VERDE_FONDO)
