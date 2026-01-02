@@ -1,39 +1,91 @@
 {
   "project": {
     "name": "Control Financiero 2026 - NeuroTEA & Familia",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "Sistema de control financiero para clínica NeuroTEA y finanzas familiares en Google Sheets"
   },
   "context": {
-    "mainDocument": "PLAN_MAESTRO_Control_Financiero_2026.md",
-    "codeFile": "Code.gs",
+    "primaryDoc": "CLAUDE.md",
+    "referenceDoc": "PLAN_MAESTRO_Control_Financiero_2026.md",
+    "codeDir": "gs/",
     "language": "es",
     "platform": "Google Apps Script"
   },
   "conventions": {
     "currency": "Guaraníes (Gs.)",
     "dateFormat": "dd/mm/yyyy",
+    "year": 2026,
     "entities": ["FAMILIA", "NEUROTEA"],
     "colorScheme": {
-      "familia": "#059669",
-      "neurotea": "#1d4ed8",
-      "alert": "#dc2626",
-      "warning": "#f59e0b",
-      "success": "#22c55e"
+      "familia": {
+        "header": "#059669",
+        "background": "#d1fae5",
+        "subtotal": "#a7f3d0"
+      },
+      "neurotea": {
+        "header": "#1d4ed8",
+        "background": "#dbeafe",
+        "subtotal": "#93c5fd"
+      },
+      "balanceCruzado": {
+        "header": "#7c3aed",
+        "background": "#ede9fe"
+      },
+      "states": {
+        "ok": "#22c55e",
+        "alert": "#dc2626",
+        "warning": "#f59e0b"
+      }
+    }
+  },
+  "dataRules": {
+    "frecuencias": {
+      "Variable": "CARGA sheets (SUMIFS)",
+      "Fijo/Mensual": "GASTOS_FIJOS (INDEX/MATCH)",
+      "Variable/Mensual": "GASTOS_FIJOS (INDEX/MATCH)",
+      "Fijo/Anual": "GASTOS_FIJOS (mes específico)",
+      "Variable/Anual": "GASTOS_FIJOS (INDEX/MATCH)"
+    },
+    "variablesPuros": [
+      "Supermercado",
+      "Combustible",
+      "Ropa/Vestidos",
+      "Recreación",
+      "Salud y Medicamentos",
+      "Gastos no identificados",
+      "Insumos y Papelería",
+      "Gastos Cursos",
+      "Gastos Varios Cumple"
+    ]
+  },
+  "metasNT": {
+    "gananciaMinima": 0.07,
+    "maximoGastos": 0.93,
+    "distribucion": {
+      "utilidadDueno": 0.3333,
+      "fondoEmergencia": 0.3333,
+      "fondoInversion": 0.3334
     }
   },
   "validation": {
-    "beforeCommit": [
-      "Verificar que CONFIG contenga todas las listas actualizadas",
-      "Verificar lógica Anti-Burro en CARGA_FAMILIA y CARGA_NT",
-      "Verificar que GASTOS_FIJOS tenga lógica de arrastre BASE",
-      "Verificar fórmulas de PRESUPUESTO sumen correctamente"
+    "beforeEdit": [
+      "Leer CLAUDE.md completo",
+      "Verificar que el cambio es consistente con PLAN_MAESTRO",
+      "Verificar referencias de fórmulas"
     ],
-    "testCases": [
-      "Crear nueva entrada en CARGA_FAMILIA con tipo Ingreso",
-      "Crear nueva entrada en CARGA_NT con tipo Egreso y categoría EVENTOS",
-      "Verificar que subcategorías se deshabiliten correctamente",
-      "Verificar cálculo de Ganancia NT >= 7%"
+    "afterEdit": [
+      "Ejecutar /verificar",
+      "Verificar que no hay valores hardcodeados en MOVIMIENTO/TABLERO"
+    ],
+    "criticalChecks": [
+      "CONFIG contiene todas las listas del PLAN_MAESTRO",
+      "MOVIMIENTO usa fórmulas dinámicas (no valores fijos)",
+      "TABLERO lee de MOVIMIENTO (no tiene datos propios)",
+      "GASTOS_FIJOS tiene lógica de arrastre BASE",
+      "Sistema Anti-Burro funciona en CARGA sheets"
     ]
+  },
+  "hooks": {
+    "reminder": "Antes de modificar gs/*.gs, lee CLAUDE.md para evitar inconsistencias"
   }
 }
