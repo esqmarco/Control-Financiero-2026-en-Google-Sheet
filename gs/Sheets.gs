@@ -688,7 +688,7 @@ function aplicarFormatoCondicionalCarga(sheet, entidad) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 6. HOJA MOVIMIENTO - Real vs Presupuesto
+// 6. HOJA MOVIMIENTO - Real vs Presupuesto (CON FÓRMULAS DINÁMICAS)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function crearHojaMOVIMIENTO() {
@@ -711,8 +711,12 @@ function crearHojaMOVIMIENTO() {
       .build()
   );
 
+  // Número de mes calculado (oculto en K3)
+  sheet.getRange('J3').setValue('MES_NUM:').setFontColor(C.TEXTO_CLARO);
+  sheet.getRange('K3').setFormula('=MATCH(B3,{"Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"},0)');
+
   sheet.getRange('D3').setValue('Hoy:').setFontWeight('bold');
-  sheet.getRange('E3').setValue(new Date()).setNumberFormat('dd/mm/yyyy');
+  sheet.getRange('E3').setFormula('=TODAY()').setNumberFormat('dd/mm/yyyy');
 
   // ─── HEADERS DE COLUMNAS ───
   const headers = ['CONCEPTO', 'TIPO', 'FREC.', 'PRESUPUESTO', 'REAL', 'DIFERENCIA', '%', 'ESTADO', '🚦'];
@@ -736,21 +740,29 @@ function crearHojaMOVIMIENTO() {
     .setHorizontalAlignment('center');
   row += 2;
 
-  // Ingresos Familia
-  row = escribirSeccionMovimiento(sheet, row, '▶ INGRESOS FAMILIA', INGRESOS_FAMILIA, C.FAM_FONDO, C.FAM_SUBTOTAL);
+  // Ingresos Familia (vienen de CARGA_FAMILIA - son variables puros)
+  row = escribirSeccionMovimientoIngresos(sheet, row, '▶ INGRESOS FAMILIA', INGRESOS_FAMILIA, 'FAMILIA', C.FAM_FONDO, C.FAM_SUBTOTAL);
 
-  // Egresos Familia
-  row = escribirSeccionMovimiento(sheet, row, '▶ GASTOS FIJOS', GASTOS_FIJOS_FAM, C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionMovimiento(sheet, row, '▶ CUOTAS Y PRÉSTAMOS', CUOTAS_FAM, C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionMovimiento(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_FAM, C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionMovimiento(sheet, row, '▶ SUSCRIPCIONES', SUSCRIPCIONES_FAM, C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionMovimiento(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_FAM, C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionMovimiento(sheet, row, '▶ AHORRO', AHORRO_FAM, C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  // Egresos Familia (vienen de GASTOS_FIJOS o CARGA según frecuencia)
+  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ GASTOS FIJOS', GASTOS_FIJOS_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ CUOTAS Y PRÉSTAMOS', CUOTAS_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ SUSCRIPCIONES', SUSCRIPCIONES_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = escribirSeccionMovimientoVariables(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ AHORRO', AHORRO_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
 
   // Balance Familia
+  const filaBalanceFam = row;
   sheet.getRange(row, 1).setValue('💰 BALANCE FAMILIA').setFontWeight('bold').setFontSize(11);
+  sheet.getRange(row, 4).setFormula(`=SUMIF(B9:B${row-1},"Ingreso",D9:D${row-1})-SUMIF(B9:B${row-1},"Egreso",D9:D${row-1})`);
+  sheet.getRange(row, 5).setFormula(`=SUMIF(B9:B${row-1},"Ingreso",E9:E${row-1})-SUMIF(B9:B${row-1},"Egreso",E9:E${row-1})`);
+  sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+  sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,"-",E${row}/D${row})`);
+  sheet.getRange(row, 8).setFormula(`=IF(E${row}>=D${row},"✓ OK","⚠ DÉFICIT")`);
   sheet.getRange(row, 1, 1, 9).setBackground(C.GANANCIA_FONDO);
   row += 3;
+
+  const filaInicioNT = row;
 
   // ═══════════════════════════════════════════════════════════════════
   // NEUROTEA
@@ -762,41 +774,62 @@ function crearHojaMOVIMIENTO() {
     .setHorizontalAlignment('center');
   row += 2;
 
-  // Ingresos NT
-  row = escribirSeccionMovimiento(sheet, row, '▶ INGRESOS NEUROTEA', INGRESOS_NT, C.NT_FONDO, C.NT_SUBTOTAL);
+  // Ingresos NT (vienen de CARGA_NT - son variables puros)
+  row = escribirSeccionMovimientoIngresos(sheet, row, '▶ INGRESOS NEUROTEA', INGRESOS_NT, 'NEUROTEA', C.NT_FONDO, C.NT_SUBTOTAL);
 
-  // Egresos NT
-  row = escribirSeccionMovimiento(sheet, row, '▶ CLÍNICA', CLINICA_NT, C.NT_FONDO_ALT, C.NT_SUBTOTAL);
-  row = escribirSeccionMovimiento(sheet, row, '▶ SUELDOS Y HONORARIOS', SUELDOS_NT, C.NT_FONDO_ALT, C.NT_SUBTOTAL);
-  row = escribirSeccionMovimiento(sheet, row, '▶ TELEFONÍA E INTERNET', TELEFONIA_NT, C.NT_FONDO_ALT, C.NT_SUBTOTAL);
-  row = escribirSeccionMovimiento(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_NT, C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  // Egresos NT (vienen de GASTOS_FIJOS o CARGA según frecuencia)
+  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ CLÍNICA', CLINICA_NT, 'NEUROTEA', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ SUELDOS Y HONORARIOS', SUELDOS_NT, 'NEUROTEA', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ TELEFONÍA E INTERNET', TELEFONIA_NT, 'NEUROTEA', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_NT, 'NEUROTEA', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
 
-  // Eventos (simplificado - una sola línea)
+  // Eventos NT
+  row = escribirSeccionMovimientoEventos(sheet, row, C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+
+  row = escribirSeccionMovimientoVariables(sheet, row, '▶ VARIABLES NT', VARIABLES_PRESUP_NT, 'NEUROTEA', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+
+  // Ganancia NT
+  const filaGanancia = row;
   sheet.getRange(row, 1, 1, 9).merge()
-    .setValue('▶ EVENTOS')
-    .setFontWeight('bold').setBackground(C.NT_FONDO_ALT);
-  row++;
-  sheet.getRange(row, 1).setValue('Total Eventos').setFontWeight('bold');
-  sheet.getRange(row, 4).setFormula('=0'); // Presupuesto
-  sheet.getRange(row, 5).setFormula('=0'); // Real
-  sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
-  sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,"-",E${row}/D${row})`);
-  row += 2;
-
-  row = escribirSeccionMovimiento(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_NT, C.NT_FONDO_ALT, C.NT_SUBTOTAL);
-
-  // Ganancia
-  sheet.getRange(row, 1, 1, 9).merge()
-    .setValue('▶ GANANCIA (7% META)')
+    .setValue('▶ GANANCIA (META 7%)')
     .setFontWeight('bold').setBackground(C.GANANCIA_FONDO);
   row++;
+
+  // Fila de Ganancia Calculada
   sheet.getRange(row, 1).setValue('Ganancia Calculada');
+  sheet.getRange(row, 2).setValue('Ganancia');
+  sheet.getRange(row, 3).setValue('-');
+  // Ganancia = Ingresos NT - Egresos NT
+  sheet.getRange(row, 4).setFormula(`=SUMIF(B${filaInicioNT+2}:B${row-2},"Ingreso",D${filaInicioNT+2}:D${row-2})-SUMIF(B${filaInicioNT+2}:B${row-2},"Egreso",D${filaInicioNT+2}:D${row-2})`);
+  sheet.getRange(row, 5).setFormula(`=SUMIF(B${filaInicioNT+2}:B${row-2},"Ingreso",E${filaInicioNT+2}:E${row-2})-SUMIF(B${filaInicioNT+2}:B${row-2},"Egreso",E${filaInicioNT+2}:E${row-2})`);
+  sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
   row++;
+
+  // % Ganancia sobre Ingresos
   sheet.getRange(row, 1).setValue('% Ganancia sobre Ingresos');
+  sheet.getRange(row, 4).setFormula(`=IF(SUMIF(B${filaInicioNT+2}:B${row-2},"Ingreso",D${filaInicioNT+2}:D${row-2})>0,D${row-1}/SUMIF(B${filaInicioNT+2}:B${row-2},"Ingreso",D${filaInicioNT+2}:D${row-2}),0)`);
+  sheet.getRange(row, 5).setFormula(`=IF(SUMIF(B${filaInicioNT+2}:B${row-2},"Ingreso",E${filaInicioNT+2}:E${row-2})>0,E${row-1}/SUMIF(B${filaInicioNT+2}:B${row-2},"Ingreso",E${filaInicioNT+2}:E${row-2}),0)`);
+  sheet.getRange(row, 8).setFormula(`=IF(E${row}>=0.07,"✓ META","⚠ <7%")`);
+  row++;
+
+  // Distribución de Ganancia
+  sheet.getRange(row, 1).setValue('  → Utilidad Dueño (33.33%)').setFontStyle('italic');
+  sheet.getRange(row, 5).setFormula(`=E${row-2}*0.3333`);
+  row++;
+  sheet.getRange(row, 1).setValue('  → Fondo Emergencia (33.33%)').setFontStyle('italic');
+  sheet.getRange(row, 5).setFormula(`=E${row-3}*0.3333`);
+  row++;
+  sheet.getRange(row, 1).setValue('  → Fondo Inversión (33.34%)').setFontStyle('italic');
+  sheet.getRange(row, 5).setFormula(`=E${row-4}*0.3334`);
   row += 2;
 
   // Balance NT
   sheet.getRange(row, 1).setValue('💰 BALANCE NEUROTEA').setFontWeight('bold').setFontSize(11);
+  sheet.getRange(row, 4).setFormula(`=D${filaGanancia+1}`);
+  sheet.getRange(row, 5).setFormula(`=E${filaGanancia+1}`);
+  sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+  sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,"-",E${row}/D${row})`);
+  sheet.getRange(row, 8).setFormula(`=IF(E${row}>=D${row},"✓ OK","⚠ DÉFICIT")`);
   sheet.getRange(row, 1, 1, 9).setBackground(C.GANANCIA_FONDO);
 
   // Formato
@@ -806,20 +839,24 @@ function crearHojaMOVIMIENTO() {
   // Anchos
   sheet.setColumnWidth(1, 280);
   sheet.setColumnWidth(2, 80);
-  sheet.setColumnWidth(3, 90);
+  sheet.setColumnWidth(3, 110);
   sheet.setColumnWidth(4, 110);
   sheet.setColumnWidth(5, 110);
   sheet.setColumnWidth(6, 100);
   sheet.setColumnWidth(7, 60);
-  sheet.setColumnWidth(8, 90);
+  sheet.setColumnWidth(8, 100);
   sheet.setColumnWidth(9, 50);
+
+  // Formato condicional para ESTADO
+  aplicarFormatoCondicionalMovimiento(sheet);
 
   sheet.setFrozenRows(5);
 
   return sheet;
 }
 
-function escribirSeccionMovimiento(sheet, row, titulo, items, colorFondo, colorSubtotal) {
+// ─── SECCIÓN INGRESOS (Variables puros - vienen de CARGA) ───
+function escribirSeccionMovimientoIngresos(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
   sheet.getRange(row, 1, 1, 9).merge()
     .setValue(titulo)
     .setFontWeight('bold')
@@ -827,23 +864,29 @@ function escribirSeccionMovimiento(sheet, row, titulo, items, colorFondo, colorS
   row++;
 
   const filaInicio = row;
+  const hojaCarga = entidad === 'FAMILIA' ? 'CARGA_FAMILIA' : 'CARGA_NT';
 
   items.forEach(item => {
     sheet.getRange(row, 1).setValue(item.concepto);
-    sheet.getRange(row, 2).setValue(item.tipo || (titulo.includes('INGRESO') ? 'Ingreso' : 'Egreso'));
-    sheet.getRange(row, 3).setValue(item.frecuencia);
+    sheet.getRange(row, 2).setValue('Ingreso');
+    sheet.getRange(row, 3).setValue(item.frecuencia || 'Variable');
 
-    // Presupuesto (columna D)
-    sheet.getRange(row, 4).setValue(item.monto || 0);
+    // PRESUPUESTO: Busca en hoja PRESUPUESTO según mes seleccionado
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("${item.concepto}",PRESUPUESTO!$A:$A,0),$K$3),0)`;
+    sheet.getRange(row, 4).setFormula(formulaPresup);
 
-    // Real (columna E) - aquí irían fórmulas que buscan en CARGA
-    sheet.getRange(row, 5).setValue(0);
+    // REAL: SUMIFS desde CARGA según tipo y mes
+    const formulaReal = `=SUMIFS(${hojaCarga}!$F:$F,${hojaCarga}!$B:$B,"${item.concepto}",MONTH(${hojaCarga}!$A:$A),$K$3,YEAR(${hojaCarga}!$A:$A),${AÑO})`;
+    sheet.getRange(row, 5).setFormula(formulaReal);
 
-    // Diferencia
+    // DIFERENCIA
     sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
 
     // %
-    sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,"-",E${row}/D${row})`);
+    sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,IF(E${row}>0,1,0),E${row}/D${row})`);
+
+    // ESTADO (Ingreso: positivo es bueno)
+    sheet.getRange(row, 8).setFormula(`=IF(E${row}>=D${row},"✓","⚠")`);
 
     row++;
   });
@@ -854,8 +897,187 @@ function escribirSeccionMovimiento(sheet, row, titulo, items, colorFondo, colorS
   sheet.getRange(row, 4).setFormula(`=SUM(D${filaInicio}:D${filaFin})`);
   sheet.getRange(row, 5).setFormula(`=SUM(E${filaInicio}:E${filaFin})`);
   sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+  sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,"-",E${row}/D${row})`);
   sheet.getRange(row, 1, 1, 9).setBackground(colorSubtotal);
   row++;
 
   return row;
+}
+
+// ─── SECCIÓN EGRESOS FIJOS (vienen de GASTOS_FIJOS) ───
+function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
+  sheet.getRange(row, 1, 1, 9).merge()
+    .setValue(titulo)
+    .setFontWeight('bold')
+    .setBackground(colorFondo);
+  row++;
+
+  const filaInicio = row;
+
+  items.forEach(item => {
+    sheet.getRange(row, 1).setValue(item.concepto);
+    sheet.getRange(row, 2).setValue('Egreso');
+    sheet.getRange(row, 3).setValue(item.frecuencia);
+
+    // PRESUPUESTO: Busca en hoja PRESUPUESTO según mes seleccionado
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("${item.concepto}",PRESUPUESTO!$A:$A,0),$K$3),0)`;
+    sheet.getRange(row, 4).setFormula(formulaPresup);
+
+    // REAL: Busca en GASTOS_FIJOS (columnas G a R son ENE a DIC)
+    // La columna del mes es: G(7) + MES_NUM - 1 = G para Enero, H para Febrero, etc.
+    const formulaReal = `=IFERROR(INDEX(GASTOS_FIJOS!$G:$R,MATCH("${item.concepto}",GASTOS_FIJOS!$A:$A,0),$K$3),IFERROR(INDEX(GASTOS_FIJOS!$F:$F,MATCH("${item.concepto}",GASTOS_FIJOS!$A:$A,0)),0))`;
+    sheet.getRange(row, 5).setFormula(formulaReal);
+
+    // DIFERENCIA
+    sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+
+    // %
+    sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,IF(E${row}>0,1,0),E${row}/D${row})`);
+
+    // ESTADO (Egreso: gastar menos es bueno)
+    sheet.getRange(row, 8).setFormula(`=IF(E${row}<=D${row},"✓","⚠")`);
+
+    row++;
+  });
+
+  // Subtotal
+  const filaFin = row - 1;
+  sheet.getRange(row, 1).setValue('Subtotal').setFontWeight('bold').setFontStyle('italic');
+  sheet.getRange(row, 4).setFormula(`=SUM(D${filaInicio}:D${filaFin})`);
+  sheet.getRange(row, 5).setFormula(`=SUM(E${filaInicio}:E${filaFin})`);
+  sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+  sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,"-",E${row}/D${row})`);
+  sheet.getRange(row, 1, 1, 9).setBackground(colorSubtotal);
+  row++;
+
+  return row;
+}
+
+// ─── SECCIÓN VARIABLES PUROS (vienen de CARGA) ───
+function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
+  sheet.getRange(row, 1, 1, 9).merge()
+    .setValue(titulo)
+    .setFontWeight('bold')
+    .setBackground(colorFondo);
+  row++;
+
+  const filaInicio = row;
+  const hojaCarga = entidad === 'FAMILIA' ? 'CARGA_FAMILIA' : 'CARGA_NT';
+
+  items.forEach(item => {
+    sheet.getRange(row, 1).setValue(item.concepto);
+    sheet.getRange(row, 2).setValue('Egreso');
+    sheet.getRange(row, 3).setValue('Variable');
+
+    // PRESUPUESTO: Busca en hoja PRESUPUESTO según mes seleccionado
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("${item.concepto}",PRESUPUESTO!$A:$A,0),$K$3),0)`;
+    sheet.getRange(row, 4).setFormula(formulaPresup);
+
+    // REAL: SUMIFS desde CARGA según subcategoría y mes
+    const formulaReal = `=SUMIFS(${hojaCarga}!$F:$F,${hojaCarga}!$D:$D,"${item.concepto}",MONTH(${hojaCarga}!$A:$A),$K$3,YEAR(${hojaCarga}!$A:$A),${AÑO})`;
+    sheet.getRange(row, 5).setFormula(formulaReal);
+
+    // DIFERENCIA
+    sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+
+    // %
+    sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,IF(E${row}>0,1,0),E${row}/D${row})`);
+
+    // ESTADO (Egreso: gastar menos es bueno)
+    sheet.getRange(row, 8).setFormula(`=IF(E${row}<=D${row},"✓","⚠")`);
+
+    row++;
+  });
+
+  // Subtotal
+  const filaFin = row - 1;
+  sheet.getRange(row, 1).setValue('Subtotal').setFontWeight('bold').setFontStyle('italic');
+  sheet.getRange(row, 4).setFormula(`=SUM(D${filaInicio}:D${filaFin})`);
+  sheet.getRange(row, 5).setFormula(`=SUM(E${filaInicio}:E${filaFin})`);
+  sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+  sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,"-",E${row}/D${row})`);
+  sheet.getRange(row, 1, 1, 9).setBackground(colorSubtotal);
+  row++;
+
+  return row;
+}
+
+// ─── SECCIÓN EVENTOS NT ───
+function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal) {
+  sheet.getRange(row, 1, 1, 9).merge()
+    .setValue('▶ EVENTOS')
+    .setFontWeight('bold').setBackground(colorFondo);
+  row++;
+
+  const filaInicio = row;
+
+  EVENTOS_NT.forEach(evento => {
+    if (!evento.nombre.includes('Reserva')) {
+      sheet.getRange(row, 1).setValue(evento.nombre);
+      sheet.getRange(row, 2).setValue('Egreso');
+      sheet.getRange(row, 3).setValue('Variable');
+
+      // PRESUPUESTO: Busca en hoja PRESUPUESTO
+      const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("${evento.nombre}",PRESUPUESTO!$A:$A,0),$K$3),0)`;
+      sheet.getRange(row, 4).setFormula(formulaPresup);
+
+      // REAL: SUMIFS desde CARGA_NT según evento y mes
+      const formulaReal = `=SUMIFS(CARGA_NT!$F:$F,CARGA_NT!$D:$D,"${evento.nombre}",MONTH(CARGA_NT!$A:$A),$K$3,YEAR(CARGA_NT!$A:$A),${AÑO})`;
+      sheet.getRange(row, 5).setFormula(formulaReal);
+
+      sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+      sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,IF(E${row}>0,1,0),E${row}/D${row})`);
+      sheet.getRange(row, 8).setFormula(`=IF(E${row}<=D${row},"✓","⚠")`);
+      row++;
+    }
+  });
+
+  // Subtotal Eventos
+  const filaFin = row - 1;
+  sheet.getRange(row, 1).setValue('Subtotal Eventos').setFontWeight('bold').setFontStyle('italic');
+  sheet.getRange(row, 4).setFormula(`=SUM(D${filaInicio}:D${filaFin})`);
+  sheet.getRange(row, 5).setFormula(`=SUM(E${filaInicio}:E${filaFin})`);
+  sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+  sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,"-",E${row}/D${row})`);
+  sheet.getRange(row, 1, 1, 9).setBackground(colorSubtotal);
+  row++;
+
+  return row;
+}
+
+// ─── FORMATO CONDICIONAL MOVIMIENTO ───
+function aplicarFormatoCondicionalMovimiento(sheet) {
+  const C = COLORES;
+
+  // Estado ✓ = Verde
+  const reglaOK = SpreadsheetApp.newConditionalFormatRule()
+    .whenTextContains('✓')
+    .setBackground(C.VERDE_FONDO)
+    .setFontColor(C.VERDE)
+    .setRanges([sheet.getRange('H:H')])
+    .build();
+
+  // Estado ⚠ = Rojo
+  const reglaAlerta = SpreadsheetApp.newConditionalFormatRule()
+    .whenTextContains('⚠')
+    .setBackground(C.ROJO_FONDO)
+    .setFontColor(C.ROJO)
+    .setRanges([sheet.getRange('H:H')])
+    .build();
+
+  // Diferencia negativa (egresos) = Rojo
+  const reglaDifNeg = SpreadsheetApp.newConditionalFormatRule()
+    .whenNumberGreaterThan(0)
+    .setFontColor(C.ROJO)
+    .setRanges([sheet.getRange('F:F')])
+    .build();
+
+  // Diferencia positiva = Verde (solo para filas de egreso donde gastar menos es bueno)
+  const reglaDifPos = SpreadsheetApp.newConditionalFormatRule()
+    .whenNumberLessThan(0)
+    .setFontColor(C.VERDE)
+    .setRanges([sheet.getRange('F:F')])
+    .build();
+
+  sheet.setConditionalFormatRules([reglaOK, reglaAlerta, reglaDifNeg, reglaDifPos]);
 }
