@@ -2,6 +2,7 @@
 
 > **FUENTE DE VERDAD TÉCNICA** - Este archivo debe leerse SIEMPRE antes de modificar código.
 > Para detalles de negocio completos, ver: `PLAN_MAESTRO_Control_Financiero_2026.md`
+> Para decisiones ya aprobadas (NO REVERTIR), ver: `DECISIONES.md`
 
 ---
 
