@@ -769,18 +769,18 @@ function crearHojaMOVIMIENTO() {
   sheet.getRange(row, 1).setValue('% Ganancia sobre Ingresos');
   sheet.getRange(row, 4).setFormula(`=IFERROR(IF(SUMIF(B${filaInicioNT+2}:B${row-2},"Ingreso",D${filaInicioNT+2}:D${row-2})>0,D${row-1}/SUMIF(B${filaInicioNT+2}:B${row-2},"Ingreso",D${filaInicioNT+2}:D${row-2}),0),0)`);
   sheet.getRange(row, 5).setFormula(`=IFERROR(IF(SUMIF(B${filaInicioNT+2}:B${row-2},"Ingreso",E${filaInicioNT+2}:E${row-2})>0,E${row-1}/SUMIF(B${filaInicioNT+2}:B${row-2},"Ingreso",E${filaInicioNT+2}:E${row-2}),0),0)`);
-  sheet.getRange(row, 8).setFormula(`=IF(E${row}>=0.07,"✓ META","⚠ <7%")`);
+  sheet.getRange(row, 8).setFormula(`=IF(E${row}>=0,07;"✓ META";"⚠ <7%")`);
   row++;
 
   // Distribución de Ganancia
   sheet.getRange(row, 1).setValue('  → Utilidad Dueño (33.33%)').setFontStyle('italic');
-  sheet.getRange(row, 5).setFormula(`=IFERROR(E${row-2}*0.3333,0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(E${row-2}*0,3333;0)`);
   row++;
   sheet.getRange(row, 1).setValue('  → Fondo Emergencia (33.33%)').setFontStyle('italic');
-  sheet.getRange(row, 5).setFormula(`=IFERROR(E${row-3}*0.3333,0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(E${row-3}*0,3333;0)`);
   row++;
   sheet.getRange(row, 1).setValue('  → Fondo Inversión (33.34%)').setFontStyle('italic');
-  sheet.getRange(row, 5).setFormula(`=IFERROR(E${row-4}*0.3334,0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(E${row-4}*0,3334;0)`);
   row += 2;
 
   // Balance NT

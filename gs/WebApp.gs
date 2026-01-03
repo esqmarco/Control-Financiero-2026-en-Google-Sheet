@@ -405,15 +405,14 @@ function generarHTMLDashboard() {
             </tr>
           </thead>
           <tbody>
-            <tr><td>ITAU Marco</td><td class="text-right">2.500.000</td><td class="text-right text-blue font-bold">2.350.000</td><td class="text-right text-red font-bold">-150.000</td></tr>
-            <tr><td>Coop. Univ. Marco</td><td class="text-right">1.200.000</td><td class="text-right text-blue font-bold">1.200.000</td><td class="text-right text-gray">-</td></tr>
-            <tr><td>ITAU Clara</td><td class="text-right">800.000</td><td class="text-right text-blue font-bold">650.000</td><td class="text-right text-red font-bold">-150.000</td></tr>
-            <tr><td>UENO Clara</td><td class="text-right">500.000</td><td class="text-right text-blue font-bold">520.000</td><td class="text-right text-green font-bold">+20.000</td></tr>
-            <tr><td>Tarjeta Solar Clara</td><td class="text-right text-red">-1.500.000</td><td class="text-right text-red font-bold">-1.800.000</td><td class="text-right text-red font-bold">-300.000</td></tr>
-            <tr><td>Tarjeta ITAU Clara</td><td class="text-right text-red">-800.000</td><td class="text-right text-red font-bold">-950.000</td><td class="text-right text-red font-bold">-150.000</td></tr>
-            <tr><td>Tarjeta ITAU Marco</td><td class="text-right">0</td><td class="text-right text-blue font-bold">0</td><td class="text-right text-gray">-</td></tr>
-            <tr><td>Gourmed</td><td class="text-right">350.000</td><td class="text-right text-blue font-bold">280.000</td><td class="text-right text-red font-bold">-70.000</td></tr>
-            <tr><td>Efectivo</td><td class="text-right">0</td><td class="text-right text-blue font-bold">0</td><td class="text-right text-gray">-</td></tr>
+            ${datos.cuentasFamilia.map(c => `
+              <tr>
+                <td>${c.nombre}</td>
+                <td class="text-right ${c.esperado < 0 ? 'text-red' : ''}">${formatearGuaranies(c.esperado)}</td>
+                <td class="text-right text-blue font-bold">${formatearGuaranies(c.real)}</td>
+                <td class="text-right ${c.diferencia > 0 ? 'text-green' : c.diferencia < 0 ? 'text-red' : 'text-gray'} font-bold">${c.diferencia !== 0 ? (c.diferencia > 0 ? '+' : '') + formatearGuaranies(c.diferencia) : '-'}</td>
+              </tr>
+            `).join('')}
           </tbody>
         </table>
         <p style="font-size: 0.8em; color: #6b7280; margin-top: 10px;">✏️ = Ingreso manual</p>
@@ -534,35 +533,38 @@ function generarHTMLDashboard() {
         <div class="kpi-grid">
           <div class="kpi-box" style="background:#dbeafe">
             <div class="kpi-label">INGRESOS DEL MES</div>
-            <div class="kpi-value text-blue">30.000.000</div>
+            <div class="kpi-value text-blue">${formatearGuaranies(datos.neurotea.ingresos)}</div>
           </div>
           <div class="kpi-box" style="background:#f3f4f6">
             <div class="kpi-label">GASTOS DEL MES</div>
-            <div class="kpi-value">27.300.000</div>
+            <div class="kpi-value">${formatearGuaranies(datos.neurotea.gastos)}</div>
           </div>
           <div class="kpi-box" style="background:#dcfce7">
             <div class="kpi-label">GANANCIA REAL</div>
-            <div class="kpi-value text-green">2.700.000</div>
+            <div class="kpi-value text-green">${formatearGuaranies(datos.neurotea.ganancia)}</div>
           </div>
           <div class="kpi-box" style="background:#fef3c7">
             <div class="kpi-label">META 7%</div>
-            <div class="kpi-value text-yellow">2.100.000</div>
+            <div class="kpi-value text-yellow">${formatearGuaranies(datos.neurotea.meta)}</div>
           </div>
         </div>
 
         <div class="progress-container">
           <div style="display:flex;justify-content:space-between;font-size:0.9em;margin-bottom:8px">
             <span>% Gastos sobre Ingresos</span>
-            <span class="font-bold">91% / 93% máx</span>
+            <span class="font-bold">${datos.neurotea.ingresos > 0 ? Math.round(datos.neurotea.gastos / datos.neurotea.ingresos * 100) : 0}% / 93% máx</span>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" style="width:91%"></div>
-            <span class="progress-text">91%</span>
+            <div class="progress-fill ${datos.neurotea.ingresos > 0 && datos.neurotea.gastos / datos.neurotea.ingresos > 0.93 ? 'danger' : ''}" style="width:${datos.neurotea.ingresos > 0 ? Math.min(Math.round(datos.neurotea.gastos / datos.neurotea.ingresos * 100), 100) : 0}%"></div>
+            <span class="progress-text">${datos.neurotea.ingresos > 0 ? Math.round(datos.neurotea.gastos / datos.neurotea.ingresos * 100) : 0}%</span>
           </div>
         </div>
 
         <div style="text-align:center;margin:15px 0">
-          <span class="badge badge-solid-green" style="padding:10px 25px;font-size:1em">✅ META CUMPLIDA - Superávit: 600.000</span>
+          ${datos.neurotea.ganancia >= datos.neurotea.meta
+            ? `<span class="badge badge-solid-green" style="padding:10px 25px;font-size:1em">✅ META CUMPLIDA - Superávit: ${formatearGuaranies(datos.neurotea.ganancia - datos.neurotea.meta)}</span>`
+            : `<span class="badge badge-solid-red" style="padding:10px 25px;font-size:1em">⚠️ META NO CUMPLIDA - Falta: ${formatearGuaranies(datos.neurotea.meta - datos.neurotea.ganancia)}</span>`
+          }
         </div>
 
         <div style="border-top:1px solid #e5e7eb;padding-top:15px;margin-top:15px">
@@ -763,20 +765,65 @@ function generarHTMLDashboard() {
 
 // Función para obtener datos reales de las hojas
 function obtenerDatosDashboard() {
-  // Por ahora retorna datos de ejemplo
-  // En la implementación completa, esto leerá de las hojas
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const tablero = ss.getSheetByName(NOMBRES_HOJAS.TABLERO);
+  const movimiento = ss.getSheetByName(NOMBRES_HOJAS.MOVIMIENTO);
+
+  // Leer mes seleccionado de MOVIMIENTO
+  const mesSeleccionado = movimiento ? movimiento.getRange('B3').getValue() : 'Enero';
+
+  // Leer datos de FAMILIA desde TABLERO (filas 8-17 para cuentas)
+  const cuentasFamilia = [];
+  if (tablero) {
+    CUENTAS_FAMILIA.forEach((cuenta, idx) => {
+      const fila = 8 + idx;
+      cuentasFamilia.push({
+        nombre: cuenta,
+        esperado: tablero.getRange(fila, 3).getValue() || 0,
+        real: tablero.getRange(fila, 4).getValue() || 0,
+        diferencia: tablero.getRange(fila, 5).getValue() || 0
+      });
+    });
+  }
+
+  // Leer indicadores NT desde TABLERO (aproximadamente fila 9 y 10)
+  let ingresosNT = 0, gastosNT = 0, gananciaNT = 0, metaNT = 0;
+  if (tablero) {
+    ingresosNT = tablero.getRange('I9').getValue() || 0;
+    gastosNT = tablero.getRange('K9').getValue() || 0;
+    gananciaNT = tablero.getRange('I13').getValue() || 0;
+    metaNT = tablero.getRange('K13').getValue() || 0;
+  }
+
+  // Leer resumen FAMILIA desde TABLERO
+  let ingresosFam = 0, egresosFam = 0, balanceFam = 0;
+  if (tablero) {
+    // Las filas exactas dependen del layout, aproximadamente fila 23-25
+    ingresosFam = tablero.getRange('D23').getValue() || 0;
+    egresosFam = tablero.getRange('D24').getValue() || 0;
+    balanceFam = tablero.getRange('D25').getValue() || 0;
+  }
+
   return {
-    mes: 'Enero',
+    mes: mesSeleccionado,
     año: AÑO,
+    cuentasFamilia: cuentasFamilia,
     familia: {
-      ingresos: 14500000,
-      egresosPagados: 12450000,
-      egresosPendientes: 2341000
+      ingresos: ingresosFam,
+      egresos: egresosFam,
+      balance: balanceFam
     },
     neurotea: {
-      ingresos: 30000000,
-      gastos: 27300000,
-      ganancia: 2700000
+      ingresos: ingresosNT,
+      gastos: gastosNT,
+      ganancia: gananciaNT,
+      meta: metaNT
     }
   };
+}
+
+// Función auxiliar para formatear números
+function formatearGuaranies(num) {
+  if (num === 0 || num === null || num === undefined) return '0';
+  return new Intl.NumberFormat('es-PY').format(Math.round(num));
 }
