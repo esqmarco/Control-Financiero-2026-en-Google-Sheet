@@ -92,8 +92,7 @@ const CUENTAS_FAMILIA = [
 
 const CUENTAS_NT = [
   'Atlas NeuroTEA',
-  'Caja Chica NT',
-  'Efectivo NT'
+  'Caja Chica NT'
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -133,7 +132,8 @@ const CATEGORIAS_EGRESO_FAMILIA = [
   'OBLIGACIONES LEGALES',
   'SUSCRIPCIONES',
   'VARIABLES',
-  'AHORRO'
+  'AHORRO',
+  'FONDO DE EMERGENCIA'
 ];
 
 const CATEGORIAS_EGRESO_NT = [
