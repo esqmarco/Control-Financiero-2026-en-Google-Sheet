@@ -92,8 +92,7 @@ const CUENTAS_FAMILIA = [
 
 const CUENTAS_NT = [
   'Atlas NeuroTEA',
-  'Caja Chica NT',
-  'Efectivo NT'
+  'Caja Chica NT'
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════

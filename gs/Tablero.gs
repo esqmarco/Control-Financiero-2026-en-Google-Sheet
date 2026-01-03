@@ -778,7 +778,7 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Headers
-  ['Cuenta', 'Saldo ✏️', 'Acumulado', 'Estado'].forEach((h, i) => {
+  ['Cuenta', 'Esperado', 'Real ✏️', 'Estado'].forEach((h, i) => {
     sheet.getRange(rowNT, 8 + i)
       .setValue(h)
       .setFontSize(10)
@@ -799,8 +799,16 @@ function crearHojaTABLERO() {
       .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Saldo ✏️ (editable - manual)
-    sheet.getRange(rowNT, 9).setValue(0)
+    // Esperado (fórmula automática: suma de INGRESOS del mes en esa cuenta desde CARGA_NT)
+    const formulaEsperado = `=IFERROR(SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500<>"Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500));0)`;
+    sheet.getRange(rowNT, 9).setFormula(formulaEsperado)
+      .setNumberFormat('#,##0')
+      .setBackground(bgColor)
+      .setHorizontalAlignment('right')
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+    // Real ✏️ (editable - manual: lo que confirmas que hay)
+    sheet.getRange(rowNT, 10).setValue(0)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
       .setHorizontalAlignment('right')
@@ -808,16 +816,8 @@ function crearHojaTABLERO() {
       .setFontWeight('bold')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Acumulado (fórmula: Ingresos - Egresos del mes en esa cuenta)
-    const formulaAcumulado = `=IFERROR(SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500<>"Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500))-SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500="Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500)),0)`;
-    sheet.getRange(rowNT, 10).setFormula(formulaAcumulado)
-      .setNumberFormat('#,##0')
-      .setBackground(bgColor)
-      .setHorizontalAlignment('right')
-      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-
-    // Estado (fórmula basada en saldo)
-    sheet.getRange(rowNT, 11).setFormula(`=IF(I${rowNT}>=J${rowNT},"✓","⚠")`)
+    // Estado (fórmula: Real >= Esperado)
+    sheet.getRange(rowNT, 11).setFormula(`=IF(J${rowNT}>=I${rowNT};"✓";"⚠")`)
       .setBackground(bgColor)
       .setHorizontalAlignment('center')
       .setFontWeight('bold')
