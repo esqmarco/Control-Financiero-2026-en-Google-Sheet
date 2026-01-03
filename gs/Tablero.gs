@@ -345,7 +345,7 @@ function crearHojaTABLERO() {
 
   // Valor Meta 7%
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(I${filaIngresosNT}*0.07,0)`)
+    .setFormula(`=IFERROR(I${filaIngresosNT}*0,07;0)`)
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -422,20 +422,20 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Valores de distribución
-  sheet.getRange(rowNT, 8).setFormula(`=IFERROR(I${filaGananciaNT}*0.3333,0)`)
+  sheet.getRange(rowNT, 8).setFormula(`=IFERROR(I${filaGananciaNT}*0,3333;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#F3E8FF')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(I${filaGananciaNT}*0.3333,0)`)
+  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(I${filaGananciaNT}*0,3333;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#FFEDD5')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(I${filaGananciaNT}*0.3334,0)`)
+    .setFormula(`=IFERROR(I${filaGananciaNT}*0,3334;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#CFFAFE')
