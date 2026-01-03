@@ -130,6 +130,79 @@ function generarMesesOptions() {
   return html;
 }
 
+function generarTortaGastos(categorias, tipo) {
+  // Filtrar solo categorías de egresos (no ingresos, no balance)
+  var gastos = [];
+  var total = 0;
+  var colores = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'];
+
+  for (var i = 0; i < categorias.length; i++) {
+    var cat = categorias[i];
+    var nombre = cat.categoria.toUpperCase();
+    // Excluir ingresos y totales
+    if (nombre.indexOf('INGRESO') === -1 && nombre.indexOf('BALANCE') === -1 && nombre.indexOf('GANANCIA') === -1) {
+      if (cat.real > 0) {
+        gastos.push({ nombre: cat.categoria, valor: cat.real });
+        total += cat.real;
+      }
+    }
+  }
+
+  if (total === 0 || gastos.length === 0) {
+    return '<div style="text-align:center;padding:40px;color:#6b7280">Sin gastos registrados</div>';
+  }
+
+  // Generar SVG de la torta
+  var svgSize = 160;
+  var cx = svgSize / 2;
+  var cy = svgSize / 2;
+  var radius = 60;
+  var startAngle = -90;
+
+  var svg = '<svg class="chart-svg" viewBox="0 0 ' + svgSize + ' ' + svgSize + '">';
+
+  for (var j = 0; j < gastos.length; j++) {
+    var gasto = gastos[j];
+    var pct = gasto.valor / total;
+    var angle = pct * 360;
+    var color = colores[j % colores.length];
+
+    var endAngle = startAngle + angle;
+    var largeArc = angle > 180 ? 1 : 0;
+
+    var x1 = cx + radius * Math.cos(startAngle * Math.PI / 180);
+    var y1 = cy + radius * Math.sin(startAngle * Math.PI / 180);
+    var x2 = cx + radius * Math.cos(endAngle * Math.PI / 180);
+    var y2 = cy + radius * Math.sin(endAngle * Math.PI / 180);
+
+    if (gastos.length === 1) {
+      // Si solo hay un segmento, dibujar un círculo completo
+      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="' + color + '"/>';
+    } else {
+      svg += '<path d="M' + cx + ',' + cy + ' L' + x1 + ',' + y1 + ' A' + radius + ',' + radius + ' 0 ' + largeArc + ',1 ' + x2 + ',' + y2 + ' Z" fill="' + color + '"/>';
+    }
+
+    startAngle = endAngle;
+  }
+
+  svg += '</svg>';
+
+  // Generar leyenda
+  var leyenda = '<div class="chart-legend">';
+  for (var k = 0; k < gastos.length; k++) {
+    var g = gastos[k];
+    var pctLeyenda = Math.round(g.valor / total * 100);
+    var colorL = colores[k % colores.length];
+    leyenda += '<div class="chart-legend-item">';
+    leyenda += '<div class="chart-legend-color" style="background:' + colorL + '"></div>';
+    leyenda += '<span>' + g.nombre + ' (' + pctLeyenda + '%)</span>';
+    leyenda += '</div>';
+  }
+  leyenda += '</div>';
+
+  return svg + leyenda;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // FUNCIÓN PRINCIPAL: GENERAR HTML DEL DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -299,6 +372,13 @@ function generarHTMLDashboard() {
 '          <td class="text-center"><span class="badge ' + (datos.liquidezFamilia.saldoFinal >= 0 ? 'badge-solid-green' : 'badge-solid-red') + '">' + (datos.liquidezFamilia.saldoFinal >= 0 ? 'OK' : 'DÉFICIT') + '</span></td>' +
 '        </tr></tfoot></table>' +
 '      </div>' +
+'      <!-- DISTRIBUCIÓN DE GASTOS -->' +
+'      <div class="card">' +
+'        <div class="card-title">📊 DISTRIBUCIÓN DE GASTOS</div>' +
+'        <div class="chart-container">' +
+           generarTortaGastos(datos.presupuestoFamilia, 'familia') +
+'        </div>' +
+'      </div>' +
 '    </div>' +
 '    <!-- COLUMNA NEUROTEA -->' +
 '    <div class="column neurotea">' +
@@ -365,6 +445,13 @@ function generarHTMLDashboard() {
 '        </tr></tfoot></table>' +
 '        <p style="font-size: 0.8em; color: #6b7280; margin-top: 10px;">✏️ = Ingreso manual</p>' +
 '      </div>' +
+'      <!-- DISTRIBUCIÓN DE GASTOS NT -->' +
+'      <div class="card">' +
+'        <div class="card-title">📊 DISTRIBUCIÓN DE GASTOS</div>' +
+'        <div class="chart-container">' +
+           generarTortaGastos(datos.presupuestoNT, 'neurotea') +
+'        </div>' +
+'      </div>' +
 '    </div>' +
 '    <!-- BALANCE CRUZADO -->' +
 '    <div class="balance-section">' +
@@ -395,6 +482,7 @@ function generarHTMLDashboard() {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FUNCIÓN PARA OBTENER DATOS DEL DASHBOARD
+// Calcula posiciones dinámicamente basándose en la estructura del TABLERO
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function obtenerDatosDashboard() {
@@ -404,98 +492,143 @@ function obtenerDatosDashboard() {
 
   var mesSeleccionado = movimiento ? movimiento.getRange('B3').getValue() : 'Enero';
 
-  // SALDOS EN CUENTAS FAMILIA (filas 8-17)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CÁLCULO DINÁMICO DE POSICIONES (basado en Tablero.gs)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // FAMILIA - Posiciones calculadas
+  var FILA_INICIO_CUENTAS_FAM = 8;  // Primera cuenta FAMILIA
+  var FILA_TOTAL_CUENTAS_FAM = FILA_INICIO_CUENTAS_FAM + CUENTAS_FAMILIA.length; // 8 + 10 = 18
+  var FILA_TITULO_RESUMEN = FILA_TOTAL_CUENTAS_FAM + 3; // 18 + 3 = 21
+  var FILA_INGRESOS_FAM = FILA_TITULO_RESUMEN + 2; // 21 + 2 = 23
+  var FILA_EGRESOS_FAM = FILA_INGRESOS_FAM + 1; // 24
+  var FILA_BALANCE_FAM = FILA_EGRESOS_FAM + 1; // 25
+  var FILA_TITULO_LIQUIDEZ = FILA_BALANCE_FAM + 2; // 25 + 2 = 27
+  var FILA_CAJA_DISP = FILA_TITULO_LIQUIDEZ + 2; // 27 + 2 = 29
+  var FILA_SEMANA_1 = FILA_CAJA_DISP + 1; // 30
+  var FILA_SALDO_FINAL_FAM = FILA_SEMANA_1 + 3; // 30 + 3 = 33
+
+  // NEUROTEA - Posiciones fijas según estructura
+  var FILA_INGRESOS_NT = 9;  // Valores Ingresos/Gastos NT
+  var FILA_GANANCIA_NT = 13; // Valores Ganancia/Meta NT
+  var FILA_DISTRIBUCION = 20; // Valores distribución
+  var FILA_INICIO_CUENTAS_NT = 24; // Primera cuenta NT
+  var FILA_TOTAL_CUENTAS_NT = FILA_INICIO_CUENTAS_NT + CUENTAS_NT.length; // 24 + 3 = 27
+
+  // BALANCE CRUZADO - Posición calculada
+  var FILA_BALANCE_CRUZADO = Math.max(FILA_SALDO_FINAL_FAM, FILA_TOTAL_CUENTAS_NT + 2) + 3; // max(33, 29) + 3 = 36
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LECTURA DE DATOS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Función auxiliar para leer valor numérico seguro
+  function leerNumero(rango) {
+    try {
+      var val = rango.getValue();
+      if (val === '' || val === null || val === undefined) return 0;
+      var num = Number(val);
+      return isNaN(num) ? 0 : num;
+    } catch(e) {
+      return 0;
+    }
+  }
+
+  // SALDOS EN CUENTAS FAMILIA
   var cuentasFamilia = [];
   if (tablero) {
     for (var i = 0; i < CUENTAS_FAMILIA.length; i++) {
-      var fila = 8 + i;
+      var fila = FILA_INICIO_CUENTAS_FAM + i;
       cuentasFamilia.push({
         nombre: CUENTAS_FAMILIA[i],
-        esperado: tablero.getRange(fila, 3).getValue() || 0,
-        real: tablero.getRange(fila, 4).getValue() || 0,
-        diferencia: tablero.getRange(fila, 5).getValue() || 0
+        esperado: leerNumero(tablero.getRange(fila, 3)),  // Columna C
+        real: leerNumero(tablero.getRange(fila, 4)),      // Columna D
+        diferencia: leerNumero(tablero.getRange(fila, 5)) // Columna E
       });
     }
   }
 
-  // INDICADORES NT
+  // INDICADORES NEUROTEA (celdas merged: H-I = Ingresos/Ganancia, J-K = Gastos/Meta)
   var ingresosNT = 0, gastosNT = 0, gananciaNT = 0, metaNT = 0;
   if (tablero) {
-    ingresosNT = tablero.getRange('I9').getValue() || 0;
-    gastosNT = tablero.getRange('K9').getValue() || 0;
-    gananciaNT = tablero.getRange('I13').getValue() || 0;
-    metaNT = tablero.getRange('K13').getValue() || 0;
+    ingresosNT = leerNumero(tablero.getRange(FILA_INGRESOS_NT, 8));  // H9
+    gastosNT = leerNumero(tablero.getRange(FILA_INGRESOS_NT, 10));   // J9
+    gananciaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 8));  // H13
+    metaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 10));     // J13
   }
 
-  // DISTRIBUCIÓN DE GANANCIA NT
+  // DISTRIBUCIÓN DE GANANCIA NT (fila 20: I=Utilidad, J=Emergencia, K=Inversión)
   var utilidadDueno = 0, fondoEmergencia = 0, fondoInversion = 0;
   if (tablero) {
-    utilidadDueno = tablero.getRange('H20').getValue() || 0;
-    fondoEmergencia = tablero.getRange('I20').getValue() || 0;
-    fondoInversion = tablero.getRange('J20').getValue() || 0;
+    utilidadDueno = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 9));    // I20
+    fondoEmergencia = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 10)); // J20
+    fondoInversion = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 11));  // K20
   }
 
-  // RESUMEN DEL MES FAMILIA
+  // RESUMEN DEL MES FAMILIA (columna C=Presupuesto, D=Real)
   var ingresosFamPres = 0, ingresosFamReal = 0;
   var egresosFamPres = 0, egresosFamReal = 0;
   var balanceFamPres = 0, balanceFamReal = 0;
   if (tablero) {
-    ingresosFamPres = tablero.getRange('C22').getValue() || 0;
-    ingresosFamReal = tablero.getRange('D22').getValue() || 0;
-    egresosFamPres = tablero.getRange('C23').getValue() || 0;
-    egresosFamReal = tablero.getRange('D23').getValue() || 0;
-    balanceFamPres = tablero.getRange('C24').getValue() || 0;
-    balanceFamReal = tablero.getRange('D24').getValue() || 0;
+    ingresosFamPres = leerNumero(tablero.getRange(FILA_INGRESOS_FAM, 3));  // C23
+    ingresosFamReal = leerNumero(tablero.getRange(FILA_INGRESOS_FAM, 4));  // D23
+    egresosFamPres = leerNumero(tablero.getRange(FILA_EGRESOS_FAM, 3));    // C24
+    egresosFamReal = leerNumero(tablero.getRange(FILA_EGRESOS_FAM, 4));    // D24
+    balanceFamPres = leerNumero(tablero.getRange(FILA_BALANCE_FAM, 3));    // C25
+    balanceFamReal = leerNumero(tablero.getRange(FILA_BALANCE_FAM, 4));    // D25
   }
 
-  // SALDOS EN CUENTAS NT
+  // SALDOS EN CUENTAS NT (columna I=Saldo, J=Acumulado)
   var cuentasNT = [];
   if (tablero) {
     for (var j = 0; j < CUENTAS_NT.length; j++) {
-      var filaNT = 25 + j;
+      var filaNT = FILA_INICIO_CUENTAS_NT + j;
       cuentasNT.push({
         nombre: CUENTAS_NT[j],
-        saldo: tablero.getRange(filaNT, 9).getValue() || 0,
-        acumulado: tablero.getRange(filaNT, 10).getValue() || 0
+        saldo: leerNumero(tablero.getRange(filaNT, 9)),     // Columna I
+        acumulado: leerNumero(tablero.getRange(filaNT, 10)) // Columna J
       });
     }
   }
-  var totalCuentasNT = tablero ? tablero.getRange('I28').getValue() || 0 : 0;
+  var totalCuentasNT = tablero ? leerNumero(tablero.getRange(FILA_TOTAL_CUENTAS_NT, 9)) : 0;
 
-  // LIQUIDEZ FAMILIA
+  // LIQUIDEZ FAMILIA (columna C=Gastos, D=Saldo)
   var cajaDisponibleFam = 0;
   var semanasFam = [];
   var saldoFinalFam = 0, totalGastosFam = 0;
   if (tablero) {
-    cajaDisponibleFam = tablero.getRange('D28').getValue() || 0;
+    cajaDisponibleFam = leerNumero(tablero.getRange(FILA_CAJA_DISP, 4)); // D29
     var nombresSemanadas = ['Esta semana', 'Próxima semana', '3ra semana'];
     for (var k = 0; k < 3; k++) {
-      var filaS = 29 + k;
+      var filaS = FILA_SEMANA_1 + k;
       semanasFam.push({
         nombre: nombresSemanadas[k],
-        gastos: tablero.getRange(filaS, 3).getValue() || 0,
-        saldo: tablero.getRange(filaS, 4).getValue() || 0,
+        gastos: leerNumero(tablero.getRange(filaS, 3)),  // Columna C
+        saldo: leerNumero(tablero.getRange(filaS, 4)),   // Columna D
         estado: tablero.getRange(filaS, 5).getValue() || ''
       });
     }
-    totalGastosFam = tablero.getRange('C32').getValue() || 0;
-    saldoFinalFam = tablero.getRange('D32').getValue() || 0;
+    totalGastosFam = leerNumero(tablero.getRange(FILA_SALDO_FINAL_FAM, 3)); // C33
+    saldoFinalFam = leerNumero(tablero.getRange(FILA_SALDO_FINAL_FAM, 4));  // D33
   }
 
-  // BALANCE CRUZADO
+  // BALANCE CRUZADO (columna C=Este Mes, D=Acumulado)
   var prestamoNTMes = 0, prestamoNTAcum = 0;
   var devolucionFamMes = 0, devolucionFamAcum = 0;
   var saldoNetoMes = 0, saldoNetoAcum = 0;
   if (tablero) {
-    prestamoNTMes = tablero.getRange('C38').getValue() || 0;
-    prestamoNTAcum = tablero.getRange('D38').getValue() || 0;
-    devolucionFamMes = tablero.getRange('C39').getValue() || 0;
-    devolucionFamAcum = tablero.getRange('D39').getValue() || 0;
-    saldoNetoMes = tablero.getRange('C40').getValue() || 0;
-    saldoNetoAcum = tablero.getRange('D40').getValue() || 0;
+    var filaPrestamoBC = FILA_BALANCE_CRUZADO + 2;
+    var filaDevolucionBC = filaPrestamoBC + 1;
+    var filaSaldoBC = filaDevolucionBC + 1;
+    prestamoNTMes = leerNumero(tablero.getRange(filaPrestamoBC, 3));    // C38
+    prestamoNTAcum = leerNumero(tablero.getRange(filaPrestamoBC, 4));   // D38
+    devolucionFamMes = leerNumero(tablero.getRange(filaDevolucionBC, 3)); // C39
+    devolucionFamAcum = leerNumero(tablero.getRange(filaDevolucionBC, 4)); // D39
+    saldoNetoMes = leerNumero(tablero.getRange(filaSaldoBC, 3));       // C40
+    saldoNetoAcum = leerNumero(tablero.getRange(filaSaldoBC, 4));      // D40
   }
 
-  // PRESUPUESTO VS REAL POR CATEGORÍAS
+  // PRESUPUESTO VS REAL POR CATEGORÍAS (desde MOVIMIENTO)
   var presupuestoFamilia = [];
   var presupuestoNT = [];
 
@@ -507,21 +640,21 @@ function obtenerDatosDashboard() {
       if (concepto && concepto.toString().indexOf('►') >= 0) {
         presupuestoFamilia.push({
           categoria: concepto.toString().replace('►', '').trim(),
-          presupuesto: row[3] || 0,
-          real: row[4] || 0
+          presupuesto: Number(row[3]) || 0,
+          real: Number(row[4]) || 0
         });
       }
     }
 
-    var datosNT = movimiento.getRange('A73:E150').getValues();
-    for (var n = 0; n < datosNT.length; n++) {
-      var rowNT = datosNT[n];
-      var conceptoNT = rowNT[0];
+    var datosNTMov = movimiento.getRange('A73:E150').getValues();
+    for (var n = 0; n < datosNTMov.length; n++) {
+      var rowNTMov = datosNTMov[n];
+      var conceptoNT = rowNTMov[0];
       if (conceptoNT && conceptoNT.toString().indexOf('►') >= 0) {
         presupuestoNT.push({
           categoria: conceptoNT.toString().replace('►', '').trim(),
-          presupuesto: rowNT[3] || 0,
-          real: rowNT[4] || 0
+          presupuesto: Number(rowNTMov[3]) || 0,
+          real: Number(rowNTMov[4]) || 0
         });
       }
     }
