@@ -264,4 +264,62 @@ La versión anterior se marca como:
 
 ---
 
-*Última actualización: 2026-01-03 - Agregadas decisiones g, h, i, j (SUMPRODUCT, locale español, WebApp)*
+---
+
+### [2026-01-03k] - EST. PAGO como GATILLO de contabilización
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- EST. PAGO en MOVIMIENTO controla DÓNDE se contabiliza cada gasto
+- **Pendiente**: Monto se muestra pero suma a "EGRESOS PENDIENTES" (no a pagados)
+- **Pagado**: Monto suma a "EGRESOS PAGADOS" (se descuenta de DISPONIBLE)
+- **Cancelado**: Monto no suma a ninguno (anulado)
+- Por defecto: Todos los conceptos inician como "Pendiente"
+- Fórmula TABLERO: `EGRESOS_PAGADOS = SUMIF(MOVIMIENTO!I:I,"Pagado",MOVIMIENTO!E:E)`
+**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs, PLAN_MAESTRO (§8.3)
+**Razón**: El usuario quiere controlar manualmente cuándo un gasto se considera "efectuado", no automáticamente.
+
+---
+
+### [2026-01-03l] - Nueva hoja LIQUIDEZ (8va hoja)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Se crea una 8va hoja llamada "LIQUIDEZ" (antes eran 7 + WEB APP popup)
+- Estructura:
+  - 🔴 ATRASADOS: Gastos donde DÍA < DAY(TODAY()) y EST.PAGO = "Pendiente"
+  - 🟡 ESTA SEMANA: DÍA entre HOY y HOY+7
+  - 🟢 PRÓXIMA SEMANA: DÍA entre HOY+8 y HOY+14
+- Usa fórmulas con TODAY() que se actualizan automáticamente cada día
+- Separado por entidad: FAMILIA y NEUROTEA
+- Incluye resumen con SALDO PROYECTADO
+**Archivos afectados**: gs/Sheets.gs (nueva función crearHojaLIQUIDEZ), gs/Código.gs, PLAN_MAESTRO (§11)
+**Razón**: El usuario quiere ver claramente qué gastos vencieron, cuáles vencen esta semana y cuáles la próxima.
+
+---
+
+### [2026-01-03m] - SALDO_INICIAL manual por mes
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- En TABLERO, sección editable para ingresar SALDO_INICIAL de cada entidad
+- Al cambiar de mes, el usuario carga manualmente el saldo que quedó del mes anterior
+- Fórmula: `DISPONIBLE = SALDO_INICIAL + INGRESOS_MES - EGRESOS_PAGADOS`
+- NO se arrastra automáticamente del mes anterior (simplicidad)
+- Flujo: Cerrar enero → Ver saldo final → Cambiar a febrero → Cargar saldo inicial febrero
+**Archivos afectados**: gs/Tablero.gs, PLAN_MAESTRO (§12.0)
+**Razón**: El usuario prefiere control manual del cierre de mes en lugar de fórmulas complejas de arrastre.
+
+---
+
+### [2026-01-03n] - Corrección de colores en DIFERENCIA
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Colores de la columna DIFERENCIA deben considerar el contexto:
+  - **INGRESOS**: Positivo (+) = VERDE (recibiste más), Negativo (-) = ROJO (recibiste menos)
+  - **EGRESOS**: Negativo (-) = VERDE (gastaste menos), Positivo (+) = ROJO (gastaste más)
+- Antes: Misma regla para todos (invertido para ingresos)
+- Implementación: Formato condicional con fórmula que verifica columna TIPO
+**Archivos afectados**: gs/Sheets.gs (reglas de formato condicional)
+**Razón**: El usuario reportó que los colores estaban invertidos para ingresos.
+
+---
+
+*Última actualización: 2026-01-03 - Agregadas decisiones k, l, m, n (EST.PAGO gatillo, LIQUIDEZ, SALDO_INICIAL, colores)*

@@ -1,6 +1,6 @@
 # PLAN MAESTRO: Sistema de Control Financiero 2026
 ## NeuroTEA & Familia - Google Sheets + Web App
-### Versión 2.3 - Variables Recurrentes, Eventos con Reservas y Aclaraciones
+### Versión 2.4 - EST. PAGO como Gatillo, Hoja LIQUIDEZ, SALDO_INICIAL Manual
 
 ---
 
@@ -14,6 +14,12 @@ Este documento consolida la interpretación completa del proyecto de planilla de
 - PDF del presupuesto anual
 
 **Objetivo del Sistema:** Crear una herramienta robusta, práctica y visualmente elegante para controlar las finanzas de la familia y de la clínica NeuroTEA de forma integrada, con alertas automáticas sobre rentabilidad y flujo de caja.
+
+### Principios Clave (v2.4)
+1. **EST. PAGO es el gatillo**: Un gasto solo se contabiliza como PAGADO cuando el usuario lo marca así
+2. **Separación clara**: EGRESOS PAGADOS vs EGRESOS PENDIENTES
+3. **LIQUIDEZ automática**: Calcula gastos atrasados, esta semana y próxima semana según DÍA
+4. **SALDO_INICIAL manual**: El usuario carga el saldo inicial del mes anterior para cada entidad
 
 ---
 
@@ -48,9 +54,11 @@ Este documento consolida la interpretación completa del proyecto de planilla de
 | 3 | **GASTOS_FIJOS** | Montos base × 12 meses + día de vencimiento | Marco | Sí |
 | 4 | **CARGA_FAMILIA** | Registro cronológico de variables familiares | Clara/Marco | Sí |
 | 5 | **CARGA_NT** | Registro cronológico de variables NeuroTEA | Marco | Sí |
-| 6 | **MOVIMIENTO** | Real vs Presupuesto mes a mes con estados | Marco | Parcial |
-| 7 | **TABLERO** | Indicadores resumidos en hoja (KPIs básicos) | Lectura | No |
-| 8 | **WEB APP** | Dashboard completo visual (igual al JSX) | Ambos | No |
+| 6 | **MOVIMIENTO** | Real vs Presupuesto + EST. PAGO (gatillo de contabilización) | Marco | Parcial |
+| 7 | **TABLERO** | KPIs, SALDO_INICIAL, resumen PAGADOS vs PENDIENTES | Lectura | Parcial (SALDO_INICIAL) |
+| 8 | **LIQUIDEZ** | Gastos atrasados, esta semana, próxima semana (fórmulas TODAY()) | Lectura | No |
+
+> **Nota**: WEB APP no es una hoja, es un popup HTML que se abre desde el menú.
 
 ---
 
@@ -916,10 +924,39 @@ Donde REAL = Suma de:
 | Variable/Anual | SUMA de CARGA_FAMILIA o CARGA_NT filtrado por mes y subcategoría |
 | **EVENTOS (NT)** | SUMA de todos los registros con CATEGORÍA = "EVENTOS" del mes |
 
-### 8.3 Estados y Contabilización
-- **Pendiente:** No suma a "Egresos Pagados", sí suma a "Egresos Pendientes"
-- **Pagado:** Suma a "Egresos Pagados", resta de "Egresos Pendientes"
-- **Cancelado:** No suma a ninguno
+### 8.3 Estados y Contabilización (EST. PAGO como GATILLO)
+
+**Principio fundamental:** El monto REAL siempre se muestra (viene de GASTOS_FIJOS o CARGA), pero el EST. PAGO controla DÓNDE se contabiliza.
+
+| Estado | Comportamiento | En TABLERO |
+|--------|---------------|------------|
+| **Pendiente** | Monto visible pero NO contabilizado como pagado | Suma a "EGRESOS PENDIENTES" |
+| **Pagado** | Monto contabilizado como efectivamente pagado | Suma a "EGRESOS PAGADOS" |
+| **Cancelado** | Monto anulado, no cuenta para nada | No suma a ninguno |
+
+**Por defecto:** Todos los conceptos inician con EST. PAGO = "Pendiente"
+
+**Flujo de trabajo:**
+```
+1. GASTOS_FIJOS tiene: Alquiler = 3.500.000 (BASE)
+                              ↓
+2. MOVIMIENTO trae automáticamente: REAL = 3.500.000, EST. PAGO = [Pendiente ▼]
+                              ↓
+3. Usuario paga el alquiler → cambia dropdown a "Pagado"
+                              ↓
+4. TABLERO recalcula:
+   - EGRESOS PAGADOS += 3.500.000
+   - EGRESOS PENDIENTES -= 3.500.000
+   - DISPONIBLE = SALDO_INICIAL + INGRESOS - EGRESOS PAGADOS
+```
+
+**Fórmulas clave en TABLERO:**
+```
+EGRESOS_PAGADOS = SUMIF(MOVIMIENTO!I:I, "Pagado", MOVIMIENTO!E:E)
+EGRESOS_PENDIENTES = SUMIF(MOVIMIENTO!I:I, "Pendiente", MOVIMIENTO!E:E)
+DISPONIBLE = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS
+PROYECCIÓN = DISPONIBLE - EGRESOS_PENDIENTES
+```
 
 ---
 
@@ -995,84 +1032,198 @@ SI SALDO = 0 → "FINANZAS EQUILIBRADAS" 🟢
 
 ---
 
-## 11. LIQUIDEZ 3 SEMANAS - FLUJO DE CAJA
+## 11. HOJA LIQUIDEZ - CONTROL DE FLUJO DE CAJA (NUEVA)
 
 ### 11.1 Propósito
-Prever si habrá dinero suficiente en las próximas 3 semanas para cubrir los gastos que vencen. Esto permite tomar decisiones anticipadas (postergar un gasto, buscar ingreso extra, etc.).
+Hoja separada (8va hoja) que muestra en tiempo real:
+- **Gastos ATRASADOS**: Vencieron y siguen pendientes
+- **Gastos ESTA SEMANA**: Vencen en los próximos 7 días
+- **Gastos PRÓXIMA SEMANA**: Vencen entre 8 y 14 días
 
-### 11.2 Conceptos Clave
+Usa fórmulas con `TODAY()` que se actualizan automáticamente cada día.
 
-| Concepto | Definición | Fórmula |
-|----------|------------|---------|
-| **CAJA DISPONIBLE** | Dinero "libre" después de pagar | Ingresos del mes - Egresos PAGADOS |
-| **GASTOS POR VENCER** | Compromisos próximos | Suma de gastos con estado "Pendiente" que vencen en las próximas semanas |
-| **LIQUIDEZ SEMANA X** | Proyección de caja | CAJA DISPONIBLE - GASTOS POR VENCER (acumulado hasta esa semana) |
-
-### 11.3 Cálculo Detallado
-
-#### Paso 1: Calcular CAJA DISPONIBLE (hoy)
-```
-INGRESOS_MES = Suma de todos los ingresos del mes actual (de CARGA_FAMILIA o CARGA_NT)
-EGRESOS_PAGADOS = Suma de gastos donde ESTADO = "Pagado" del mes actual
-
-CAJA_DISPONIBLE = INGRESOS_MES - EGRESOS_PAGADOS
-```
-
-#### Paso 2: Identificar GASTOS POR VENCER (según DÍA VENC de GASTOS_FIJOS)
-```
-Para cada gasto fijo en GASTOS_FIJOS:
-  - SI DÍA_VENC está entre HOY y FIN_SEMANA_1 → Sumar a VENCER_SEM1
-  - SI DÍA_VENC está entre FIN_SEMANA_1 y FIN_SEMANA_2 → Sumar a VENCER_SEM2
-  - SI DÍA_VENC está entre FIN_SEMANA_2 y FIN_SEMANA_3 → Sumar a VENCER_SEM3
-```
-
-#### Paso 3: Calcular LIQUIDEZ por Semana
-```
-LIQUIDEZ_SEM1 = CAJA_DISPONIBLE - VENCER_SEM1
-LIQUIDEZ_SEM2 = LIQUIDEZ_SEM1 - VENCER_SEM2
-LIQUIDEZ_SEM3 = LIQUIDEZ_SEM2 - VENCER_SEM3
-```
-
-### 11.4 Semáforo de Liquidez
-
-| Condición | Color | Significado | Acción |
-|-----------|-------|-------------|--------|
-| LIQUIDEZ_SEMX < 0 | 🔴 ROJO | Déficit proyectado | Buscar ingreso o postergar gasto |
-| 0 ≤ LIQUIDEZ_SEMX < 500.000 | 🟡 AMARILLO | Margen ajustado | Monitorear de cerca |
-| LIQUIDEZ_SEMX ≥ 500.000 | 🟢 VERDE | Liquidez saludable | Continuar normalmente |
-
-### 11.5 Visualización en Dashboard
+### 11.2 Estructura de la Hoja LIQUIDEZ
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  LIQUIDEZ 3 SEMANAS - FAMILIA                               │
-├─────────────────────────────────────────────────────────────┤
-│  Caja Disponible Hoy:           Gs. 2.500.000              │
-├───────────────┬───────────────┬───────────────┬────────────┤
-│    SEMANA 1   │    SEMANA 2   │    SEMANA 3   │   ESTADO   │
-│  (5-11 Ene)   │  (12-18 Ene)  │  (19-25 Ene)  │            │
-├───────────────┼───────────────┼───────────────┼────────────┤
-│ Por Vencer:   │ Por Vencer:   │ Por Vencer:   │            │
-│ - Alquiler    │ - Escuela     │ - ANDE        │            │
-│ - Cuota ITAU  │ - Seguro      │ - Tigo        │            │
-│ = 1.200.000   │ = 800.000     │ = 350.000     │            │
-├───────────────┼───────────────┼───────────────┼────────────┤
-│ Liquidez:     │ Liquidez:     │ Liquidez:     │            │
-│ 1.300.000 🟢  │ 500.000 🟡    │ 150.000 🔴    │  ⚠️ ALERTA │
-└───────────────┴───────────────┴───────────────┴────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  📊 LIQUIDEZ - CONTROL DE FLUJO DE CAJA                    [Auto: TODAY()]  │
+│  Sincronizado con: MOVIMIENTO (mes actual)                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ════════════════════════════════════════════════════════════════════════  │
+│  🏠 FAMILIA                                              🏥 NEUROTEA       │
+│  ════════════════════════════════════════════════════════════════════════  │
+│                                                                             │
+│  ┌─────────────────────────────────────┐  ┌─────────────────────────────────┐
+│  │ 🔴 ATRASADOS (vencidos, no pagados) │  │ 🔴 ATRASADOS                    │
+│  ├─────────────────────────────────────┤  ├─────────────────────────────────┤
+│  │ Concepto          │ DÍA │ Monto    │  │ Concepto          │ DÍA │ Monto │
+│  │ Alquiler          │  5  │ 3.500.000│  │ Alquiler 1        │  5  │3.500.000│
+│  │ Salario Lili      │  5  │ 2.500.000│  │ Sueldo Aracely    │  5  │2.800.000│
+│  │ ─────────────────────────────────── │  │ ────────────────────────────────│
+│  │ TOTAL ATRASADO:          6.000.000  │  │ TOTAL ATRASADO:         6.300.000│
+│  │ Días máx. atraso:        5 días     │  │ Días máx. atraso:       5 días   │
+│  └─────────────────────────────────────┘  └─────────────────────────────────┘
+│                                                                             │
+│  ┌─────────────────────────────────────┐  ┌─────────────────────────────────┐
+│  │ 🟡 ESTA SEMANA (próx. 7 días)       │  │ 🟡 ESTA SEMANA                  │
+│  ├─────────────────────────────────────┤  ├─────────────────────────────────┤
+│  │ Concepto          │ DÍA │ Monto    │  │ Concepto          │ DÍA │ Monto │
+│  │ Escuela Fabián    │ 10  │ 1.200.000│  │ Honorario Contador│ 10  │  800.000│
+│  │ Coop. Univ. Clara │ 10  │   500.000│  │                   │     │        │
+│  │ ─────────────────────────────────── │  │ ────────────────────────────────│
+│  │ TOTAL ESTA SEMANA:       1.700.000  │  │ TOTAL ESTA SEMANA:        800.000│
+│  └─────────────────────────────────────┘  └─────────────────────────────────┘
+│                                                                             │
+│  ┌─────────────────────────────────────┐  ┌─────────────────────────────────┐
+│  │ 🟢 PRÓXIMA SEMANA (8-14 días)       │  │ 🟢 PRÓXIMA SEMANA               │
+│  ├─────────────────────────────────────┤  ├─────────────────────────────────┤
+│  │ Concepto          │ DÍA │ Monto    │  │ Concepto          │ DÍA │ Monto │
+│  │ ANDE Casa         │ 15  │   450.000│  │ ANDE Clínica      │ 15  │  350.000│
+│  │ Cuota ITAU        │ 15  │ 1.500.000│  │ IPS               │ 15  │  400.000│
+│  │ ─────────────────────────────────── │  │ ────────────────────────────────│
+│  │ TOTAL PRÓX. SEMANA:      1.950.000  │  │ TOTAL PRÓX. SEMANA:       750.000│
+│  └─────────────────────────────────────┘  └─────────────────────────────────┘
+│                                                                             │
+│  ═══════════════════════════════════════════════════════════════════════   │
+│  📊 RESUMEN DE LIQUIDEZ                                                    │
+│  ═══════════════════════════════════════════════════════════════════════   │
+│                                                                             │
+│  │ Concepto              │ FAMILIA     │ NEUROTEA    │ CONSOLIDADO │       │
+│  │ DISPONIBLE (hoy)      │  8.000.000  │  5.000.000  │  13.000.000 │       │
+│  │ - Atrasados           │ -6.000.000  │ -6.300.000  │ -12.300.000 │       │
+│  │ - Esta semana         │ -1.700.000  │   -800.000  │  -2.500.000 │       │
+│  │ - Próxima semana      │ -1.950.000  │   -750.000  │  -2.700.000 │       │
+│  │ ═══════════════════════════════════════════════════════════════════    │
+│  │ SALDO PROYECTADO      │ -1.650.000🔴│ -2.850.000🔴│  -4.500.000 │       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 11.6 Notas Importantes
-- Este cálculo se realiza para FAMILIA y NEUROTEA por separado
-- Los gastos variables estimados del mes también deben considerarse
-- Si la LIQUIDEZ_SEM3 es negativa, el sistema debe alertar ANTES de que llegue esa semana
-- El usuario puede marcar gastos como "Postergable" para simular escenarios
+### 11.3 Lógica de Clasificación por Fechas
+
+```
+HOY = DAY(TODAY())  // Ej: si hoy es 10 de enero, HOY = 10
+
+Para cada gasto en MOVIMIENTO donde EST.PAGO = "Pendiente":
+  - DÍA viene de GASTOS_FIJOS (columna E)
+
+  SI DÍA < HOY:
+    → ATRASADO (venció y no se pagó)
+    → Días de atraso = HOY - DÍA
+
+  SI DÍA >= HOY Y DÍA <= HOY + 7:
+    → ESTA SEMANA (vence pronto)
+    → Días para vencer = DÍA - HOY
+
+  SI DÍA > HOY + 7 Y DÍA <= HOY + 14:
+    → PRÓXIMA SEMANA
+    → Días para vencer = DÍA - HOY
+
+  SI DÍA > HOY + 14:
+    → MÁS ADELANTE (no se muestra en detalle)
+```
+
+### 11.4 Fórmulas Clave para Google Sheets
+
+```
+// Celda que obtiene el día actual del mes
+HOY = DAY(TODAY())
+
+// ATRASADOS FAMILIA (DÍA < HOY y EST.PAGO = "Pendiente")
+=SUMPRODUCT(
+  (MOVIMIENTO!$I$9:$I$70="Pendiente")*
+  (GASTOS_FIJOS!$E$4:$E$100<DAY(TODAY()))*
+  (MOVIMIENTO!$E$9:$E$70)
+)
+
+// ESTA SEMANA FAMILIA (DÍA entre HOY y HOY+7)
+=SUMPRODUCT(
+  (MOVIMIENTO!$I$9:$I$70="Pendiente")*
+  (GASTOS_FIJOS!$E$4:$E$100>=DAY(TODAY()))*
+  (GASTOS_FIJOS!$E$4:$E$100<=DAY(TODAY())+7)*
+  (MOVIMIENTO!$E$9:$E$70)
+)
+
+// PRÓXIMA SEMANA FAMILIA (DÍA entre HOY+8 y HOY+14)
+=SUMPRODUCT(
+  (MOVIMIENTO!$I$9:$I$70="Pendiente")*
+  (GASTOS_FIJOS!$E$4:$E$100>DAY(TODAY())+7)*
+  (GASTOS_FIJOS!$E$4:$E$100<=DAY(TODAY())+14)*
+  (MOVIMIENTO!$E$9:$E$70)
+)
+```
+
+### 11.5 Semáforo de Alertas
+
+| Sección | Condición | Color | Acción |
+|---------|-----------|-------|--------|
+| **ATRASADOS** | Total > 0 | 🔴 ROJO | ¡Pagar urgente! |
+| **ESTA SEMANA** | Saldo proyectado < 0 | 🟡 AMARILLO | Buscar fondos |
+| **PRÓXIMA SEMANA** | Saldo proyectado < 0 | 🟠 NARANJA | Planificar |
+| **SALDO FINAL** | >= 0 | 🟢 VERDE | OK |
+
+### 11.6 Relación con otras hojas
+
+```
+GASTOS_FIJOS ────► DÍA de vencimiento
+      │
+      ▼
+MOVIMIENTO ──────► EST.PAGO (Pendiente/Pagado) + REAL (monto)
+      │
+      ▼
+LIQUIDEZ ────────► Agrupa por fecha relativa a TODAY()
+      │
+      ▼
+TABLERO ─────────► Resumen: Total Atrasados, Total Esta Semana
+```
+
+### 11.7 Notas Importantes
+
+- **Se actualiza sola**: Las fórmulas con TODAY() recalculan automáticamente cada día
+- **Solo gastos con DÍA**: Los variables puros (Supermercado, Combustible) no tienen DÍA, no aparecen aquí
+- **Fin de mes especial**: Si HOY = 28 y DÍA = 5, técnicamente el día 5 del próximo mes está a 7 días, pero la fórmula simple no lo detecta. Solución: El mes cambia en MOVIMIENTO, reiniciando el ciclo.
+- **Separación FAM/NT**: Cada entidad tiene su propia sección de liquidez
 
 ---
 
-## 12. SALDOS EN CUENTAS - CONCILIACIÓN BANCARIA
+## 12. SALDOS EN CUENTAS Y SALDO INICIAL
 
-### 12.1 Propósito
+### 12.0 SALDO INICIAL DEL MES (Manual)
+
+**Propósito:** Al cambiar de mes, el usuario ingresa manualmente el saldo que quedó del mes anterior. Esto permite:
+- Iniciar cada mes con el contexto correcto
+- Ver histórico de cómo cerró cada mes
+- No depender de fórmulas complejas de arrastre automático
+
+**Ubicación:** Sección editable en TABLERO, arriba del resumen
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  📅 SALDO INICIAL DEL MES (editable)                            │
+├─────────────────────────────────────────────────────────────────┤
+│  🏠 FAMILIA:     [____________] Gs.    ✏️                       │
+│  🏥 NEUROTEA:    [____________] Gs.    ✏️                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Flujo de cierre de mes:**
+```
+1. Estás en ENERO, cerró con saldo FAMILIA = 3.000.000
+2. Cambias el selector de MOVIMIENTO a FEBRERO
+3. En TABLERO, ingresas SALDO INICIAL FAMILIA = 3.000.000
+4. Los cálculos de FEBRERO usan ese saldo como punto de partida
+
+DISPONIBLE = SALDO_INICIAL + INGRESOS_MES - EGRESOS_PAGADOS
+```
+
+**Fórmula en TABLERO:**
+```
+// Celda DISPONIBLE FAMILIA
+=B_SALDO_INICIAL + SUMIF(MOVIMIENTO!B:B,"Ingreso",MOVIMIENTO!E:E) - SUMIF(MOVIMIENTO!I:I,"Pagado",MOVIMIENTO!E:E)
+```
+
+### 12.1 Propósito - Conciliación Bancaria
 Comparar el saldo CALCULADO (según los movimientos cargados) con el saldo REAL (lo que se ve en la app del banco). La diferencia revela gastos no registrados o errores de carga.
 
 ### 12.2 Tipos de Saldo
@@ -1228,6 +1379,17 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 26 | Cada evento tiene presupuesto individual | ✅ |
 | 27 | Clara también carga variables (acceso independiente) | ✅ |
 | 28 | Ejemplos de qué va en CARGA vs GASTOS_FIJOS | ✅ |
+
+### Versión 2.4 (Actual)
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 29 | **EST. PAGO como GATILLO**: El dropdown controla si un gasto se suma a PAGADOS o PENDIENTES | ✅ |
+| 30 | **Separación PAGADOS vs PENDIENTES**: TABLERO muestra ambos por separado | ✅ |
+| 31 | **Nueva hoja LIQUIDEZ (8va hoja)**: Atrasados, Esta Semana, Próxima Semana con TODAY() | ✅ |
+| 32 | **SALDO_INICIAL manual**: Usuario carga saldo del mes anterior al cambiar de mes | ✅ |
+| 33 | **Fórmula DISPONIBLE**: = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS | ✅ |
+| 34 | **Colores corregidos**: Verde/Rojo según contexto (ingreso = + verde, egreso = - verde) | ✅ |
+| 35 | WEB APP ya no es hoja, es popup HTML. LIQUIDEZ es la 8va hoja | ✅ |
 
 ---
 

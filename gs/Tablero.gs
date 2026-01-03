@@ -445,14 +445,17 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SECCIÓN FAMILIA: RESUMEN DEL MES (Filas 20+)
+  // SECCIÓN FAMILIA: FLUJO DE CAJA DEL MES (Filas 20+)
+  // Implementa: SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS = DISPONIBLE
+  // Decisión [2026-01-03k]: EST. PAGO como gatillo de contabilización
+  // Decisión [2026-01-03m]: SALDO_INICIAL manual por mes
   // ═══════════════════════════════════════════════════════════════════════════
 
   rowFam++; // Espaciador
 
   // Título sección
   sheet.getRange(rowFam, 2, 1, 4).merge()
-    .setValue('📋 RESUMEN DEL MES')
+    .setValue('💵 FLUJO DE CAJA DEL MES')
     .setFontSize(12)
     .setFontWeight('bold')
     .setFontColor(UI.FAM_TEXTO)
@@ -474,21 +477,46 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 25);
   rowFam++;
 
+  // SALDO INICIAL (editable - azul) - Manual por mes
+  sheet.getRange(rowFam, 2).setValue('📥 SALDO INICIAL ✏️')
+    .setBackground(UI.GRIS_INFO)
+    .setFontWeight('bold')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 3).setValue('-')
+    .setBackground(UI.GRIS_INFO)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 4).setValue(0)
+    .setNumberFormat('#,##0')
+    .setBackground(UI.GRIS_INFO)
+    .setHorizontalAlignment('right')
+    .setFontColor(UI.NT_EDITABLE)
+    .setFontWeight('bold')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 5).setValue('Manual')
+    .setBackground(UI.GRIS_INFO)
+    .setHorizontalAlignment('center')
+    .setFontStyle('italic')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowFam, 24);
+  const filaSaldoInicialFam = rowFam;
+  rowFam++;
+
   // Total Ingresos FAMILIA (rango específico de FAMILIA: filas 9-70)
-  sheet.getRange(rowFam, 2).setValue('Total Ingresos')
+  sheet.getRange(rowFam, 2).setValue('➕ Total Ingresos')
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70,"Ingreso",MOVIMIENTO!D9:D70),0)')
+  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70;"Ingreso";MOVIMIENTO!D9:D70);0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70,"Ingreso",MOVIMIENTO!E9:E70),0)')
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70;"Ingreso";MOVIMIENTO!E9:E70);0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 5).setFormula(`=IF(D${rowFam}>=C${rowFam},"✓ OK","⚠")`)
+  sheet.getRange(rowFam, 5).setFormula(`=IF(D${rowFam}>=C${rowFam};"✓ OK";"⚠")`)
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('center')
     .setFontWeight('bold')
@@ -497,49 +525,101 @@ function crearHojaTABLERO() {
   const filaIngresosFam = rowFam;
   rowFam++;
 
-  // Total Egresos FAMILIA (rango específico de FAMILIA: filas 9-70)
-  sheet.getRange(rowFam, 2).setValue('Total Egresos')
+  // Egresos PAGADOS FAMILIA (filtrado por EST. PAGO = "Pagado")
+  sheet.getRange(rowFam, 2).setValue('➖ Egresos Pagados')
     .setBackground(UI.ROJO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70,"Egreso",MOVIMIENTO!D9:D70),0)')
+  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70;"Egreso";MOVIMIENTO!D9:D70);0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70,"Egreso",MOVIMIENTO!E9:E70),0)')
+  // REAL = Solo los que tienen EST. PAGO = "Pagado" (columna I)
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!E9:E70;MOVIMIENTO!B9:B70;"Egreso";MOVIMIENTO!I9:I70;"Pagado");0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 5).setFormula(`=IF(D${rowFam}<=C${rowFam},"✓ OK","⚠")`)
+  sheet.getRange(rowFam, 5).setFormula(`=IF(D${rowFam}<=C${rowFam};"✓ OK";"⚠")`)
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('center')
     .setFontWeight('bold')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowFam, 24);
-  const filaEgresosFam = rowFam;
+  const filaEgresosPagadosFam = rowFam;
   rowFam++;
 
-  // BALANCE FAMILIA
-  sheet.getRange(rowFam, 2).setValue('💰 BALANCE FAMILIA')
+  // DISPONIBLE = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS
+  sheet.getRange(rowFam, 2).setValue('💰 DISPONIBLE')
     .setFontWeight('bold')
     .setBackground(UI.FAM_SUBTOTAL)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setFormula(`=IFERROR(C${filaIngresosFam}-C${filaEgresosFam},0)`)
+  sheet.getRange(rowFam, 3).setValue('-')
+    .setBackground(UI.FAM_SUBTOTAL)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 4).setFormula(`=IFERROR(D${filaSaldoInicialFam}+D${filaIngresosFam}-D${filaEgresosPagadosFam};0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
+    .setFontSize(12)
     .setBackground(UI.FAM_SUBTOTAL)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 4).setFormula(`=IFERROR(D${filaIngresosFam}-D${filaEgresosFam},0)`)
-    .setNumberFormat('#,##0')
+  sheet.getRange(rowFam, 5).setFormula(`=IF(D${rowFam}>=0;"✓ OK";"⚠ DÉFICIT")`)
     .setFontWeight('bold')
     .setBackground(UI.FAM_SUBTOTAL)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowFam, 28);
+  const filaDisponibleFam = rowFam;
+  rowFam++;
+
+  // Separador visual
+  sheet.setRowHeight(rowFam, 6);
+  rowFam++;
+
+  // Egresos PENDIENTES FAMILIA (filtrado por EST. PAGO = "Pendiente")
+  sheet.getRange(rowFam, 2).setValue('⏳ Egresos Pendientes')
+    .setBackground(UI.AMARILLO_FONDO)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 3).setValue('-')
+    .setBackground(UI.AMARILLO_FONDO)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  // PENDIENTES = Solo los que tienen EST. PAGO = "Pendiente" (columna I)
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!E9:E70;MOVIMIENTO!B9:B70;"Egreso";MOVIMIENTO!I9:I70;"Pendiente");0)')
+    .setNumberFormat('#,##0')
+    .setFontColor(UI.AMARILLO)
+    .setFontWeight('bold')
+    .setBackground(UI.AMARILLO_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 5).setFormula(`=IF(D${rowFam}>=0,"SUPERÁVIT","DÉFICIT")`)
+  sheet.getRange(rowFam, 5).setFormula(`=IF(D${rowFam}=0;"✓ Todo pagado";"⏳ Pendiente")`)
+    .setBackground(UI.AMARILLO_FONDO)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowFam, 24);
+  const filaEgresosPendientesFam = rowFam;
+  rowFam++;
+
+  // PROYECCIÓN = DISPONIBLE - EGRESOS_PENDIENTES
+  sheet.getRange(rowFam, 2).setValue('📊 PROYECCIÓN FIN DE MES')
     .setFontWeight('bold')
-    .setBackground(UI.FAM_SUBTOTAL)
+    .setBackground('#E0E7FF')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 3).setValue('-')
+    .setBackground('#E0E7FF')
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 4).setFormula(`=IFERROR(D${filaDisponibleFam}-D${filaEgresosPendientesFam};0)`)
+    .setNumberFormat('#,##0')
+    .setFontWeight('bold')
+    .setBackground('#E0E7FF')
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 5).setFormula(`=IF(D${rowFam}>=0;"SUPERÁVIT";"DÉFICIT")`)
+    .setFontWeight('bold')
+    .setBackground('#E0E7FF')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowFam, 28);
@@ -633,6 +713,185 @@ function crearHojaTABLERO() {
     .setBackground(UI.NT_SUBTOTAL)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowNT, 25);
+  rowNT += 2;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SECCIÓN NEUROTEA: FLUJO DE CAJA DEL MES
+  // Implementa: SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS = DISPONIBLE
+  // Decisión [2026-01-03k]: EST. PAGO como gatillo de contabilización
+  // Decisión [2026-01-03m]: SALDO_INICIAL manual por mes
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Título sección
+  sheet.getRange(rowNT, 8, 1, 4).merge()
+    .setValue('💵 FLUJO DE CAJA DEL MES')
+    .setFontSize(12)
+    .setFontWeight('bold')
+    .setFontColor(UI.NT_TEXTO)
+    .setBackground(UI.NT_TITULO)
+    .setVerticalAlignment('middle');
+  sheet.setRowHeight(rowNT, 32);
+  rowNT++;
+
+  // Headers
+  ['Concepto', 'Presupuesto', 'Real', 'Estado'].forEach((h, i) => {
+    sheet.getRange(rowNT, 8 + i)
+      .setValue(h)
+      .setFontSize(10)
+      .setFontWeight('bold')
+      .setBackground(UI.NT_FILA_PAR)
+      .setHorizontalAlignment(i === 0 ? 'left' : (i === 3 ? 'center' : 'right'))
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  });
+  sheet.setRowHeight(rowNT, 25);
+  rowNT++;
+
+  // SALDO INICIAL NT (editable - azul)
+  sheet.getRange(rowNT, 8).setValue('📥 SALDO INICIAL ✏️')
+    .setBackground(UI.GRIS_INFO)
+    .setFontWeight('bold')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 9).setValue('-')
+    .setBackground(UI.GRIS_INFO)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 10).setValue(0)
+    .setNumberFormat('#,##0')
+    .setBackground(UI.GRIS_INFO)
+    .setHorizontalAlignment('right')
+    .setFontColor(UI.NT_EDITABLE)
+    .setFontWeight('bold')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 11).setValue('Manual')
+    .setBackground(UI.GRIS_INFO)
+    .setHorizontalAlignment('center')
+    .setFontStyle('italic')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowNT, 24);
+  const filaSaldoInicialNT = rowNT;
+  rowNT++;
+
+  // Total Ingresos NT (rango específico de NT: filas 73-150)
+  sheet.getRange(rowNT, 8).setValue('➕ Total Ingresos')
+    .setBackground(UI.VERDE_FONDO)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 9).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B73:B150;"Ingreso";MOVIMIENTO!D73:D150);0)')
+    .setNumberFormat('#,##0')
+    .setBackground(UI.VERDE_FONDO)
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B73:B150;"Ingreso";MOVIMIENTO!E73:E150);0)')
+    .setNumberFormat('#,##0')
+    .setBackground(UI.VERDE_FONDO)
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 11).setFormula(`=IF(J${rowNT}>=I${rowNT};"✓ OK";"⚠")`)
+    .setBackground(UI.VERDE_FONDO)
+    .setHorizontalAlignment('center')
+    .setFontWeight('bold')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowNT, 24);
+  const filaIngresosNTFlujo = rowNT;
+  rowNT++;
+
+  // Egresos PAGADOS NT (filtrado por EST. PAGO = "Pagado")
+  sheet.getRange(rowNT, 8).setValue('➖ Egresos Pagados')
+    .setBackground(UI.ROJO_FONDO)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 9).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!D73:D150);0)')
+    .setNumberFormat('#,##0')
+    .setBackground(UI.ROJO_FONDO)
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  // REAL = Solo los que tienen EST. PAGO = "Pagado" (columna I)
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!E73:E150;MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!I73:I150;"Pagado");0)')
+    .setNumberFormat('#,##0')
+    .setBackground(UI.ROJO_FONDO)
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 11).setFormula(`=IF(J${rowNT}<=I${rowNT};"✓ OK";"⚠")`)
+    .setBackground(UI.ROJO_FONDO)
+    .setHorizontalAlignment('center')
+    .setFontWeight('bold')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowNT, 24);
+  const filaEgresosPagadosNT = rowNT;
+  rowNT++;
+
+  // DISPONIBLE NT = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS
+  sheet.getRange(rowNT, 8).setValue('💰 DISPONIBLE')
+    .setFontWeight('bold')
+    .setBackground(UI.NT_SUBTOTAL)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 9).setValue('-')
+    .setBackground(UI.NT_SUBTOTAL)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 10).setFormula(`=IFERROR(J${filaSaldoInicialNT}+J${filaIngresosNTFlujo}-J${filaEgresosPagadosNT};0)`)
+    .setNumberFormat('#,##0')
+    .setFontWeight('bold')
+    .setFontSize(12)
+    .setBackground(UI.NT_SUBTOTAL)
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 11).setFormula(`=IF(J${rowNT}>=0;"✓ OK";"⚠ DÉFICIT")`)
+    .setFontWeight('bold')
+    .setBackground(UI.NT_SUBTOTAL)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowNT, 28);
+  const filaDisponibleNT = rowNT;
+  rowNT++;
+
+  // Separador visual
+  sheet.setRowHeight(rowNT, 6);
+  rowNT++;
+
+  // Egresos PENDIENTES NT (filtrado por EST. PAGO = "Pendiente")
+  sheet.getRange(rowNT, 8).setValue('⏳ Egresos Pendientes')
+    .setBackground(UI.AMARILLO_FONDO)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 9).setValue('-')
+    .setBackground(UI.AMARILLO_FONDO)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  // PENDIENTES = Solo los que tienen EST. PAGO = "Pendiente" (columna I)
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!E73:E150;MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!I73:I150;"Pendiente");0)')
+    .setNumberFormat('#,##0')
+    .setFontColor(UI.AMARILLO)
+    .setFontWeight('bold')
+    .setBackground(UI.AMARILLO_FONDO)
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 11).setFormula(`=IF(J${rowNT}=0;"✓ Todo pagado";"⏳ Pendiente")`)
+    .setBackground(UI.AMARILLO_FONDO)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowNT, 24);
+  const filaEgresosPendientesNT = rowNT;
+  rowNT++;
+
+  // PROYECCIÓN NT = DISPONIBLE - EGRESOS_PENDIENTES
+  sheet.getRange(rowNT, 8).setValue('📊 PROYECCIÓN FIN DE MES')
+    .setFontWeight('bold')
+    .setBackground('#E0E7FF')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 9).setValue('-')
+    .setBackground('#E0E7FF')
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 10).setFormula(`=IFERROR(J${filaDisponibleNT}-J${filaEgresosPendientesNT};0)`)
+    .setNumberFormat('#,##0')
+    .setFontWeight('bold')
+    .setBackground('#E0E7FF')
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 11).setFormula(`=IF(J${rowNT}>=0;"SUPERÁVIT";"DÉFICIT")`)
+    .setFontWeight('bold')
+    .setBackground('#E0E7FF')
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowNT, 28);
   rowNT += 2;
 
   // ═══════════════════════════════════════════════════════════════════════════
