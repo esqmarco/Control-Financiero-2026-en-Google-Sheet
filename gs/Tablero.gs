@@ -94,7 +94,7 @@ function crearHojaTABLERO() {
   // ═══════════════════════════════════════════════════════════════════════════
 
   sheet.getRange('A2:L2').merge()
-    .setFormula('="   📅 Mes: "&MOVIMIENTO!B3&"                                                                        🗓️ Actualizado: "&TEXT(TODAY(),"dd/mm/yyyy")')
+    .setFormula('="   📅 Mes: "&MOVIMIENTO!B3&" (seleccionar en hoja MOVIMIENTO)                                    🗓️ Actualizado: "&TEXT(TODAY();"dd/mm/yyyy")')
     .setFontSize(11)
     .setBackground(UI.GRIS_INFO)
     .setVerticalAlignment('middle');
