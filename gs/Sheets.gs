@@ -852,12 +852,10 @@ function escribirSeccionMovimientoIngresos(sheet, row, titulo, items, entidad, c
     // ESTADO (Ingreso: positivo es bueno)
     sheet.getRange(row, 8).setFormula(`=IF(E${row}>=D${row},"✓","⚠")`);
 
-    // ESTADO PAGO (dropdown) - por defecto "Pendiente"
-    sheet.getRange(row, 9).setValue('Pendiente').setDataValidation(
-      SpreadsheetApp.newDataValidation()
-        .requireValueInList(ESTADOS, true)
-        .build()
-    );
+    // EST. PAGO: Ingresos de CARGA ya están RECIBIDOS (sin dropdown)
+    sheet.getRange(row, 9).setValue('Recibido')
+      .setFontStyle('italic')
+      .setFontColor('#6B7280');
 
     row++;
   });
@@ -964,12 +962,10 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
     // ESTADO (Egreso: gastar menos es bueno)
     sheet.getRange(row, 8).setFormula(`=IF(E${row}<=D${row},"✓","⚠")`);
 
-    // ESTADO PAGO (dropdown) - por defecto "Pendiente"
-    sheet.getRange(row, 9).setValue('Pendiente').setDataValidation(
-      SpreadsheetApp.newDataValidation()
-        .requireValueInList(ESTADOS, true)
-        .build()
-    );
+    // EST. PAGO: Variables de CARGA ya están PAGADOS (sin dropdown)
+    sheet.getRange(row, 9).setValue('Pagado')
+      .setFontStyle('italic')
+      .setFontColor('#6B7280');
 
     row++;
   });
@@ -1014,12 +1010,10 @@ function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal)
       sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,0,E${row}/D${row})`);
       sheet.getRange(row, 8).setFormula(`=IF(E${row}<=D${row},"✓","⚠")`);
 
-      // ESTADO PAGO (dropdown) - por defecto "Pendiente"
-      sheet.getRange(row, 9).setValue('Pendiente').setDataValidation(
-        SpreadsheetApp.newDataValidation()
-          .requireValueInList(ESTADOS, true)
-          .build()
-      );
+      // EST. PAGO: Eventos de CARGA ya están PAGADOS (sin dropdown)
+      sheet.getRange(row, 9).setValue('Pagado')
+        .setFontStyle('italic')
+        .setFontColor('#6B7280');
 
       row++;
     }
