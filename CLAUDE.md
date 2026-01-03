@@ -49,11 +49,13 @@ gs/
 
 | Frecuencia | ¿Dónde se registra? | Origen en MOVIMIENTO |
 |------------|---------------------|----------------------|
-| **Variable** (puro) | CARGA_FAMILIA / CARGA_NT | `SUMIFS()` desde CARGA |
+| **Variable** (puro) | CARGA_FAMILIA / CARGA_NT | `SUMPRODUCT()` desde CARGA |
 | **Fijo/Mensual** | GASTOS_FIJOS | `INDEX/MATCH` desde GASTOS_FIJOS |
 | **Variable/Mensual** | GASTOS_FIJOS | `INDEX/MATCH` desde GASTOS_FIJOS |
 | **Fijo/Anual** | GASTOS_FIJOS | `INDEX/MATCH` (mes específico) |
 | **Variable/Anual** | GASTOS_FIJOS | `INDEX/MATCH` desde GASTOS_FIJOS |
+
+> **NOTA**: Se usa SUMPRODUCT en lugar de SUMIFS porque SUMIFS no funciona correctamente con MONTH()/YEAR() como criterios en locale español.
 
 ### Ejemplos concretos:
 - ✅ **Supermercado** → Variable puro → va a CARGA_FAMILIA
@@ -231,8 +233,9 @@ CONFIG (listas maestras)
 
 ### Columna REAL (para variables puros)
 ```
-=IFERROR(SUMIFS(CARGA_FAMILIA!$F:$F,CARGA_FAMILIA!$D:$D,"concepto",MONTH(CARGA_FAMILIA!$A:$A),$L$3,YEAR(CARGA_FAMILIA!$A:$A),2026),0)
+=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$D$4:$D$500="concepto")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=$L$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500)),0)
 ```
+> **IMPORTANTE**: Se usa SUMPRODUCT en lugar de SUMIFS porque SUMIFS no acepta funciones como MONTH()/YEAR() en criterios.
 
 ### Columna DIFERENCIA
 ```
@@ -249,6 +252,25 @@ CONFIG (listas maestras)
 Dropdown con opciones: **Pendiente**, **Pagado**, **Cancelado**
 
 > **IMPORTANTE**: Todas las fórmulas usan `IFERROR(...,0)` para evitar errores #VALUE! cuando no hay datos.
+
+---
+
+## Locale Español (Paraguay)
+
+El sistema usa formato español/europeo para números:
+
+| Elemento | Formato Correcto | Formato Incorrecto |
+|----------|-----------------|-------------------|
+| Separador decimal | `,` (coma) | `.` (punto) |
+| Separador argumentos | `;` (punto y coma) | `,` (coma) |
+| 7% | `0,07` | `0.07` |
+| 33.33% | `0,3333` | `0.3333` |
+
+### Ejemplo de fórmula en locale español:
+```
+=IF(A1>=0,07;"META CUMPLIDA";"META NO CUMPLIDA")
+=IFERROR(B1*0,3333;0)
+```
 
 ---
 
@@ -344,5 +366,5 @@ Dropdown con opciones: **Pendiente**, **Pagado**, **Cancelado**
 
 ---
 
-*Última actualización: Enero 2026*
-*Versión: 2.1 - Agregada columna EST. PAGO, corregidas fórmulas con IFERROR*
+*Última actualización: 2026-01-03*
+*Versión: 2.2 - SUMPRODUCT para variables, locale español, WebApp dinámico*

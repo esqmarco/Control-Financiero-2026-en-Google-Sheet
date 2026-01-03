@@ -119,6 +119,58 @@
 
 ---
 
+### [2026-01-03g] - SUMPRODUCT en lugar de SUMIFS para filtrar por mes/año
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Usar `SUMPRODUCT` en lugar de `SUMIFS` cuando se filtran fechas con `MONTH()` y `YEAR()`
+- SUMIFS no funciona correctamente con funciones de fecha como criterio en español
+- Sintaxis correcta: `=SUMPRODUCT((CARGA!$B$4:$B$500="Concepto")*(MONTH(CARGA!$A$4:$A$500)=$L$3)*(YEAR(CARGA!$A$4:$A$500)=2026)*(CARGA!$F$4:$F$500))`
+- Siempre envuelto en `IFERROR(...,0)`
+**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs
+**Razón**: SUMIFS fallaba silenciosamente al no reconocer MONTH()/YEAR() como criterios válidos.
+
+---
+
+### [2026-01-03h] - Locale español en fórmulas Google Sheets
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Separador decimal: **coma** (`,`) → `0,07` no `0.07`
+- Separador de argumentos: **punto y coma** (`;`) → `IF(A1>0;B1;C1)` no `IF(A1>0,B1,C1)`
+- Aplica a todas las fórmulas generadas por Apps Script
+- Ejemplo: `=IFERROR(E${row}*0,3333;0)` para 33.33%
+**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs
+**Razón**: El sistema está configurado para Paraguay (es-PY) que usa formato europeo de números.
+
+---
+
+### [2026-01-03i] - WebApp.gs con concatenación de strings
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- El HTML se genera usando **concatenación de strings** (`+`) en lugar de template literals
+- Google Apps Script NO soporta template literals anidados con backticks escapados
+- Se usan funciones auxiliares (`generarFilasCuentasFamilia()`, `generarTortaGastos()`, etc.) para modularizar
+**Archivos afectados**: gs/WebApp.gs
+**Razón**: Error de sintaxis "Invalid or unexpected token" al usar template literals anidados.
+
+---
+
+### [2026-01-03j] - Cálculo dinámico de posiciones en WebApp
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Las posiciones de celdas en `obtenerDatosDashboard()` se calculan dinámicamente
+- Basado en `CUENTAS_FAMILIA.length` (10) y `CUENTAS_NT.length` (3)
+- Posiciones clave calculadas:
+  - FILA_INICIO_CUENTAS_FAM = 8
+  - FILA_TOTAL_CUENTAS_FAM = 8 + 10 = 18
+  - FILA_INGRESOS_FAM = 23, FILA_EGRESOS_FAM = 24, FILA_BALANCE_FAM = 25
+  - FILA_INGRESOS_NT = 9 (H9/J9), FILA_GANANCIA_NT = 13 (H13/J13)
+  - FILA_DISTRIBUCION = 20
+- Función `leerNumero()` para evitar valores NaN
+**Archivos afectados**: gs/WebApp.gs
+**Razón**: Valores hardcodeados causaban que el HTML mostrara datos incorrectos o NaN.
+
+---
+
 ## Cómo Agregar Nuevas Decisiones
 
 Después de aprobar un cambio, el usuario debe decir:
@@ -212,4 +264,4 @@ La versión anterior se marca como:
 
 ---
 
-*Última actualización: 2026-01-02 - Agregadas decisiones c, d, e, f*
+*Última actualización: 2026-01-03 - Agregadas decisiones g, h, i, j (SUMPRODUCT, locale español, WebApp)*
