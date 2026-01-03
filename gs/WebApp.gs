@@ -431,20 +431,29 @@ function generarHTMLDashboard() {
             </tr>
           </thead>
           <tbody>
-            <tr><td class="font-bold">► INGRESOS FAMILIA</td><td class="text-right">15.200.000</td><td class="text-right">14.500.000</td><td class="text-center"><span class="badge badge-yellow">95%</span></td></tr>
-            <tr><td class="font-bold">► GASTOS FIJOS</td><td class="text-right">7.250.000</td><td class="text-right">7.100.000</td><td class="text-center"><span class="badge badge-green">98%</span></td></tr>
-            <tr><td class="font-bold">► CUOTAS Y PRÉSTAMOS</td><td class="text-right">5.541.000</td><td class="text-right">5.541.000</td><td class="text-center"><span class="badge badge-green">100%</span></td></tr>
-            <tr><td class="font-bold">► OBLIGACIONES LEGALES</td><td class="text-right">450.000</td><td class="text-right">380.000</td><td class="text-center"><span class="badge badge-green">84%</span></td></tr>
-            <tr><td class="font-bold">► SUSCRIPCIONES</td><td class="text-right">520.000</td><td class="text-right">520.000</td><td class="text-center"><span class="badge badge-green">100%</span></td></tr>
-            <tr><td class="font-bold">► VARIABLES</td><td class="text-right">900.000</td><td class="text-right">1.250.000</td><td class="text-center"><span class="badge badge-red">139%</span></td></tr>
-            <tr><td class="font-bold">► AHORRO</td><td class="text-right">500.000</td><td class="text-right">0</td><td class="text-center"><span class="badge badge-red">0%</span></td></tr>
+            ${datos.presupuestoFamilia.map(cat => {
+              const pct = cat.presupuesto > 0 ? Math.round(cat.real / cat.presupuesto * 100) : 0;
+              const isIngreso = cat.categoria.toUpperCase().includes('INGRESO');
+              let badgeClass = 'badge-green';
+              if (isIngreso) {
+                badgeClass = pct >= 100 ? 'badge-green' : pct >= 90 ? 'badge-yellow' : 'badge-red';
+              } else {
+                badgeClass = pct <= 100 ? 'badge-green' : pct <= 110 ? 'badge-yellow' : 'badge-red';
+              }
+              return \`<tr>
+                <td class="font-bold">► \${cat.categoria}</td>
+                <td class="text-right">\${formatearGuaranies(cat.presupuesto)}</td>
+                <td class="text-right">\${formatearGuaranies(cat.real)}</td>
+                <td class="text-center"><span class="badge \${badgeClass}">\${pct}%</span></td>
+              </tr>\`;
+            }).join('')}
           </tbody>
           <tfoot>
             <tr style="background: #dcfce7;">
               <td class="font-bold">BALANCE FAMILIA</td>
-              <td class="text-right font-bold">39.000</td>
-              <td class="text-right font-bold text-red">-291.000</td>
-              <td class="text-center"><span class="badge badge-solid-red">DÉFICIT</span></td>
+              <td class="text-right font-bold">${formatearGuaranies(datos.familia.balancePres)}</td>
+              <td class="text-right font-bold ${datos.familia.balanceReal < 0 ? 'text-red' : 'text-green'}">${formatearGuaranies(datos.familia.balanceReal)}</td>
+              <td class="text-center"><span class="badge ${datos.familia.balanceReal >= 0 ? 'badge-solid-green' : 'badge-solid-red'}">${datos.familia.balanceReal >= 0 ? 'SUPERÁVIT' : 'DÉFICIT'}</span></td>
             </tr>
           </tfoot>
         </table>
@@ -456,45 +465,58 @@ function generarHTMLDashboard() {
         <div class="flujo-container">
           <div class="flujo-item flujo-ingresos">
             <span>Ingresos</span>
-            <span class="font-bold text-green">+ 14.500.000</span>
+            <span class="font-bold text-green">+ ${formatearGuaranies(datos.familia.ingresosReal)}</span>
           </div>
           <div class="flujo-item flujo-pagados">
-            <span>Egresos Pagados</span>
-            <span class="font-bold text-red">- 12.450.000</span>
+            <span>Total Egresos</span>
+            <span class="font-bold text-red">- ${formatearGuaranies(datos.familia.egresosReal)}</span>
           </div>
           <div class="flujo-item flujo-pendientes">
-            <span>Egresos Pendientes</span>
-            <span class="font-bold text-yellow">- 2.341.000</span>
+            <span>Gastos Pendientes</span>
+            <span class="font-bold text-yellow">- ${formatearGuaranies(datos.liquidezFamilia.totalGastos)}</span>
           </div>
           <div class="flujo-balance familia">
             <span>BALANCE</span>
-            <span>2.050.000</span>
+            <span>${formatearGuaranies(datos.familia.balanceReal)}</span>
           </div>
         </div>
       </div>
 
       <!-- LIQUIDEZ -->
       <div class="card">
-        <div class="card-title">📅 LIQUIDEZ - PRÓXIMOS PAGOS</div>
+        <div class="card-title">📅 LIQUIDEZ - PRÓXIMAS 3 SEMANAS</div>
         <table>
           <thead>
             <tr>
-              <th>Concepto</th>
-              <th class="text-center">Cuotas</th>
-              <th class="text-right">Monto</th>
+              <th>Semana</th>
+              <th class="text-right">Gastos</th>
               <th class="text-right">Saldo</th>
               <th class="text-center">Estado</th>
             </tr>
           </thead>
           <tbody>
-            <tr style="background: #dcfce7;"><td class="font-bold">Caja disponible</td><td class="text-center">-</td><td class="text-right">-</td><td class="text-right font-bold">2.350.000</td><td class="text-center">-</td></tr>
-            <tr style="background: #fef2f2;"><td class="text-red">⚠️ Atrasados</td><td class="text-center font-bold text-red">2</td><td class="text-right text-red">-850.000</td><td class="text-right font-bold">1.500.000</td><td class="text-center"><span class="badge badge-solid-red">PAGAR</span></td></tr>
-            <tr><td>Esta semana</td><td class="text-center font-bold">4</td><td class="text-right">-2.100.000</td><td class="text-right font-bold text-red">-600.000</td><td class="text-center"><span class="badge badge-solid-red">FALTA</span></td></tr>
-            <tr><td>Próxima semana</td><td class="text-center font-bold">3</td><td class="text-right">-1.800.000</td><td class="text-right font-bold text-red">-2.400.000</td><td class="text-center"><span class="badge badge-solid-red">FALTA</span></td></tr>
-            <tr><td>3ra semana</td><td class="text-center font-bold">2</td><td class="text-right">-1.200.000</td><td class="text-right font-bold text-red">-3.600.000</td><td class="text-center"><span class="badge badge-solid-red">FALTA</span></td></tr>
+            <tr style="background: #dcfce7;">
+              <td class="font-bold">Caja disponible</td>
+              <td class="text-right">-</td>
+              <td class="text-right font-bold">${formatearGuaranies(datos.liquidezFamilia.cajaDisponible)}</td>
+              <td class="text-center">-</td>
+            </tr>
+            ${datos.liquidezFamilia.semanas.map((sem, idx) => \`
+              <tr style="background: \${idx % 2 === 0 ? '#ffffff' : '#ecfdf5'}">
+                <td>\${sem.nombre}</td>
+                <td class="text-right">\${sem.gastos > 0 ? '-' + formatearGuaranies(sem.gastos) : '-'}</td>
+                <td class="text-right font-bold \${sem.saldo < 0 ? 'text-red' : ''}">\${formatearGuaranies(sem.saldo)}</td>
+                <td class="text-center"><span class="badge \${sem.saldo >= 0 ? 'badge-solid-green' : 'badge-solid-red'}">\${sem.saldo >= 0 ? 'OK' : 'FALTA'}</span></td>
+              </tr>
+            \`).join('')}
           </tbody>
           <tfoot>
-            <tr style="background: #f1f5f9;"><td class="font-bold">SALDO FINAL</td><td class="text-center font-bold">11</td><td class="text-right font-bold">-5.950.000</td><td class="text-right font-bold text-red">-3.600.000</td><td class="text-center"><span class="badge badge-solid-red">DÉFICIT</span></td></tr>
+            <tr style="background: #f1f5f9;">
+              <td class="font-bold">SALDO FINAL</td>
+              <td class="text-right font-bold">-${formatearGuaranies(datos.liquidezFamilia.totalGastos)}</td>
+              <td class="text-right font-bold ${datos.liquidezFamilia.saldoFinal < 0 ? 'text-red' : 'text-green'}">${formatearGuaranies(datos.liquidezFamilia.saldoFinal)}</td>
+              <td class="text-center"><span class="badge ${datos.liquidezFamilia.saldoFinal >= 0 ? 'badge-solid-green' : 'badge-solid-red'}">${datos.liquidezFamilia.saldoFinal >= 0 ? 'OK' : 'DÉFICIT'}</span></td>
+            </tr>
           </tfoot>
         </table>
       </div>
@@ -568,22 +590,22 @@ function generarHTMLDashboard() {
         </div>
 
         <div style="border-top:1px solid #e5e7eb;padding-top:15px;margin-top:15px">
-          <div class="font-bold" style="margin-bottom:12px">Distribución de Ganancia (7% = 2.100.000)</div>
+          <div class="font-bold" style="margin-bottom:12px">Distribución de Ganancia (Meta: ${formatearGuaranies(datos.distribucion.metaTotal)})</div>
           <div class="fondos-grid">
             <div class="fondo-box utilidad">
               <div class="fondo-label" style="color:#7c3aed">Utilidad Dueño</div>
-              <div class="fondo-meta">700.000</div>
-              <div class="fondo-real ok">✓ 580.000</div>
+              <div class="fondo-meta">${formatearGuaranies(Math.round(datos.distribucion.metaTotal * 0.3333))}</div>
+              <div class="fondo-real ${datos.distribucion.utilidad >= datos.distribucion.metaTotal * 0.3333 ? 'ok' : 'warning'}">${datos.distribucion.utilidad >= datos.distribucion.metaTotal * 0.3333 ? '✓' : '⚠'} ${formatearGuaranies(datos.distribucion.utilidad)}</div>
             </div>
             <div class="fondo-box emergencia">
               <div class="fondo-label" style="color:#ea580c">Fondo Emerg.</div>
-              <div class="fondo-meta">700.000</div>
-              <div class="fondo-real ok">✓ 700.000</div>
+              <div class="fondo-meta">${formatearGuaranies(Math.round(datos.distribucion.metaTotal * 0.3333))}</div>
+              <div class="fondo-real ${datos.distribucion.emergencia >= datos.distribucion.metaTotal * 0.3333 ? 'ok' : 'warning'}">${datos.distribucion.emergencia >= datos.distribucion.metaTotal * 0.3333 ? '✓' : '⚠'} ${formatearGuaranies(datos.distribucion.emergencia)}</div>
             </div>
             <div class="fondo-box inversion">
               <div class="fondo-label" style="color:#0891b2">Fondo Inversión</div>
-              <div class="fondo-meta">700.000</div>
-              <div class="fondo-real warning">⚠ 420.000</div>
+              <div class="fondo-meta">${formatearGuaranies(Math.round(datos.distribucion.metaTotal * 0.3334))}</div>
+              <div class="fondo-real ${datos.distribucion.inversion >= datos.distribucion.metaTotal * 0.3334 ? 'ok' : 'warning'}">${datos.distribucion.inversion >= datos.distribucion.metaTotal * 0.3334 ? '✓' : '⚠'} ${formatearGuaranies(datos.distribucion.inversion)}</div>
             </div>
           </div>
         </div>
@@ -602,21 +624,30 @@ function generarHTMLDashboard() {
             </tr>
           </thead>
           <tbody>
-            <tr><td class="font-bold">► INGRESOS NT</td><td class="text-right">30.000.000</td><td class="text-right">30.000.000</td><td class="text-center"><span class="badge badge-green">100%</span></td></tr>
-            <tr><td class="font-bold">► CLÍNICA</td><td class="text-right">17.630.000</td><td class="text-right">17.630.000</td><td class="text-center"><span class="badge badge-green">100%</span></td></tr>
-            <tr><td class="font-bold">► SUELDOS Y HONORARIOS</td><td class="text-right">9.600.000</td><td class="text-right">9.300.000</td><td class="text-center"><span class="badge badge-green">97%</span></td></tr>
-            <tr><td class="font-bold">► TELEFONÍA E INTERNET</td><td class="text-right">550.000</td><td class="text-right">550.000</td><td class="text-center"><span class="badge badge-green">100%</span></td></tr>
-            <tr><td class="font-bold">► OBLIGACIONES LEGALES</td><td class="text-right">2.300.000</td><td class="text-right">1.850.000</td><td class="text-center"><span class="badge badge-green">80%</span></td></tr>
-            <tr><td class="font-bold">► EVENTOS</td><td class="text-right">-</td><td class="text-right">-</td><td class="text-center"><span class="badge badge-blue">-%</span></td></tr>
-            <tr><td class="font-bold">► VARIABLES</td><td class="text-right">450.000</td><td class="text-right">670.000</td><td class="text-center"><span class="badge badge-red">149%</span></td></tr>
-            <tr><td class="font-bold">► GANANCIA (7%)</td><td class="text-right">2.100.000</td><td class="text-right">2.700.000</td><td class="text-center"><span class="badge badge-green">129%</span></td></tr>
+            ${datos.presupuestoNT.map(cat => {
+              const pct = cat.presupuesto > 0 ? Math.round(cat.real / cat.presupuesto * 100) : 0;
+              const isIngreso = cat.categoria.toUpperCase().includes('INGRESO');
+              const isGanancia = cat.categoria.toUpperCase().includes('GANANCIA');
+              let badgeClass = 'badge-green';
+              if (isIngreso || isGanancia) {
+                badgeClass = pct >= 100 ? 'badge-green' : pct >= 90 ? 'badge-yellow' : 'badge-red';
+              } else {
+                badgeClass = pct <= 100 ? 'badge-green' : pct <= 110 ? 'badge-yellow' : 'badge-red';
+              }
+              return \`<tr>
+                <td class="font-bold">► \${cat.categoria}</td>
+                <td class="text-right">\${formatearGuaranies(cat.presupuesto)}</td>
+                <td class="text-right">\${formatearGuaranies(cat.real)}</td>
+                <td class="text-center"><span class="badge \${badgeClass}">\${pct}%</span></td>
+              </tr>\`;
+            }).join('')}
           </tbody>
           <tfoot>
             <tr style="background: #dbeafe;">
               <td class="font-bold">BALANCE NEUROTEA</td>
-              <td class="text-right font-bold">-530.000</td>
-              <td class="text-right font-bold text-green">2.700.000</td>
-              <td class="text-center"><span class="badge badge-solid-green">SUPERÁVIT</span></td>
+              <td class="text-right font-bold">${formatearGuaranies(datos.neurotea.meta)}</td>
+              <td class="text-right font-bold ${datos.neurotea.ganancia >= 0 ? 'text-green' : 'text-red'}">${formatearGuaranies(datos.neurotea.ganancia)}</td>
+              <td class="text-center"><span class="badge ${datos.neurotea.ganancia >= datos.neurotea.meta ? 'badge-solid-green' : 'badge-solid-red'}">${datos.neurotea.ganancia >= datos.neurotea.meta ? 'META OK' : 'DÉFICIT'}</span></td>
             </tr>
           </tfoot>
         </table>
@@ -628,47 +659,55 @@ function generarHTMLDashboard() {
         <div class="flujo-container">
           <div class="flujo-item flujo-ingresos">
             <span>Ingresos</span>
-            <span class="font-bold text-green">+ 30.000.000</span>
+            <span class="font-bold text-green">+ ${formatearGuaranies(datos.neurotea.ingresos)}</span>
           </div>
           <div class="flujo-item flujo-pagados">
-            <span>Egresos Pagados</span>
-            <span class="font-bold text-red">- 24.500.000</span>
+            <span>Total Gastos</span>
+            <span class="font-bold text-red">- ${formatearGuaranies(datos.neurotea.gastos)}</span>
           </div>
           <div class="flujo-item flujo-pendientes">
-            <span>Egresos Pendientes</span>
-            <span class="font-bold text-yellow">- 2.800.000</span>
+            <span>Meta 7%</span>
+            <span class="font-bold text-yellow">${formatearGuaranies(datos.neurotea.meta)}</span>
           </div>
           <div class="flujo-balance neurotea">
-            <span>BALANCE</span>
-            <span>5.500.000</span>
+            <span>GANANCIA</span>
+            <span>${formatearGuaranies(datos.neurotea.ganancia)}</span>
           </div>
         </div>
       </div>
 
-      <!-- LIQUIDEZ NT -->
+      <!-- SALDOS EN CUENTAS NT -->
       <div class="card">
-        <div class="card-title">📅 LIQUIDEZ - PRÓXIMOS PAGOS</div>
+        <div class="card-title">💰 SALDOS EN CUENTAS</div>
         <table>
           <thead>
             <tr>
-              <th>Concepto</th>
-              <th class="text-center">Cuotas</th>
-              <th class="text-right">Monto</th>
-              <th class="text-right">Saldo</th>
+              <th>Cuenta</th>
+              <th class="text-right">Saldo ✏️</th>
+              <th class="text-right">Acumulado</th>
               <th class="text-center">Estado</th>
             </tr>
           </thead>
           <tbody>
-            <tr style="background: #dbeafe;"><td class="font-bold">Caja disponible</td><td class="text-center">-</td><td class="text-right">-</td><td class="text-right font-bold">8.500.000</td><td class="text-center">-</td></tr>
-            <tr style="background: #dcfce7;"><td class="text-green">✅ Atrasados</td><td class="text-center font-bold text-green">0</td><td class="text-right">-</td><td class="text-right font-bold">8.500.000</td><td class="text-center"><span class="badge badge-solid-green">OK</span></td></tr>
-            <tr><td>Esta semana</td><td class="text-center font-bold">2</td><td class="text-right">-4.130.000</td><td class="text-right font-bold text-green">4.370.000</td><td class="text-center"><span class="badge badge-solid-green">ALCANZA</span></td></tr>
-            <tr><td>Próxima semana</td><td class="text-center font-bold">3</td><td class="text-right">-2.300.000</td><td class="text-right font-bold text-green">2.070.000</td><td class="text-center"><span class="badge badge-solid-green">ALCANZA</span></td></tr>
-            <tr><td>3ra semana</td><td class="text-center font-bold">1</td><td class="text-right">-500.000</td><td class="text-right font-bold text-green">1.570.000</td><td class="text-center"><span class="badge badge-solid-green">ALCANZA</span></td></tr>
+            ${datos.cuentasNT.map((c, idx) => \`
+              <tr style="background: \${idx % 2 === 0 ? '#eff6ff' : '#ffffff'}">
+                <td>\${c.nombre}</td>
+                <td class="text-right text-blue font-bold">\${formatearGuaranies(c.saldo)}</td>
+                <td class="text-right">\${formatearGuaranies(c.acumulado)}</td>
+                <td class="text-center"><span class="badge \${c.saldo >= c.acumulado ? 'badge-green' : 'badge-yellow'}">\${c.saldo >= c.acumulado ? '✓' : '⚠'}</span></td>
+              </tr>
+            \`).join('')}
           </tbody>
           <tfoot>
-            <tr style="background: #f1f5f9;"><td class="font-bold">SALDO FINAL</td><td class="text-center font-bold">6</td><td class="text-right font-bold">-6.930.000</td><td class="text-right font-bold text-green">1.570.000</td><td class="text-center"><span class="badge badge-solid-green">OK</span></td></tr>
+            <tr style="background: #93c5fd;">
+              <td class="font-bold">💵 TOTAL DISPONIBLE</td>
+              <td class="text-right font-bold">${formatearGuaranies(datos.totalCuentasNT)}</td>
+              <td class="text-right font-bold">${formatearGuaranies(datos.cuentasNT.reduce((sum, c) => sum + c.acumulado, 0))}</td>
+              <td class="text-center">-</td>
+            </tr>
           </tfoot>
         </table>
+        <p style="font-size: 0.8em; color: #6b7280; margin-top: 10px;">✏️ = Ingreso manual</p>
       </div>
 
       <!-- DISTRIBUCIÓN DE GASTOS NT -->
@@ -708,31 +747,38 @@ function generarHTMLDashboard() {
           <tbody>
             <tr>
               <td>Préstamo NT → Familia</td>
-              <td class="text-right" style="color:#fca5a5">3.000.000</td>
-              <td class="text-right font-bold" style="color:#fca5a5">8.500.000</td>
+              <td class="text-right" style="color:#fca5a5">${datos.balanceCruzado.prestamoMes > 0 ? formatearGuaranies(datos.balanceCruzado.prestamoMes) : '-'}</td>
+              <td class="text-right font-bold" style="color:#fca5a5">${formatearGuaranies(datos.balanceCruzado.prestamoAcum)}</td>
             </tr>
             <tr>
               <td>Devolución Familia → NT</td>
-              <td class="text-right" style="color:#86efac">-</td>
-              <td class="text-right font-bold" style="color:#86efac">2.000.000</td>
+              <td class="text-right" style="color:#86efac">${datos.balanceCruzado.devolucionMes > 0 ? formatearGuaranies(datos.balanceCruzado.devolucionMes) : '-'}</td>
+              <td class="text-right font-bold" style="color:#86efac">${formatearGuaranies(datos.balanceCruzado.devolucionAcum)}</td>
             </tr>
           </tbody>
           <tfoot>
             <tr style="background:rgba(0,0,0,0.2)">
               <td class="font-bold">SALDO NETO</td>
-              <td class="text-right font-bold" style="color:#fca5a5">3.000.000</td>
-              <td class="text-right font-bold" style="color:#fca5a5">6.500.000</td>
+              <td class="text-right font-bold" style="color:${datos.balanceCruzado.saldoNetoMes > 0 ? '#fca5a5' : '#86efac'}">${formatearGuaranies(datos.balanceCruzado.saldoNetoMes)}</td>
+              <td class="text-right font-bold" style="color:${datos.balanceCruzado.saldoNetoAcum > 0 ? '#fca5a5' : '#86efac'}">${formatearGuaranies(datos.balanceCruzado.saldoNetoAcum)}</td>
             </tr>
           </tfoot>
         </table>
         <div class="alert-box">
-          <div class="alert-icon">⚠️</div>
-          <div class="alert-title">NT SUBSIDIA A FAMILIA</div>
-          <div class="alert-value">Gs. 6.500.000</div>
-          <div class="alert-desc">
-            El salario de administrador (Gs. 5.000.000) no está cubriendo los gastos familiares.<br>
-            Déficit mensual promedio: Gs. 2.166.667
-          </div>
+          ${datos.balanceCruzado.saldoNetoAcum > 0
+            ? \`<div class="alert-icon">⚠️</div>
+               <div class="alert-title">NT SUBSIDIA A FAMILIA</div>
+               <div class="alert-value">Gs. \${formatearGuaranies(datos.balanceCruzado.saldoNetoAcum)}</div>
+               <div class="alert-desc">
+                 El salario de administrador no está cubriendo los gastos familiares.
+               </div>\`
+            : \`<div class="alert-icon">✅</div>
+               <div class="alert-title">BALANCE EQUILIBRADO</div>
+               <div class="alert-value">Gs. \${formatearGuaranies(Math.abs(datos.balanceCruzado.saldoNetoAcum))}</div>
+               <div class="alert-desc">
+                 Familia no debe a NeuroTEA.
+               </div>\`
+          }
         </div>
       </div>
     </div>
@@ -772,7 +818,9 @@ function obtenerDatosDashboard() {
   // Leer mes seleccionado de MOVIMIENTO
   const mesSeleccionado = movimiento ? movimiento.getRange('B3').getValue() : 'Enero';
 
-  // Leer datos de FAMILIA desde TABLERO (filas 8-17 para cuentas)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SALDOS EN CUENTAS FAMILIA (filas 8-17)
+  // ═══════════════════════════════════════════════════════════════════════════
   const cuentasFamilia = [];
   if (tablero) {
     CUENTAS_FAMILIA.forEach((cuenta, idx) => {
@@ -786,7 +834,9 @@ function obtenerDatosDashboard() {
     });
   }
 
-  // Leer indicadores NT desde TABLERO (aproximadamente fila 9 y 10)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INDICADORES NT (fila 9 = ingresos/gastos, fila 13 = ganancia/meta)
+  // ═══════════════════════════════════════════════════════════════════════════
   let ingresosNT = 0, gastosNT = 0, gananciaNT = 0, metaNT = 0;
   if (tablero) {
     ingresosNT = tablero.getRange('I9').getValue() || 0;
@@ -795,29 +845,219 @@ function obtenerDatosDashboard() {
     metaNT = tablero.getRange('K13').getValue() || 0;
   }
 
-  // Leer resumen FAMILIA desde TABLERO
-  let ingresosFam = 0, egresosFam = 0, balanceFam = 0;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DISTRIBUCIÓN DE GANANCIA NT (fila 20: H=Utilidad, I=Emergencia, J-K=Inversión)
+  // ═══════════════════════════════════════════════════════════════════════════
+  let utilidadDueno = 0, fondoEmergencia = 0, fondoInversion = 0;
   if (tablero) {
-    // Las filas exactas dependen del layout, aproximadamente fila 23-25
-    ingresosFam = tablero.getRange('D23').getValue() || 0;
-    egresosFam = tablero.getRange('D24').getValue() || 0;
-    balanceFam = tablero.getRange('D25').getValue() || 0;
+    utilidadDueno = tablero.getRange('H20').getValue() || 0;
+    fondoEmergencia = tablero.getRange('I20').getValue() || 0;
+    fondoInversion = tablero.getRange('J20').getValue() || 0;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RESUMEN DEL MES FAMILIA (fila 22=ingresos, 23=egresos, 24=balance)
+  // Columna C=Presupuesto, D=Real, E=Estado
+  // ═══════════════════════════════════════════════════════════════════════════
+  let ingresosFamPres = 0, ingresosFamReal = 0;
+  let egresosFamPres = 0, egresosFamReal = 0;
+  let balanceFamPres = 0, balanceFamReal = 0;
+  if (tablero) {
+    ingresosFamPres = tablero.getRange('C22').getValue() || 0;
+    ingresosFamReal = tablero.getRange('D22').getValue() || 0;
+    egresosFamPres = tablero.getRange('C23').getValue() || 0;
+    egresosFamReal = tablero.getRange('D23').getValue() || 0;
+    balanceFamPres = tablero.getRange('C24').getValue() || 0;
+    balanceFamReal = tablero.getRange('D24').getValue() || 0;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SALDOS EN CUENTAS NT (fila 25-27 para 3 cuentas, fila 28=total)
+  // Columna I=Saldo, J=Acumulado, K=Estado
+  // ═══════════════════════════════════════════════════════════════════════════
+  const cuentasNT = [];
+  if (tablero) {
+    CUENTAS_NT.forEach((cuenta, idx) => {
+      const fila = 25 + idx;
+      cuentasNT.push({
+        nombre: cuenta,
+        saldo: tablero.getRange(fila, 9).getValue() || 0,
+        acumulado: tablero.getRange(fila, 10).getValue() || 0
+      });
+    });
+  }
+  const totalCuentasNT = tablero ? tablero.getRange('I28').getValue() || 0 : 0;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LIQUIDEZ FAMILIA (fila 28=caja, 29-31=semanas, 32=saldo final)
+  // Columna C=Gastos, D=Saldo, E=Estado
+  // ═══════════════════════════════════════════════════════════════════════════
+  let cajaDisponibleFam = 0;
+  const semanasFam = [];
+  let saldoFinalFam = 0, totalGastosFam = 0;
+  if (tablero) {
+    cajaDisponibleFam = tablero.getRange('D28').getValue() || 0;
+    for (let i = 0; i < 3; i++) {
+      const fila = 29 + i;
+      semanasFam.push({
+        nombre: ['Esta semana', 'Próxima semana', '3ra semana'][i],
+        gastos: tablero.getRange(fila, 3).getValue() || 0,
+        saldo: tablero.getRange(fila, 4).getValue() || 0,
+        estado: tablero.getRange(fila, 5).getValue() || ''
+      });
+    }
+    totalGastosFam = tablero.getRange('C32').getValue() || 0;
+    saldoFinalFam = tablero.getRange('D32').getValue() || 0;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BALANCE CRUZADO (fila ~36-40)
+  // ═══════════════════════════════════════════════════════════════════════════
+  let prestamoNTMes = 0, prestamoNTAcum = 0;
+  let devolucionFamMes = 0, devolucionFamAcum = 0;
+  let saldoNetoMes = 0, saldoNetoAcum = 0;
+  if (tablero) {
+    // Balance cruzado empieza en fila 36 aprox (rowBalance = max(rowFam, rowNT) + 3)
+    // Fila 37: Headers, Fila 38: Préstamo, Fila 39: Devolución, Fila 40: Saldo
+    prestamoNTMes = tablero.getRange('C38').getValue() || 0;
+    prestamoNTAcum = tablero.getRange('D38').getValue() || 0;
+    devolucionFamMes = tablero.getRange('C39').getValue() || 0;
+    devolucionFamAcum = tablero.getRange('D39').getValue() || 0;
+    saldoNetoMes = tablero.getRange('C40').getValue() || 0;
+    saldoNetoAcum = tablero.getRange('D40').getValue() || 0;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRESUPUESTO VS REAL POR CATEGORÍAS (desde MOVIMIENTO)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const presupuestoFamilia = [];
+  const presupuestoNT = [];
+
+  if (movimiento) {
+    // Leer categorías FAMILIA (filas 9-70 aproximadamente)
+    // Estructura: columna A=Concepto, B=Tipo, D=Presupuesto, E=Real
+    const datosFam = movimiento.getRange('A9:E70').getValues();
+    let currentCategoria = '';
+    let categoriaPres = 0, categoriaReal = 0;
+
+    datosFam.forEach((row, idx) => {
+      const concepto = row[0];
+      const tipo = row[1];
+      const presupuesto = row[3] || 0;
+      const real = row[4] || 0;
+
+      // Detectar si es header de categoría (comienza con ►)
+      if (concepto && concepto.toString().includes('►')) {
+        if (currentCategoria) {
+          presupuestoFamilia.push({
+            categoria: currentCategoria,
+            presupuesto: categoriaPres,
+            real: categoriaReal
+          });
+        }
+        currentCategoria = concepto.toString().replace('►', '').trim();
+        categoriaPres = presupuesto;
+        categoriaReal = real;
+      }
+    });
+    // Agregar última categoría
+    if (currentCategoria) {
+      presupuestoFamilia.push({
+        categoria: currentCategoria,
+        presupuesto: categoriaPres,
+        real: categoriaReal
+      });
+    }
+
+    // Leer categorías NEUROTEA (filas 73-150 aproximadamente)
+    const datosNT = movimiento.getRange('A73:E150').getValues();
+    currentCategoria = '';
+    categoriaPres = 0;
+    categoriaReal = 0;
+
+    datosNT.forEach((row, idx) => {
+      const concepto = row[0];
+      const tipo = row[1];
+      const presupuesto = row[3] || 0;
+      const real = row[4] || 0;
+
+      if (concepto && concepto.toString().includes('►')) {
+        if (currentCategoria) {
+          presupuestoNT.push({
+            categoria: currentCategoria,
+            presupuesto: categoriaPres,
+            real: categoriaReal
+          });
+        }
+        currentCategoria = concepto.toString().replace('►', '').trim();
+        categoriaPres = presupuesto;
+        categoriaReal = real;
+      }
+    });
+    if (currentCategoria) {
+      presupuestoNT.push({
+        categoria: currentCategoria,
+        presupuesto: categoriaPres,
+        real: categoriaReal
+      });
+    }
   }
 
   return {
     mes: mesSeleccionado,
     año: AÑO,
+
+    // Cuentas y saldos
     cuentasFamilia: cuentasFamilia,
+    cuentasNT: cuentasNT,
+    totalCuentasNT: totalCuentasNT,
+
+    // Resumen mensual FAMILIA
     familia: {
-      ingresos: ingresosFam,
-      egresos: egresosFam,
-      balance: balanceFam
+      ingresosPres: ingresosFamPres,
+      ingresosReal: ingresosFamReal,
+      egresosPres: egresosFamPres,
+      egresosReal: egresosFamReal,
+      balancePres: balanceFamPres,
+      balanceReal: balanceFamReal
     },
+
+    // Indicadores NT
     neurotea: {
       ingresos: ingresosNT,
       gastos: gastosNT,
       ganancia: gananciaNT,
       meta: metaNT
+    },
+
+    // Distribución de ganancia NT
+    distribucion: {
+      utilidad: utilidadDueno,
+      emergencia: fondoEmergencia,
+      inversion: fondoInversion,
+      metaTotal: metaNT
+    },
+
+    // Presupuesto vs Real por categorías
+    presupuestoFamilia: presupuestoFamilia,
+    presupuestoNT: presupuestoNT,
+
+    // Liquidez FAMILIA
+    liquidezFamilia: {
+      cajaDisponible: cajaDisponibleFam,
+      semanas: semanasFam,
+      totalGastos: totalGastosFam,
+      saldoFinal: saldoFinalFam
+    },
+
+    // Balance cruzado
+    balanceCruzado: {
+      prestamoMes: prestamoNTMes,
+      prestamoAcum: prestamoNTAcum,
+      devolucionMes: devolucionFamMes,
+      devolucionAcum: devolucionFamAcum,
+      saldoNetoMes: saldoNetoMes,
+      saldoNetoAcum: saldoNetoAcum
     }
   };
 }
