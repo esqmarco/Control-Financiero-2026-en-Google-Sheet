@@ -122,11 +122,12 @@ FAMILIA, NEUROTEA
 | 10 | Efectivo |
 
 ### 3.6 CUENTAS NEUROTEA (para desplegable)
-| # | Cuenta |
-|---|--------|
-| 1 | Atlas NeuroTEA |
-| 2 | Caja Chica NT |
-| 3 | Efectivo NT |
+| # | Cuenta | Descripción |
+|---|--------|-------------|
+| 1 | Atlas NeuroTEA | Cuenta bancaria principal |
+| 2 | Caja Chica NT | Efectivo en caja de la clínica |
+
+> **Nota**: Solo 2 cuentas. "Caja Chica NT" es el efectivo de la clínica.
 
 ### 3.7 CATEGORÍAS EGRESO FAMILIA (Agrupaciones principales)
 | # | Categoría |
@@ -928,15 +929,24 @@ Donde REAL = Suma de:
 
 **Principio fundamental:** El monto REAL siempre se muestra (viene de GASTOS_FIJOS o CARGA), pero el EST. PAGO controla DÓNDE se contabiliza.
 
+#### EST. PAGO según origen del dato
+
+| Origen | EST. PAGO | Editable | Razón |
+|--------|-----------|----------|-------|
+| **INGRESOS** (de CARGA) | "Recibido" | No (fijo) | Ya recibiste el dinero al cargarlo |
+| **VARIABLES puros** (de CARGA) | "Pagado" | No (fijo) | Ya pagaste al cargarlo |
+| **EVENTOS** (de CARGA) | "Pagado" | No (fijo) | Ya pagaste al cargarlo |
+| **GASTOS_FIJOS** | "Pendiente" | Sí (dropdown) | Tú decides cuándo marcarlo como pagado |
+
+#### Estados disponibles (solo para GASTOS_FIJOS)
+
 | Estado | Comportamiento | En TABLERO |
 |--------|---------------|------------|
 | **Pendiente** | Monto visible pero NO contabilizado como pagado | Suma a "EGRESOS PENDIENTES" |
 | **Pagado** | Monto contabilizado como efectivamente pagado | Suma a "EGRESOS PAGADOS" |
 | **Cancelado** | Monto anulado, no cuenta para nada | No suma a ninguno |
 
-**Por defecto:** Todos los conceptos inician con EST. PAGO = "Pendiente"
-
-**Flujo de trabajo:**
+**Flujo de trabajo para GASTOS_FIJOS:**
 ```
 1. GASTOS_FIJOS tiene: Alquiler = 3.500.000 (BASE)
                               ↓
@@ -950,10 +960,19 @@ Donde REAL = Suma de:
    - DISPONIBLE = SALDO_INICIAL + INGRESOS - EGRESOS PAGADOS
 ```
 
+**Flujo de trabajo para items de CARGA:**
+```
+1. Usuario carga "Supermercado 150.000" en CARGA_FAMILIA
+                              ↓
+2. MOVIMIENTO suma automáticamente: REAL = 150.000, EST. PAGO = "Pagado" (fijo)
+                              ↓
+3. TABLERO ya lo cuenta como EGRESOS PAGADOS (no hay acción manual)
+```
+
 **Fórmulas clave en TABLERO:**
 ```
-EGRESOS_PAGADOS = SUMIF(MOVIMIENTO!I:I, "Pagado", MOVIMIENTO!E:E)
-EGRESOS_PENDIENTES = SUMIF(MOVIMIENTO!I:I, "Pendiente", MOVIMIENTO!E:E)
+EGRESOS_PAGADOS = SUMIFS(MOVIMIENTO!E:E, MOVIMIENTO!B:B, "Egreso", MOVIMIENTO!I:I, "Pagado")
+EGRESOS_PENDIENTES = SUMIFS(MOVIMIENTO!E:E, MOVIMIENTO!B:B, "Egreso", MOVIMIENTO!I:I, "Pendiente")
 DISPONIBLE = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS
 PROYECCIÓN = DISPONIBLE - EGRESOS_PENDIENTES
 ```
@@ -1380,7 +1399,7 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 27 | Clara también carga variables (acceso independiente) | ✅ |
 | 28 | Ejemplos de qué va en CARGA vs GASTOS_FIJOS | ✅ |
 
-### Versión 2.4 (Actual)
+### Versión 2.4
 | # | Adición/Aclaración | Estado |
 |---|-------------------|--------|
 | 29 | **EST. PAGO como GATILLO**: El dropdown controla si un gasto se suma a PAGADOS o PENDIENTES | ✅ |
@@ -1390,6 +1409,14 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 33 | **Fórmula DISPONIBLE**: = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS | ✅ |
 | 34 | **Colores corregidos**: Verde/Rojo según contexto (ingreso = + verde, egreso = - verde) | ✅ |
 | 35 | WEB APP ya no es hoja, es popup HTML. LIQUIDEZ es la 8va hoja | ✅ |
+
+### Versión 2.5 (Actual)
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 36 | **EST.PAGO diferenciado**: Items de CARGA = fijo ("Recibido"/"Pagado"), GASTOS_FIJOS = dropdown | ✅ |
+| 37 | **Cuentas NT corregidas**: Solo 2 cuentas (Atlas NeuroTEA, Caja Chica NT) | ✅ |
+| 38 | **SALDOS NT**: Columnas Esperado (automático) y Real ✏️ (manual) | ✅ |
+| 39 | **Selector mes**: Aviso en TABLERO que el mes se selecciona en MOVIMIENTO | ✅ |
 
 ---
 
@@ -1403,5 +1430,5 @@ DIFERENCIA:                Gs. -350.000 🔴
 
 ---
 
-*Documento actualizado el 30 de diciembre de 2025*
-*Versión: 2.3 - Variables Recurrentes, Eventos con Reservas y Aclaraciones*
+*Documento actualizado el 03 de enero de 2026*
+*Versión: 2.5 - EST.PAGO diferenciado, Cuentas NT corregidas*
