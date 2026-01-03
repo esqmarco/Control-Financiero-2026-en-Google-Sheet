@@ -322,4 +322,31 @@ La versión anterior se marca como:
 
 ---
 
-*Última actualización: 2026-01-03 - Agregadas decisiones k, l, m, n (EST.PAGO gatillo, LIQUIDEZ, SALDO_INICIAL, colores)*
+### [2026-01-03o] - EST.PAGO diferenciado según origen del dato
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Los items que vienen de **CARGA** (ya pagados/recibidos) NO tienen dropdown:
+  - **INGRESOS**: EST.PAGO = "Recibido" (fijo, gris, cursiva)
+  - **VARIABLES puros**: EST.PAGO = "Pagado" (fijo, gris, cursiva)
+  - **EVENTOS**: EST.PAGO = "Pagado" (fijo, gris, cursiva)
+- Solo **GASTOS_FIJOS** tienen dropdown (Pendiente/Pagado/Cancelado)
+- Razón: Si ya cargaste un gasto en CARGA, es porque ya lo pagaste. No tiene sentido preguntar si está pendiente.
+**Archivos afectados**: gs/Sheets.gs (funciones escribirSeccionMovimiento*)
+**Razón**: El usuario detectó inconsistencia: items de CARGA aparecían como "Pendiente" pero ya estaban contabilizados como pagados en TABLERO.
+
+---
+
+### [2026-01-03p] - Cuentas NEUROTEA corregidas
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- NEUROTEA tiene solo 2 cuentas:
+  1. Atlas NeuroTEA (cuenta bancaria)
+  2. Caja Chica NT (efectivo)
+- Se eliminó "Efectivo NT" que era redundante con Caja Chica
+- En TABLERO, SALDOS NT muestra: Esperado (automático desde CARGA_NT) y Real ✏️ (manual)
+**Archivos afectados**: gs/Config.gs, gs/Tablero.gs
+**Razón**: El usuario corrigió que no existe cuenta "Efectivo NT" separada de Caja Chica.
+
+---
+
+*Última actualización: 2026-01-03 - Agregadas decisiones o, p (EST.PAGO diferenciado, cuentas NT)*

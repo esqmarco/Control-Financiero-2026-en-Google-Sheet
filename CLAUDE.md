@@ -161,10 +161,9 @@ gs/
 9. Gourmed
 10. Efectivo
 
-### NEUROTEA (3 cuentas)
-1. Atlas NeuroTEA
-2. Caja Chica NT
-3. Efectivo NT
+### NEUROTEA (2 cuentas)
+1. Atlas NeuroTEA (cuenta bancaria)
+2. Caja Chica NT (efectivo en caja)
 
 ---
 
@@ -252,12 +251,22 @@ CONFIG (listas maestras)
 ```
 
 ### Columna EST. PAGO (GATILLO de contabilización)
-Dropdown con opciones: **Pendiente**, **Pagado**, **Cancelado**
 
-> **DECISIÓN [2026-01-03k]**: EST. PAGO controla DÓNDE se contabiliza cada gasto:
-> - **Pendiente**: Monto suma a "EGRESOS PENDIENTES" (no afecta DISPONIBLE)
-> - **Pagado**: Monto suma a "EGRESOS PAGADOS" (se descuenta de DISPONIBLE)
-> - **Cancelado**: Monto no suma a ninguno (anulado)
+> **DECISIÓN [2026-01-03o]**: EST.PAGO varía según el origen del dato:
+
+| Origen | EST. PAGO | Editable | Valor |
+|--------|-----------|----------|-------|
+| **INGRESOS** (de CARGA) | Fijo | No | "Recibido" |
+| **VARIABLES puros** (de CARGA) | Fijo | No | "Pagado" |
+| **EVENTOS** (de CARGA) | Fijo | No | "Pagado" |
+| **GASTOS_FIJOS** | Dropdown | Sí | Pendiente/Pagado/Cancelado |
+
+**Razón**: Si cargas un gasto en CARGA, es porque YA lo pagaste. No tiene sentido preguntar si está pendiente. Solo GASTOS_FIJOS (alquiler, salarios, cuotas) necesitan confirmación manual.
+
+**Estados para GASTOS_FIJOS:**
+- **Pendiente**: Monto suma a "EGRESOS PENDIENTES" (no afecta DISPONIBLE)
+- **Pagado**: Monto suma a "EGRESOS PAGADOS" (se descuenta de DISPONIBLE)
+- **Cancelado**: Monto no suma a ninguno (anulado)
 
 **Fórmulas en TABLERO:**
 ```
@@ -439,4 +448,4 @@ El sistema usa formato español/europeo para números:
 ---
 
 *Última actualización: 2026-01-03*
-*Versión: 3.0 - EST.PAGO gatillo, LIQUIDEZ 8va hoja, SALDO_INICIAL manual, colores contexto*
+*Versión: 3.1 - EST.PAGO diferenciado según origen, Cuentas NT corregidas (2 cuentas)*
