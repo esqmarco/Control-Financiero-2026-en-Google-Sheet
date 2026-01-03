@@ -21,9 +21,9 @@ Sistema de control financiero en Google Sheets con Apps Script para gestionar la
 
 ```
 gs/
-├── Código.gs      → Menú principal, triggers, inicialización
+├── Code.gs        → Menú principal, triggers, inicialización
 ├── Config.gs      → Datos maestros, cuentas, categorías, colores
-├── Sheets.gs      → Creación de las 7 hojas principales
+├── Sheets.gs      → Creación de las 8 hojas principales
 ├── Tablero.gs     → Dashboard en Google Sheets (fórmulas dinámicas)
 ├── WebApp.gs      → Dashboard HTML/CSS (lee datos en tiempo real)
 └── Utils.gs       → Funciones utilitarias
@@ -31,7 +31,7 @@ gs/
 
 ---
 
-## Estructura de las 7 Hojas
+## Estructura de las 8 Hojas
 
 | # | Hoja | Función | Editable |
 |---|------|---------|----------|
@@ -41,7 +41,10 @@ gs/
 | 4 | CARGA_FAMILIA | Transacciones variables puras | Sí |
 | 5 | CARGA_NT | Transacciones variables + eventos | Sí |
 | 6 | MOVIMIENTO | Real vs Presupuesto (automático) | Parcial |
-| 7 | TABLERO | KPIs y dashboard (automático) | No |
+| 7 | TABLERO | KPIs y dashboard (automático) | Parcial* |
+| 8 | LIQUIDEZ | Vencimientos y flujo de caja (automático) | No |
+
+> *TABLERO tiene campos editables: SALDO_INICIAL para FAMILIA y NEUROTEA
 
 ---
 
@@ -248,10 +251,65 @@ CONFIG (listas maestras)
 =IF(E{row}<=D{row},"✓","⚠")  // Para Egresos
 ```
 
-### Columna EST. PAGO (nueva)
+### Columna EST. PAGO (GATILLO de contabilización)
 Dropdown con opciones: **Pendiente**, **Pagado**, **Cancelado**
 
+> **DECISIÓN [2026-01-03k]**: EST. PAGO controla DÓNDE se contabiliza cada gasto:
+> - **Pendiente**: Monto suma a "EGRESOS PENDIENTES" (no afecta DISPONIBLE)
+> - **Pagado**: Monto suma a "EGRESOS PAGADOS" (se descuenta de DISPONIBLE)
+> - **Cancelado**: Monto no suma a ninguno (anulado)
+
+**Fórmulas en TABLERO:**
+```
+EGRESOS_PAGADOS = SUMIFS(MOVIMIENTO!E:E;MOVIMIENTO!B:B;"Egreso";MOVIMIENTO!I:I;"Pagado")
+EGRESOS_PENDIENTES = SUMIFS(MOVIMIENTO!E:E;MOVIMIENTO!B:B;"Egreso";MOVIMIENTO!I:I;"Pendiente")
+DISPONIBLE = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS
+PROYECCIÓN = DISPONIBLE - EGRESOS_PENDIENTES
+```
+
 > **IMPORTANTE**: Todas las fórmulas usan `IFERROR(...,0)` para evitar errores #VALUE! cuando no hay datos.
+
+---
+
+## Hoja LIQUIDEZ (8va hoja)
+
+**Propósito**: Mostrar gastos según vencimiento usando fórmulas con `TODAY()`.
+
+### Estructura:
+| Sección | Descripción | Fórmula clave |
+|---------|-------------|---------------|
+| 🔴 ATRASADOS | DÍA < DAY(TODAY()) y EST.PAGO = "Pendiente" | `=SUMPRODUCT((DAY(TODAY())>DÍA)*(EST.PAGO="Pendiente")*(MONTO))` |
+| 🟡 ESTA SEMANA | DÍA entre HOY y HOY+7 | `=SUMPRODUCT((DÍA>=DAY(TODAY()))*(DÍA<=DAY(TODAY())+7)*(EST.PAGO="Pendiente")*(MONTO))` |
+| 🟢 PRÓXIMA SEMANA | DÍA entre HOY+8 y HOY+14 | Similar con rango +8 a +14 |
+
+### Flujo de datos:
+```
+MOVIMIENTO (columna H=DÍA, I=EST.PAGO, E=REAL)
+    │
+    └──► LIQUIDEZ (fórmulas TODAY() auto-actualizables)
+            │
+            ├── ATRASADOS (urgentes)
+            ├── ESTA SEMANA (próximos)
+            └── PRÓXIMA SEMANA (planificar)
+```
+
+---
+
+## SALDO_INICIAL Manual por Mes
+
+**Decisión [2026-01-03m]**: El saldo inicial de cada mes se ingresa manualmente.
+
+### Flujo de cierre de mes:
+1. Ver saldo final del mes actual en TABLERO
+2. Cambiar selector de mes a siguiente mes
+3. Ingresar saldo final anterior como SALDO_INICIAL del nuevo mes
+
+### Fórmula de DISPONIBLE:
+```
+DISPONIBLE = SALDO_INICIAL + INGRESOS_MES - EGRESOS_PAGADOS
+```
+
+> **NOTA**: NO hay arrastre automático. El usuario controla manualmente el cierre de mes.
 
 ---
 
@@ -319,10 +377,10 @@ El sistema usa formato español/europeo para números:
 
 ## Comandos del Menú
 
-- **Inicializar Sistema COMPLETO**: Crea las 7 hojas
+- **Inicializar Sistema COMPLETO**: Crea las 8 hojas
 - **Reinicializar Sistema**: Borra y recrea todo
 - **Abrir Dashboard Web**: Muestra HTML popup
-- **Crear Hojas**: Submenú para crear hojas individuales
+- **Crear Hojas**: Submenú para crear hojas individuales (incluye LIQUIDEZ)
 - **Utilidades**: Actualizar validaciones, recalcular
 
 ---
@@ -349,9 +407,22 @@ El sistema usa formato español/europeo para números:
 1. **PRESUPUESTO es 100% manual** - Usuario define lo que PLANEA gastar
 2. **GASTOS_FIJOS tiene arrastre** - Si mes vacío, usa último valor o BASE
 3. **MOVIMIENTO es el corazón** - Compara Plan vs Real con fórmulas
-4. **TABLERO solo lee** - Todas son fórmulas que leen de MOVIMIENTO
+4. **TABLERO lee + SALDO_INICIAL editable** - Fórmulas dinámicas + campos manuales
 5. **Variables PUROS van a CARGA** - Solo Supermercado, Combustible, etc.
 6. **Variables con BASE van a GASTOS_FIJOS** - ANDE, Cuotas variables, etc.
+7. **EST. PAGO es el GATILLO** - Controla si un gasto cuenta como PAGADO o PENDIENTE
+8. **LIQUIDEZ es 100% automática** - Usa TODAY() para calcular vencimientos
+
+---
+
+## Colores de DIFERENCIA (contexto-sensitivo)
+
+**Decisión [2026-01-03n]**: Los colores dependen del tipo de concepto:
+
+| Tipo | Diferencia Positiva | Diferencia Negativa |
+|------|---------------------|---------------------|
+| **INGRESO** | 🟢 VERDE (recibiste más) | 🔴 ROJO (recibiste menos) |
+| **EGRESO** | 🔴 ROJO (gastaste más) | 🟢 VERDE (gastaste menos) |
 
 ---
 
@@ -363,8 +434,9 @@ El sistema usa formato español/europeo para números:
 - [ ] ¿Los colores siguen el esquema definido?
 - [ ] ¿Las listas están completas (tipos, categorías, cuentas)?
 - [ ] ¿Ejecuté /verificar después del cambio?
+- [ ] ¿Las decisiones en DECISIONES.md están respetadas?
 
 ---
 
 *Última actualización: 2026-01-03*
-*Versión: 2.2 - SUMPRODUCT para variables, locale español, WebApp dinámico*
+*Versión: 3.0 - EST.PAGO gatillo, LIQUIDEZ 8va hoja, SALDO_INICIAL manual, colores contexto*

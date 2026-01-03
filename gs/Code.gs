@@ -2,13 +2,13 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 4.0 - Arquitectura Modular Profesional
+ * Versión 5.0 - EST.PAGO como Gatillo, LIQUIDEZ automática, SALDO_INICIAL
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
  * ├── Code.gs       → Menú principal e inicialización (este archivo)
  * ├── Config.gs     → Datos maestros y configuraciones
- * ├── Sheets.gs     → Creación de las 7 hojas principales
+ * ├── Sheets.gs     → Creación de las 8 hojas principales (incluye LIQUIDEZ)
  * ├── Styles.gs     → Estilos profesionales y formato condicional
  * ├── Formulas.gs   → Fórmulas complejas y cálculos
  * ├── WebApp.gs     → Dashboard HTML/CSS profesional
@@ -43,7 +43,8 @@ function onOpen() {
       .addItem('👨‍👩‍👧‍👦 CARGA_FAMILIA', 'crearHojaCARGA_FAMILIA')
       .addItem('🏥 CARGA_NT', 'crearHojaCARGA_NT')
       .addItem('📈 MOVIMIENTO', 'crearHojaMOVIMIENTO')
-      .addItem('🎯 TABLERO', 'crearHojaTABLERO'))
+      .addItem('🎯 TABLERO', 'crearHojaTABLERO')
+      .addItem('💰 LIQUIDEZ', 'crearHojaLIQUIDEZ'))
     .addSeparator()
 
     // Utilidades
@@ -69,14 +70,15 @@ function inicializarSistemaCompleto() {
   const resultado = ui.alert(
     '🚀 Inicializar Sistema Completo',
     '¿Crear todas las hojas del sistema?\n\n' +
-    '📋 Se crearán las siguientes hojas:\n' +
+    '📋 Se crearán las siguientes 8 hojas:\n' +
     '  • CONFIG - Configuración y listas maestras\n' +
     '  • PRESUPUESTO - Plan anual ENE-DIC\n' +
     '  • GASTOS_FIJOS - Montos base × 12 meses\n' +
     '  • CARGA_FAMILIA - Variables familiares\n' +
     '  • CARGA_NT - Variables NeuroTEA\n' +
-    '  • MOVIMIENTO - Real vs Presupuesto\n' +
-    '  • TABLERO - Dashboard KPIs\n\n' +
+    '  • MOVIMIENTO - Real vs Presupuesto + EST. PAGO\n' +
+    '  • TABLERO - Dashboard KPIs + SALDO_INICIAL\n' +
+    '  • LIQUIDEZ - Atrasados, Esta Semana, Próx. Semana\n\n' +
     '⚠️ Las hojas existentes serán sobrescritas.',
     ui.ButtonSet.YES_NO
   );
@@ -108,6 +110,9 @@ function inicializarSistemaCompleto() {
 
   ss.toast('Creando TABLERO...', '🚀 Inicializando', 3);
   crearHojaTABLERO();
+
+  ss.toast('Creando LIQUIDEZ...', '🚀 Inicializando', 3);
+  crearHojaLIQUIDEZ();
 
   // Ordenar hojas
   ordenarHojas();
@@ -163,6 +168,7 @@ function ordenarHojas() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const orden = [
     NOMBRES_HOJAS.TABLERO,
+    NOMBRES_HOJAS.LIQUIDEZ,      // Nueva hoja v5.0
     NOMBRES_HOJAS.MOVIMIENTO,
     NOMBRES_HOJAS.CARGA_FAMILIA,
     NOMBRES_HOJAS.CARGA_NT,
