@@ -177,14 +177,17 @@ function crearHojaTABLERO() {
       .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Esperado (manual)
-    sheet.getRange(rowFam, 3).setValue(0)
+    // Esperado (fórmula: Ingresos - Egresos del mes en esa cuenta)
+    // Ingresos: cuando TIPO no es "Egreso Familiar"
+    // Egresos: cuando TIPO = "Egreso Familiar"
+    const formulaEsperado = `=IFERROR(SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500<>"Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500)),0)`;
+    sheet.getRange(rowFam, 3).setFormula(formulaEsperado)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
       .setHorizontalAlignment('right')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Real (editable - azul)
+    // Real (editable - azul) - saldo real en la cuenta
     sheet.getRange(rowFam, 4).setValue(0)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
@@ -274,9 +277,9 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 22);
   rowNT++;
 
-  // Valor Ingresos
+  // Valor Ingresos NEUROTEA (rango específico: filas 73-150)
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!E:E,MOVIMIENTO!B:B,"Ingreso",MOVIMIENTO!A:A,"<>Subtotal*")/2,0)')
+    .setFormula('=IFERROR(SUMIF(MOVIMIENTO!B73:B150,"Ingreso",MOVIMIENTO!E73:E150),0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -286,9 +289,9 @@ function crearHojaTABLERO() {
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-  // Valor Gastos
+  // Valor Gastos NEUROTEA (rango específico: filas 73-150)
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!E:E,MOVIMIENTO!B:B,"Egreso",MOVIMIENTO!A:A,"<>Subtotal*")/2,0)')
+    .setFormula('=IFERROR(SUMIF(MOVIMIENTO!B73:B150,"Egreso",MOVIMIENTO!E73:E150),0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -471,16 +474,16 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 25);
   rowFam++;
 
-  // Total Ingresos FAMILIA
+  // Total Ingresos FAMILIA (rango específico de FAMILIA: filas 9-70)
   sheet.getRange(rowFam, 2).setValue('Total Ingresos')
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B:B,"Ingreso",MOVIMIENTO!D:D)/2,0)')
+  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70,"Ingreso",MOVIMIENTO!D9:D70),0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B:B,"Ingreso",MOVIMIENTO!E:E)/2,0)')
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70,"Ingreso",MOVIMIENTO!E9:E70),0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
@@ -494,16 +497,16 @@ function crearHojaTABLERO() {
   const filaIngresosFam = rowFam;
   rowFam++;
 
-  // Total Egresos FAMILIA
+  // Total Egresos FAMILIA (rango específico de FAMILIA: filas 9-70)
   sheet.getRange(rowFam, 2).setValue('Total Egresos')
     .setBackground(UI.ROJO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMPRODUCT((MOVIMIENTO!B9:B100="Egreso")*(MOVIMIENTO!D9:D100))/2,0)')
+  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70,"Egreso",MOVIMIENTO!D9:D70),0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMPRODUCT((MOVIMIENTO!B9:B100="Egreso")*(MOVIMIENTO!E9:E100))/2,0)')
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70,"Egreso",MOVIMIENTO!E9:E70),0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
@@ -581,6 +584,7 @@ function crearHojaTABLERO() {
       .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
+    // Saldo ✏️ (editable - manual)
     sheet.getRange(rowNT, 9).setValue(0)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
@@ -589,16 +593,18 @@ function crearHojaTABLERO() {
       .setFontWeight('bold')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    sheet.getRange(rowNT, 10).setValue(0)
+    // Acumulado (fórmula: Ingresos - Egresos del mes en esa cuenta)
+    const formulaAcumulado = `=IFERROR(SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500<>"Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500))-SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500="Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500)),0)`;
+    sheet.getRange(rowNT, 10).setFormula(formulaAcumulado)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
       .setHorizontalAlignment('right')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    sheet.getRange(rowNT, 11).setValue('✓')
+    // Estado (fórmula basada en saldo)
+    sheet.getRange(rowNT, 11).setFormula(`=IF(I${rowNT}>=J${rowNT},"✓","⚠")`)
       .setBackground(bgColor)
       .setHorizontalAlignment('center')
-      .setFontColor(UI.VERDE)
       .setFontWeight('bold')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 

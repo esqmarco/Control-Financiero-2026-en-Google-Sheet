@@ -455,18 +455,18 @@ function crearHojaCARGA_FAMILIA() {
   const C = COLORES;
 
   // ─── HEADER PRINCIPAL ───
-  sheet.getRange('A1:J1').merge()
+  sheet.getRange('A1:I1').merge()
     .setValue('👨‍👩‍👧‍👦 CARGA FAMILIA - Variables Puros')
     .setFontSize(16).setFontWeight('bold')
     .setBackground(C.FAM_HEADER).setFontColor(C.BLANCO)
     .setHorizontalAlignment('center');
 
-  sheet.getRange('A2:J2').merge()
+  sheet.getRange('A2:I2').merge()
     .setValue('Solo para gastos VARIABLES puros (Supermercado, Combustible, etc). Los gastos fijos van en GASTOS_FIJOS.')
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
 
   // ─── HEADERS DE COLUMNAS ───
-  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCATEGORÍA', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'ESTADO', 'NOTAS', '#'];
+  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCATEGORÍA', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'NOTAS', '#'];
 
   headers.forEach((h, i) => {
     sheet.getRange(3, i + 1)
@@ -492,9 +492,8 @@ function crearHojaCARGA_FAMILIA() {
   sheet.setColumnWidth(5, 200);  // DESCRIPCIÓN
   sheet.setColumnWidth(6, 110);  // MONTO
   sheet.setColumnWidth(7, 130);  // CUENTA
-  sheet.setColumnWidth(8, 90);   // ESTADO
-  sheet.setColumnWidth(9, 150);  // NOTAS
-  sheet.setColumnWidth(10, 40);  // #
+  sheet.setColumnWidth(8, 150);  // NOTAS
+  sheet.setColumnWidth(9, 40);   // #
 
   sheet.setFrozenRows(3);
 
@@ -538,14 +537,6 @@ function aplicarValidacionesCargaFamilia(sheet) {
       .setAllowInvalid(false)
       .build()
   );
-
-  // ESTADO (columna H)
-  sheet.getRange('H4:H500').setDataValidation(
-    SpreadsheetApp.newDataValidation()
-      .requireValueInList(ESTADOS, true)
-      .setAllowInvalid(false)
-      .build()
-  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -557,18 +548,18 @@ function crearHojaCARGA_NT() {
   const C = COLORES;
 
   // ─── HEADER PRINCIPAL ───
-  sheet.getRange('A1:J1').merge()
+  sheet.getRange('A1:I1').merge()
     .setValue('🏥 CARGA NEUROTEA - Variables + Eventos')
     .setFontSize(16).setFontWeight('bold')
     .setBackground(C.NT_HEADER).setFontColor(C.BLANCO)
     .setHorizontalAlignment('center');
 
-  sheet.getRange('A2:J2').merge()
+  sheet.getRange('A2:I2').merge()
     .setValue('Solo para gastos VARIABLES puros y EVENTOS. Los gastos fijos van en GASTOS_FIJOS.')
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
 
   // ─── HEADERS DE COLUMNAS ───
-  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCAT/EVENTO', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'ESTADO', 'NOTAS', '#'];
+  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCAT/EVENTO', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'NOTAS', '#'];
 
   headers.forEach((h, i) => {
     sheet.getRange(3, i + 1)
@@ -594,9 +585,8 @@ function crearHojaCARGA_NT() {
   sheet.setColumnWidth(5, 200);  // DESCRIPCIÓN
   sheet.setColumnWidth(6, 110);  // MONTO
   sheet.setColumnWidth(7, 130);  // CUENTA
-  sheet.setColumnWidth(8, 90);   // ESTADO
-  sheet.setColumnWidth(9, 150);  // NOTAS
-  sheet.setColumnWidth(10, 40);  // #
+  sheet.setColumnWidth(8, 150);  // NOTAS
+  sheet.setColumnWidth(9, 40);   // #
 
   sheet.setFrozenRows(3);
 
@@ -641,14 +631,6 @@ function aplicarValidacionesCargaNT(sheet) {
       .setAllowInvalid(false)
       .build()
   );
-
-  // ESTADO (columna H)
-  sheet.getRange('H4:H500').setDataValidation(
-    SpreadsheetApp.newDataValidation()
-      .requireValueInList(ESTADOS, true)
-      .setAllowInvalid(false)
-      .build()
-  );
 }
 
 function aplicarFormatoCondicionalCarga(sheet, entidad) {
@@ -659,32 +641,10 @@ function aplicarFormatoCondicionalCarga(sheet, entidad) {
   const reglaAlternada = SpreadsheetApp.newConditionalFormatRule()
     .whenFormulaSatisfied('=ISEVEN(ROW())')
     .setBackground(color)
-    .setRanges([sheet.getRange('A4:J500')])
+    .setRanges([sheet.getRange('A4:I500')])
     .build();
 
-  // Estado Pagado = verde
-  const reglaPagado = SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo('Pagado')
-    .setBackground(C.VERDE_FONDO)
-    .setRanges([sheet.getRange('H4:H500')])
-    .build();
-
-  // Estado Pendiente = amarillo
-  const reglaPendiente = SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo('Pendiente')
-    .setBackground(C.AMARILLO_FONDO)
-    .setRanges([sheet.getRange('H4:H500')])
-    .build();
-
-  // Estado Cancelado = gris
-  const reglaCancelado = SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo('Cancelado')
-    .setBackground(C.GRIS_FONDO)
-    .setFontColor(C.TEXTO_CLARO)
-    .setRanges([sheet.getRange('H4:H500')])
-    .build();
-
-  sheet.setConditionalFormatRules([reglaAlternada, reglaPagado, reglaPendiente, reglaCancelado]);
+  sheet.setConditionalFormatRules([reglaAlternada]);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
