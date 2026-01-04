@@ -331,18 +331,20 @@ function crearHojaGASTOS_FIJOS() {
   const C = COLORES;
 
   // ─── HEADER PRINCIPAL ───
-  sheet.getRange('A1:S1').merge()
+  // Nueva estructura: 19 columnas (A-S) + CUENTA = 20 columnas (A-T)
+  sheet.getRange('A1:T1').merge()
     .setValue('📋 GASTOS FIJOS - LISTA MAESTRA')
     .setFontSize(16).setFontWeight('bold')
     .setBackground(C.HEADER_DARK).setFontColor(C.BLANCO)
     .setHorizontalAlignment('center');
 
-  sheet.getRange('A2:S2').merge()
-    .setValue('DÍA = día del mes que vence | Si un mes está vacío, usa el MONTO BASE | Poner 0 para cancelar un gasto')
+  sheet.getRange('A2:T2').merge()
+    .setValue('DÍA = día del mes que vence | CUENTA = cuenta desde donde se paga | Si un mes está vacío, usa el MONTO BASE | Poner 0 para cancelar un gasto')
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
 
   // ─── HEADERS DE COLUMNAS ───
-  const headers = ['CONCEPTO', 'ENTIDAD', 'CATEGORÍA', 'FRECUENCIA', 'DÍA', 'BASE', ...MESES_CORTOS];
+  // Nueva estructura: CONCEPTO, ENTIDAD, CATEGORÍA, FRECUENCIA, DÍA, CUENTA, BASE, ENE-DIC
+  const headers = ['CONCEPTO', 'ENTIDAD', 'CATEGORÍA', 'FRECUENCIA', 'DÍA', 'CUENTA', 'BASE', ...MESES_CORTOS];
   headers.forEach((h, i) => {
     sheet.getRange(4, i + 1)
       .setValue(h)
@@ -356,7 +358,7 @@ function crearHojaGASTOS_FIJOS() {
   // ═══════════════════════════════════════════════════════════════════
   // GASTOS FIJOS FAMILIA
   // ═══════════════════════════════════════════════════════════════════
-  sheet.getRange(row, 1, 1, 18).merge()
+  sheet.getRange(row, 1, 1, 19).merge()
     .setValue('═══════════════  🏠 GASTOS FIJOS FAMILIA  ═══════════════')
     .setFontSize(12).setFontWeight('bold')
     .setBackground(C.FAM_HEADER).setFontColor(C.BLANCO)
@@ -377,21 +379,21 @@ function crearHojaGASTOS_FIJOS() {
     sheet.getRange(row, 3).setValue(gasto.categoria);
     sheet.getRange(row, 4).setValue(gasto.frecuencia);
     sheet.getRange(row, 5).setValue(gasto.dia).setHorizontalAlignment('center');
-    sheet.getRange(row, 6).setValue(gasto.monto).setNumberFormat('#,##0');
+    sheet.getRange(row, 6).setValue(gasto.cuenta || ''); // CUENTA (nueva columna F)
+    sheet.getRange(row, 7).setValue(gasto.monto).setNumberFormat('#,##0'); // BASE ahora es columna G
 
-    // Fórmulas de arrastre para cada mes
-    for (let m = 7; m <= 18; m++) {
-      // El valor del mes es: si hay valor en este mes usarlo, sino buscar hacia atrás
-      const colActual = String.fromCharCode(64 + m);
-      const colAnterior = String.fromCharCode(64 + m - 1);
-      const formula = m === 7
-        ? `=IF(${colActual}${row}<>"", ${colActual}${row}, F${row})`
-        : `=IF(${colActual}${row}<>"", ${colActual}${row}, ${colAnterior}${row})`;
-      // No ponemos fórmula automática, dejamos celdas editables
+    // Validación para CUENTA (columna F) - dropdown de cuentas FAMILIA
+    if (gasto.cuenta) {
+      sheet.getRange(row, 6).setDataValidation(
+        SpreadsheetApp.newDataValidation()
+          .requireValueInList(CUENTAS_FAMILIA, true)
+          .setAllowInvalid(false)
+          .build()
+      );
     }
 
     if (!gasto.concepto.includes('Reserva')) {
-      sheet.getRange(row, 1, 1, 18).setBackground(C.FAM_FONDO_ALT);
+      sheet.getRange(row, 1, 1, 19).setBackground(C.FAM_FONDO_ALT);
     }
     row++;
   });
@@ -401,7 +403,7 @@ function crearHojaGASTOS_FIJOS() {
   // ═══════════════════════════════════════════════════════════════════
   // GASTOS FIJOS NEUROTEA
   // ═══════════════════════════════════════════════════════════════════
-  sheet.getRange(row, 1, 1, 18).merge()
+  sheet.getRange(row, 1, 1, 19).merge()
     .setValue('═══════════════  🏥 GASTOS FIJOS NEUROTEA  ═══════════════')
     .setFontSize(12).setFontWeight('bold')
     .setBackground(C.NT_HEADER).setFontColor(C.BLANCO)
@@ -421,25 +423,37 @@ function crearHojaGASTOS_FIJOS() {
     sheet.getRange(row, 3).setValue(gasto.categoria);
     sheet.getRange(row, 4).setValue(gasto.frecuencia);
     sheet.getRange(row, 5).setValue(gasto.dia).setHorizontalAlignment('center');
-    sheet.getRange(row, 6).setValue(gasto.monto).setNumberFormat('#,##0');
+    sheet.getRange(row, 6).setValue(gasto.cuenta || ''); // CUENTA (nueva columna F)
+    sheet.getRange(row, 7).setValue(gasto.monto).setNumberFormat('#,##0'); // BASE ahora es columna G
+
+    // Validación para CUENTA (columna F) - dropdown de cuentas NT
+    if (gasto.cuenta) {
+      sheet.getRange(row, 6).setDataValidation(
+        SpreadsheetApp.newDataValidation()
+          .requireValueInList(CUENTAS_NT, true)
+          .setAllowInvalid(false)
+          .build()
+      );
+    }
 
     if (!gasto.concepto.includes('Reserva')) {
-      sheet.getRange(row, 1, 1, 18).setBackground(C.NT_FONDO_ALT);
+      sheet.getRange(row, 1, 1, 19).setBackground(C.NT_FONDO_ALT);
     }
     row++;
   });
 
-  // Formato de números
-  sheet.getRange('F:R').setNumberFormat('#,##0');
+  // Formato de números (BASE es columna G, meses son H-S)
+  sheet.getRange('G:S').setNumberFormat('#,##0');
 
   // Anchos de columna
-  sheet.setColumnWidth(1, 250);
-  sheet.setColumnWidth(2, 90);
-  sheet.setColumnWidth(3, 150);
-  sheet.setColumnWidth(4, 110);
-  sheet.setColumnWidth(5, 50);
-  sheet.setColumnWidth(6, 100);
-  for (let i = 7; i <= 18; i++) sheet.setColumnWidth(i, 80);
+  sheet.setColumnWidth(1, 250);  // CONCEPTO
+  sheet.setColumnWidth(2, 90);   // ENTIDAD
+  sheet.setColumnWidth(3, 150);  // CATEGORÍA
+  sheet.setColumnWidth(4, 110);  // FRECUENCIA
+  sheet.setColumnWidth(5, 50);   // DÍA
+  sheet.setColumnWidth(6, 130);  // CUENTA (nueva)
+  sheet.setColumnWidth(7, 100);  // BASE
+  for (let i = 8; i <= 19; i++) sheet.setColumnWidth(i, 80); // ENE-DIC
 
   sheet.setFrozenRows(4);
 
@@ -892,9 +906,10 @@ function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, co
     const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("${item.concepto}",PRESUPUESTO!$A:$A,0),$L$3),0)`;
     sheet.getRange(row, 4).setFormula(formulaPresup);
 
-    // REAL: Busca en GASTOS_FIJOS (columnas G a R son ENE a DIC)
-    // Si no hay valor en el mes, usa BASE (columna F)
-    const formulaReal = `=IFERROR(IF(INDEX(GASTOS_FIJOS!$G:$R,MATCH("${item.concepto}",GASTOS_FIJOS!$A:$A,0),$L$3)<>"",INDEX(GASTOS_FIJOS!$G:$R,MATCH("${item.concepto}",GASTOS_FIJOS!$A:$A,0),$L$3),INDEX(GASTOS_FIJOS!$F:$F,MATCH("${item.concepto}",GASTOS_FIJOS!$A:$A,0))),0)`;
+    // REAL: Busca en GASTOS_FIJOS (columnas H a S son ENE a DIC)
+    // Si no hay valor en el mes, usa BASE (columna G)
+    // NOTA: Estructura GASTOS_FIJOS v2: A=Concepto, B=Entidad, C=Categoría, D=Frecuencia, E=Día, F=Cuenta, G=Base, H-S=Meses
+    const formulaReal = `=IFERROR(IF(INDEX(GASTOS_FIJOS!$H:$S,MATCH("${item.concepto}",GASTOS_FIJOS!$A:$A,0),$L$3)<>"",INDEX(GASTOS_FIJOS!$H:$S,MATCH("${item.concepto}",GASTOS_FIJOS!$A:$A,0),$L$3),INDEX(GASTOS_FIJOS!$G:$G,MATCH("${item.concepto}",GASTOS_FIJOS!$A:$A,0))),0)`;
     sheet.getRange(row, 5).setFormula(formulaReal);
 
     // DIFERENCIA
