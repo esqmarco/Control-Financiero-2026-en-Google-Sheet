@@ -154,7 +154,7 @@ function crearHojaTABLERO() {
   rowFam++;
 
   // Headers tabla
-  const headersCuentasFam = ['Cuenta', 'Esperado', 'Real ✏️', 'Diferencia'];
+  const headersCuentasFam = ['Cuenta', 'Esperado', 'Saldo Banco ✏️', 'Diferencia'];
   headersCuentasFam.forEach((h, i) => {
     sheet.getRange(rowFam, 2 + i)
       .setValue(h)
@@ -178,16 +178,19 @@ function crearHojaTABLERO() {
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
     // Esperado (fórmula: Ingresos - Egresos del mes en esa cuenta)
-    // Ingresos: cuando TIPO no es "Egreso Familiar"
-    // Egresos: cuando TIPO = "Egreso Familiar"
-    const formulaEsperado = `=IFERROR(SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500<>"Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500)),0)`;
+    // = Ingresos de CARGA_FAMILIA (TIPO != "Egreso Familiar")
+    //   - Egresos de CARGA_FAMILIA (TIPO = "Egreso Familiar")
+    //   - Gastos Fijos PAGADOS de esta cuenta (desde GASTOS_FIJOS donde CUENTA = esta cuenta AND MOVIMIENTO.EST.PAGO = "Pagado")
+    // NOTA: Para gastos fijos, usamos SUMPRODUCT buscando en GASTOS_FIJOS por cuenta (col F) y verificando en MOVIMIENTO si está pagado
+    // ESTRUCTURA GASTOS_FIJOS v2: A=Concepto, B=Entidad, C=Categoría, D=Frecuencia, E=Día, F=Cuenta, G=Base, H-S=Meses
+    const formulaEsperado = `=IFERROR(SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500<>"Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$L$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((GASTOS_FIJOS!$F$6:$F$100="${cuenta}")*(IFERROR(INDEX(MOVIMIENTO!$I:$I;MATCH(GASTOS_FIJOS!$A$6:$A$100;MOVIMIENTO!$A:$A;0))="Pagado";0))*(IFERROR(INDEX(MOVIMIENTO!$E:$E;MATCH(GASTOS_FIJOS!$A$6:$A$100;MOVIMIENTO!$A:$A;0));0)));0)`;
     sheet.getRange(rowFam, 3).setFormula(formulaEsperado)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
       .setHorizontalAlignment('right')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Real (editable - azul) - saldo real en la cuenta
+    // Saldo Banco (editable - azul) - lo que verificás en tu cuenta bancaria
     sheet.getRange(rowFam, 4).setValue(0)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
@@ -358,8 +361,12 @@ function crearHojaTABLERO() {
   rowFam++;
 
   // ROW 5: Balance de distribución
+  // NOTA: La fórmula compara Ingresos de CARGA vs distribución
+  // EGRESOS_PAGADOS incluye gastos fijos + variables de MOVIMIENTO
+  // AHORRO y FONDO solo vienen de CARGA_FAMILIA
+  // La diferencia muestra dinero sin asignar o faltante
   sheet.getRange(rowFam, 2, 1, 4).merge()
-    .setFormula(`=IFERROR(IF(B${filaValorIngresosFamInd}=(D${filaValorEgresosFamInd}+B${filaValorAhorroFam}+D${filaValorFondoEmFam});"✅ EQUILIBRADO: Ingresos = Egresos + Ahorro + F.Emergencia";"⚠️ DIFERENCIA: Gs. "&TEXT(B${filaValorIngresosFamInd}-(D${filaValorEgresosFamInd}+B${filaValorAhorroFam}+D${filaValorFondoEmFam});"#,##0")&" sin asignar");"")`)
+    .setFormula(`=IFERROR(LET(diff;B${filaValorIngresosFamInd}-(D${filaValorEgresosFamInd}+B${filaValorAhorroFam}+D${filaValorFondoEmFam});IF(ABS(diff)<1000;"✅ EQUILIBRADO: Ingresos distribuidos correctamente";IF(diff>0;"💰 DISPONIBLE: Gs. "&TEXT(diff;"#,##0")&" sin asignar";"⚠️ DÉFICIT: Gs. "&TEXT(ABS(diff);"#,##0")&" de más pagado")));"")`)
     .setFontSize(10)
     .setFontWeight('bold')
     .setHorizontalAlignment('center')
@@ -778,7 +785,7 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Headers
-  ['Cuenta', 'Esperado', 'Real ✏️', 'Estado'].forEach((h, i) => {
+  ['Cuenta', 'Esperado', 'Saldo Banco ✏️', 'Estado'].forEach((h, i) => {
     sheet.getRange(rowNT, 8 + i)
       .setValue(h)
       .setFontSize(10)
@@ -807,7 +814,7 @@ function crearHojaTABLERO() {
       .setHorizontalAlignment('right')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Real ✏️ (editable - manual: lo que confirmas que hay)
+    // Saldo Banco ✏️ (editable - manual: lo que verificás en tu cuenta bancaria)
     sheet.getRange(rowNT, 10).setValue(0)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)

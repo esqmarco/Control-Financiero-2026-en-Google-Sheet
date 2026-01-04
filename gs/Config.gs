@@ -219,75 +219,75 @@ const INGRESOS_FAMILIA = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const GASTOS_FIJOS_FAM = [
-  { concepto: 'Salario Lili Doméstico', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'Salario Laura Doméstico', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'Escuela Fabián y Brenda', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 10, monto: 0 },
-  { concepto: 'Robótica Niños', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 10, monto: 0 },
-  { concepto: 'ANDE Casa', categoria: 'GASTOS FIJOS', frecuencia: 'Variable/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Expensa Casa', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 1, monto: 0 },
-  { concepto: 'Ña Luisa', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'Remedio Lochi', categoria: 'GASTOS FIJOS', frecuencia: 'Variable/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Seguro Médico Papá y Mamá', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 10, monto: 0 },
-  { concepto: 'Contadora Marco', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Reserva GF 1', categoria: 'GASTOS FIJOS', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva GF 2', categoria: 'GASTOS FIJOS', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva GF 3', categoria: 'GASTOS FIJOS', frecuencia: '-', dia: '', monto: 0 }
+  { concepto: 'Salario Lili Doméstico', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'Efectivo', monto: 0 },
+  { concepto: 'Salario Laura Doméstico', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'Efectivo', monto: 0 },
+  { concepto: 'Escuela Fabián y Brenda', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Robótica Niños', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'ANDE Casa', categoria: 'GASTOS FIJOS', frecuencia: 'Variable/Mensual', dia: 15, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Expensa Casa', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 1, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Ña Luisa', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'Efectivo', monto: 0 },
+  { concepto: 'Remedio Lochi', categoria: 'GASTOS FIJOS', frecuencia: 'Variable/Mensual', dia: 15, cuenta: 'Efectivo', monto: 0 },
+  { concepto: 'Seguro Médico Papá y Mamá', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Contadora Marco', categoria: 'GASTOS FIJOS', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Reserva GF 1', categoria: 'GASTOS FIJOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva GF 2', categoria: 'GASTOS FIJOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva GF 3', categoria: 'GASTOS FIJOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
 ];
 
 const CUOTAS_FAM = [
-  { concepto: 'Préstamo Lizzi', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 20, monto: 0 },
-  { concepto: 'Cajubi Marco', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'Mutual Marco', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'Seguro Auto Laura ITAU', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Cuota ITAU', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Variable/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Auto Laura Cuota', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Coop. Universitaria Clara', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 10, monto: 0 },
-  { concepto: 'Coomecipar Clara', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 10, monto: 0 },
-  { concepto: 'Solar Préstamo 1', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 20, monto: 0 },
-  { concepto: 'Solar Préstamo 2', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 20, monto: 0 },
-  { concepto: 'Show Congelador', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 25, monto: 0 },
-  { concepto: 'Pago Mínimo Tarj ITAU Clara', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Variable/Mensual', dia: 10, monto: 0 },
-  { concepto: 'Pago Mínimo Tarj ITAU Marco', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Variable/Mensual', dia: 10, monto: 0 },
-  { concepto: 'Pago Mínimo Tarj Solar Clara', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Variable/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Pago Mínimo Tarj Comecipar', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Variable/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Reserva Cuota 1', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Cuota 2', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: '-', dia: '', monto: 0 }
+  { concepto: 'Préstamo Lizzi', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 20, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Cajubi Marco', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'Coop. Univ. Marco', monto: 0 },
+  { concepto: 'Mutual Marco', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'Coop. Univ. Marco', monto: 0 },
+  { concepto: 'Seguro Auto Laura ITAU', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'ITAU Clara', monto: 0 },
+  { concepto: 'Cuota ITAU', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Variable/Mensual', dia: 15, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Auto Laura Cuota', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'ITAU Clara', monto: 0 },
+  { concepto: 'Coop. Universitaria Clara', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'ITAU Clara', monto: 0 },
+  { concepto: 'Coomecipar Clara', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'Tarjeta Comecipar Clara', monto: 0 },
+  { concepto: 'Solar Préstamo 1', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 20, cuenta: 'Tarjeta Solar Clara', monto: 0 },
+  { concepto: 'Solar Préstamo 2', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 20, cuenta: 'Tarjeta Solar Clara', monto: 0 },
+  { concepto: 'Show Congelador', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Fijo/Mensual', dia: 25, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Pago Mínimo Tarj ITAU Clara', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Variable/Mensual', dia: 10, cuenta: 'Tarjeta ITAU Clara', monto: 0 },
+  { concepto: 'Pago Mínimo Tarj ITAU Marco', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Variable/Mensual', dia: 10, cuenta: 'Tarjeta ITAU Marco', monto: 0 },
+  { concepto: 'Pago Mínimo Tarj Solar Clara', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Variable/Mensual', dia: 15, cuenta: 'Tarjeta Solar Clara', monto: 0 },
+  { concepto: 'Pago Mínimo Tarj Comecipar', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: 'Variable/Mensual', dia: 15, cuenta: 'Tarjeta Comecipar Clara', monto: 0 },
+  { concepto: 'Reserva Cuota 1', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Cuota 2', categoria: 'CUOTAS Y PRÉSTAMOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
 ];
 
 const OBLIGACIONES_FAM = [
-  { concepto: 'Aporte IPS', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'Aporte Cajubi', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'Aporte STEIBI', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'Aporte SICHAP', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'Impuesto compra digital', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Variable/Mensual', dia: 20, monto: 0 },
-  { concepto: 'Aporte Coop. Univer. Clara', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 10, monto: 0 },
-  { concepto: 'Aporte Coop. Univer. Marco', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 10, monto: 0 },
-  { concepto: 'Impuesto Renta personal', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Anual', dia: 31, monto: 0 },
-  { concepto: 'Impuesto terreno casa', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Anual', dia: 31, monto: 0 },
-  { concepto: 'Reserva Oblig. 1', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Oblig. 2', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Oblig. 3', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', monto: 0 }
+  { concepto: 'Aporte IPS', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Aporte Cajubi', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'Coop. Univ. Marco', monto: 0 },
+  { concepto: 'Aporte STEIBI', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Aporte SICHAP', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Impuesto compra digital', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Variable/Mensual', dia: 20, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Aporte Coop. Univer. Clara', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'ITAU Clara', monto: 0 },
+  { concepto: 'Aporte Coop. Univer. Marco', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'Coop. Univ. Marco', monto: 0 },
+  { concepto: 'Impuesto Renta personal', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Anual', dia: 31, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Impuesto terreno casa', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Anual', dia: 31, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Reserva Oblig. 1', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Oblig. 2', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Oblig. 3', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
 ];
 
 const SUSCRIPCIONES_FAM = [
-  { concepto: 'Giganet', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 1, monto: 0 },
-  { concepto: 'Tigo Clara', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 28, monto: 0 },
-  { concepto: 'Tigo Familiar', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 28, monto: 0 },
-  { concepto: 'Google One', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'ChatGPT', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Claude Marco', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Claude Clara', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Antivirus Clara (Anual)', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Anual', dia: 15, monto: 0 },
-  { concepto: 'Antivirus Marco (Anual)', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Anual', dia: 15, monto: 0 },
-  { concepto: 'MS Office Clara (Anual)', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Anual', dia: 15, monto: 0 },
-  { concepto: 'MS Office Marco (Anual)', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Anual', dia: 15, monto: 0 },
-  { concepto: 'PosterWall', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Canva (Anual)', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Anual', dia: 15, monto: 0 },
-  { concepto: 'Scribd', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'iLovePDF', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Reserva Suscr. 1', categoria: 'SUSCRIPCIONES', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Suscr. 2', categoria: 'SUSCRIPCIONES', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Suscr. 3', categoria: 'SUSCRIPCIONES', frecuencia: '-', dia: '', monto: 0 }
+  { concepto: 'Giganet', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 1, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Tigo Clara', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 28, cuenta: 'ITAU Clara', monto: 0 },
+  { concepto: 'Tigo Familiar', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 28, cuenta: 'ITAU Marco', monto: 0 },
+  { concepto: 'Google One', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Tarjeta ITAU Marco', monto: 0 },
+  { concepto: 'ChatGPT', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Tarjeta ITAU Marco', monto: 0 },
+  { concepto: 'Claude Marco', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Tarjeta ITAU Marco', monto: 0 },
+  { concepto: 'Claude Clara', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Tarjeta ITAU Clara', monto: 0 },
+  { concepto: 'Antivirus Clara (Anual)', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Anual', dia: 15, cuenta: 'Tarjeta ITAU Clara', monto: 0 },
+  { concepto: 'Antivirus Marco (Anual)', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Anual', dia: 15, cuenta: 'Tarjeta ITAU Marco', monto: 0 },
+  { concepto: 'MS Office Clara (Anual)', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Anual', dia: 15, cuenta: 'Tarjeta ITAU Clara', monto: 0 },
+  { concepto: 'MS Office Marco (Anual)', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Anual', dia: 15, cuenta: 'Tarjeta ITAU Marco', monto: 0 },
+  { concepto: 'PosterWall', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Tarjeta ITAU Marco', monto: 0 },
+  { concepto: 'Canva (Anual)', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Anual', dia: 15, cuenta: 'Tarjeta ITAU Marco', monto: 0 },
+  { concepto: 'Scribd', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Tarjeta ITAU Marco', monto: 0 },
+  { concepto: 'iLovePDF', categoria: 'SUSCRIPCIONES', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Tarjeta ITAU Marco', monto: 0 },
+  { concepto: 'Reserva Suscr. 1', categoria: 'SUSCRIPCIONES', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Suscr. 2', categoria: 'SUSCRIPCIONES', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Suscr. 3', categoria: 'SUSCRIPCIONES', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
 ];
 
 const VARIABLES_PRESUP_FAM = [
@@ -326,44 +326,44 @@ const INGRESOS_NT = [
 ];
 
 const CLINICA_NT = [
-  { concepto: 'Alquiler 1 (Principal)', categoria: 'CLÍNICA', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'Alquiler 2 (Secundario)', categoria: 'CLÍNICA', frecuencia: 'Fijo/Mensual', dia: 5, monto: 0 },
-  { concepto: 'ANDE clínica', categoria: 'CLÍNICA', frecuencia: 'Variable/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Reserva Clín. 1', categoria: 'CLÍNICA', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Clín. 2', categoria: 'CLÍNICA', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Clín. 3', categoria: 'CLÍNICA', frecuencia: '-', dia: '', monto: 0 }
+  { concepto: 'Alquiler 1 (Principal)', categoria: 'CLÍNICA', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Alquiler 2 (Secundario)', categoria: 'CLÍNICA', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'ANDE clínica', categoria: 'CLÍNICA', frecuencia: 'Variable/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Clín. 1', categoria: 'CLÍNICA', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Clín. 2', categoria: 'CLÍNICA', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Clín. 3', categoria: 'CLÍNICA', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
 ];
 
 const SUELDOS_NT = [
-  { concepto: 'Sueldo Aracely', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, monto: 0 },
-  { concepto: 'Sueldo Fátima', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, monto: 0 },
-  { concepto: 'Limpieza NeuroTEA', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Variable/Mensual', dia: 30, monto: 0 },
-  { concepto: 'Honorario Contador', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 10, monto: 0 },
-  { concepto: 'Salario Administrador (Marco)', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, monto: 0 },
-  { concepto: 'Honorario Mant. Sistema', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Reserva Sueldo 1', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Sueldo 2', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Sueldo 3', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', monto: 0 }
+  { concepto: 'Sueldo Aracely', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Sueldo Fátima', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Limpieza NeuroTEA', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Variable/Mensual', dia: 30, cuenta: 'Caja Chica NT', monto: 0 },
+  { concepto: 'Honorario Contador', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Salario Administrador (Marco)', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Honorario Mant. Sistema', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Sueldo 1', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Sueldo 2', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Sueldo 3', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
 ];
 
 const TELEFONIA_NT = [
-  { concepto: 'Celular Tigo NeuroTEA', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 28, monto: 0 },
-  { concepto: 'Celular Tigo Sistema', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 28, monto: 0 },
-  { concepto: 'WhatsFlow', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Internet NeuroTEA', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Reserva Tel. 1', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Tel. 2', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Tel. 3', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', monto: 0 }
+  { concepto: 'Celular Tigo NeuroTEA', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 28, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Celular Tigo Sistema', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 28, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'WhatsFlow', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Internet NeuroTEA', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Tel. 1', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Tel. 2', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Tel. 3', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
 ];
 
 const OBLIGACIONES_NT = [
-  { concepto: 'IVA', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Variable/Mensual', dia: 20, monto: 0 },
-  { concepto: 'IPS', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 15, monto: 0 },
-  { concepto: 'Ministerio de Salud', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Variable/Anual', dia: 31, monto: 0 },
-  { concepto: 'Mora de Alquiler', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Variable/Mensual', dia: 10, monto: 0 },
-  { concepto: 'Reserva Oblig. 1', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Oblig. 2', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', monto: 0 },
-  { concepto: 'Reserva Oblig. 3', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', monto: 0 }
+  { concepto: 'IVA', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Variable/Mensual', dia: 20, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'IPS', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Ministerio de Salud', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Variable/Anual', dia: 31, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Mora de Alquiler', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Variable/Mensual', dia: 10, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Oblig. 1', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Oblig. 2', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Oblig. 3', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
 ];
 
 const VARIABLES_PRESUP_NT = [

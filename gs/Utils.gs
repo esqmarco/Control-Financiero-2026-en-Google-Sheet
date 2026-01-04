@@ -66,10 +66,12 @@ function calcularLiquidez(entidad, mesIndex) {
   datos.forEach((fila, i) => {
     if (i < 6) return; // Saltar headers
 
-    const entidadFila = fila[1]; // Columna ENTIDAD
-    const dia = fila[4]; // Columna DÍA
-    const montoBase = fila[5]; // Columna BASE
-    const montoMes = fila[6 + mesIndex]; // Columna del mes
+    // ESTRUCTURA GASTOS_FIJOS v2:
+    // A(0)=Concepto, B(1)=Entidad, C(2)=Categoría, D(3)=Frecuencia, E(4)=Día, F(5)=Cuenta, G(6)=Base, H-S(7-18)=Meses
+    const entidadFila = fila[1]; // Columna B = ENTIDAD
+    const dia = fila[4]; // Columna E = DÍA
+    const montoBase = fila[6]; // Columna G = BASE (v2: era F=5, ahora G=6)
+    const montoMes = fila[7 + mesIndex]; // Columnas H-S = Meses (v2: era G-R=6+mes, ahora H-S=7+mes)
 
     if (entidadFila !== entidad) return;
     if (!dia || dia === '') return;
@@ -292,16 +294,17 @@ function calcularBalanceCruzado(mesIndex) {
 /**
  * Obtiene el monto efectivo para un gasto fijo en un mes específico
  * Implementa la lógica de arrastre: usa el último valor hacia atrás o BASE
+ * ESTRUCTURA GASTOS_FIJOS v2: A(0)=Concepto, B(1)=Entidad, C(2)=Categoría, D(3)=Frecuencia, E(4)=Día, F(5)=Cuenta, G(6)=Base, H-S(7-18)=Meses
  */
 function obtenerMontoEfectivo(fila, mesIndex, base) {
   // Buscar hacia atrás desde el mes actual
   for (let m = mesIndex; m >= 0; m--) {
-    const valor = fila[6 + m]; // Columnas de meses empiezan en 7 (índice 6)
+    const valor = fila[7 + m]; // Columnas de meses empiezan en H (índice 7) - v2 con CUENTA
     if (valor !== '' && valor !== null && valor !== undefined) {
       return valor;
     }
   }
-  // Si no hay valor, usar BASE
+  // Si no hay valor, usar BASE (columna G, índice 6)
   return base || 0;
 }
 
