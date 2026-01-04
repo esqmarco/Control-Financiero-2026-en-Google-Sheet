@@ -80,6 +80,10 @@ function crearHojaCONFIG() {
   escribirListaConfig(sheet, fila2, col, 'VARIABLES FAMILIA', VARIABLES_FAMILIA, C.FAM_HEADER);
   col += 2;
 
+  // ─── AHORRO FAMILIA ───
+  escribirListaConfig(sheet, fila2, col, 'AHORRO FAMILIA', AHORRO_FAMILIA, C.FAM_HEADER);
+  col += 2;
+
   // ─── VARIABLES NT ───
   escribirListaConfig(sheet, fila2, col, 'VARIABLES NT', VARIABLES_NT, C.NT_HEADER);
   col += 2;
@@ -536,10 +540,10 @@ function aplicarValidacionesCargaFamilia(sheet) {
       .build()
   );
 
-  // SUBCATEGORÍA (columna D)
+  // SUBCATEGORÍA (columna D) - incluye VARIABLES y AHORRO
   sheet.getRange('D4:D500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['-', ...VARIABLES_FAMILIA], true)
+      .requireValueInList(['-', ...VARIABLES_FAMILIA, ...AHORRO_FAMILIA], true)
       .setAllowInvalid(false)
       .build()
   );
@@ -723,7 +727,7 @@ function crearHojaMOVIMIENTO() {
   row = escribirSeccionMovimientoEgresos(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
   row = escribirSeccionMovimientoEgresos(sheet, row, '▶ SUSCRIPCIONES', SUSCRIPCIONES_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
   row = escribirSeccionMovimientoVariables(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ AHORRO', AHORRO_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = escribirSeccionMovimientoAhorro(sheet, row, '▶ AHORRO', AHORRO_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
 
   // Balance Familia
   const filaBalanceFam = row;
@@ -981,6 +985,60 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
     sheet.getRange(row, 9).setValue('Pagado')
       .setFontStyle('italic')
       .setFontColor('#6B7280');
+
+    row++;
+  });
+
+  // Subtotal
+  const filaFin = row - 1;
+  sheet.getRange(row, 1).setValue('Subtotal').setFontWeight('bold').setFontStyle('italic');
+  sheet.getRange(row, 4).setFormula(`=IFERROR(SUM(D${filaInicio}:D${filaFin}),0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(SUM(E${filaInicio}:E${filaFin}),0)`);
+  sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+  sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,0,E${row}/D${row})`);
+  sheet.getRange(row, 1, 1, 10).setBackground(colorSubtotal);
+  row++;
+
+  return row;
+}
+
+// ─── SECCIÓN AHORRO (viene de CARGA, EST.PAGO = "Ahorrado") ───
+function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
+  sheet.getRange(row, 1, 1, 10).merge()
+    .setValue(titulo)
+    .setFontWeight('bold')
+    .setBackground(colorFondo);
+  row++;
+
+  const filaInicio = row;
+  const hojaCarga = entidad === 'FAMILIA' ? 'CARGA_FAMILIA' : 'CARGA_NT';
+
+  items.forEach(item => {
+    sheet.getRange(row, 1).setValue(item.concepto);
+    sheet.getRange(row, 2).setValue('Egreso');
+    sheet.getRange(row, 3).setValue(item.frecuencia || 'Variable/Mensual');
+
+    // PRESUPUESTO: Busca en hoja PRESUPUESTO según mes seleccionado
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("${item.concepto}",PRESUPUESTO!$A:$A,0),$L$3),0)`;
+    sheet.getRange(row, 4).setFormula(formulaPresup);
+
+    // REAL: SUMPRODUCT desde CARGA según subcategoría y mes
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$D$4:$D$500="${item.concepto}")*(MONTH(${hojaCarga}!$A$4:$A$500)=$L$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500)),0)`;
+    sheet.getRange(row, 5).setFormula(formulaReal);
+
+    // DIFERENCIA
+    sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+
+    // %
+    sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,0,E${row}/D${row})`);
+
+    // ESTADO (Ahorro: ahorrar MÁS es bueno, verde si real >= presupuesto)
+    sheet.getRange(row, 8).setFormula(`=IF(E${row}>=D${row},"✓","⚠")`);
+
+    // EST. PAGO: Ahorro viene de CARGA = ya está "Ahorrado" (sin dropdown)
+    sheet.getRange(row, 9).setValue('Ahorrado')
+      .setFontStyle('italic')
+      .setFontColor('#059669'); // Verde para ahorro
 
     row++;
   });

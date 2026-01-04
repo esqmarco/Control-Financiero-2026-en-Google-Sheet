@@ -349,8 +349,8 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
 
   // Columna C = CATEGORÍA (columna 3)
   if (col === 3) {
-    if (valor === 'VARIABLES') {
-      // Habilitar subcategoría
+    if (valor === 'VARIABLES' || valor === 'AHORRO') {
+      // Habilitar subcategoría para VARIABLES y AHORRO
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
     } else {
       // Deshabilitar subcategoría
