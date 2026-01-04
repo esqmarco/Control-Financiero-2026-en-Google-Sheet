@@ -154,7 +154,7 @@ function crearHojaTABLERO() {
   rowFam++;
 
   // Headers tabla
-  const headersCuentasFam = ['Cuenta', 'Esperado', 'Real ✏️', 'Diferencia'];
+  const headersCuentasFam = ['Cuenta', 'Esperado', 'Saldo Banco ✏️', 'Diferencia'];
   headersCuentasFam.forEach((h, i) => {
     sheet.getRange(rowFam, 2 + i)
       .setValue(h)
@@ -190,7 +190,7 @@ function crearHojaTABLERO() {
       .setHorizontalAlignment('right')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Real (editable - azul) - saldo real en la cuenta
+    // Saldo Banco (editable - azul) - lo que verificás en tu cuenta bancaria
     sheet.getRange(rowFam, 4).setValue(0)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
@@ -785,7 +785,7 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Headers
-  ['Cuenta', 'Esperado', 'Real ✏️', 'Estado'].forEach((h, i) => {
+  ['Cuenta', 'Esperado', 'Saldo Banco ✏️', 'Estado'].forEach((h, i) => {
     sheet.getRange(rowNT, 8 + i)
       .setValue(h)
       .setFontSize(10)
@@ -814,7 +814,7 @@ function crearHojaTABLERO() {
       .setHorizontalAlignment('right')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Real ✏️ (editable - manual: lo que confirmas que hay)
+    // Saldo Banco ✏️ (editable - manual: lo que verificás en tu cuenta bancaria)
     sheet.getRange(rowNT, 10).setValue(0)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
