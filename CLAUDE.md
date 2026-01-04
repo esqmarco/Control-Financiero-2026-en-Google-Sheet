@@ -36,15 +36,15 @@ gs/
 | # | Hoja | Función | Editable |
 |---|------|---------|----------|
 | 1 | CONFIG | Listas maestras para desplegables | Sí |
-| 2 | PRESUPUESTO | Plan anual (manual) | Sí |
-| 3 | GASTOS_FIJOS | Montos recurrentes con BASE y meses | Sí |
-| 4 | CARGA_FAMILIA | Transacciones variables puras | Sí |
+| 2 | PRESUPUESTO | Plan anual con cálculos automáticos (subtotales, totales, ganancia NT) | Sí (montos) |
+| 3 | GASTOS_FIJOS | Montos recurrentes con CUENTA, BASE y meses | Sí |
+| 4 | CARGA_FAMILIA | Transacciones variables puras + AHORRO | Sí |
 | 5 | CARGA_NT | Transacciones variables + eventos | Sí |
 | 6 | MOVIMIENTO | Real vs Presupuesto (automático) | Parcial |
 | 7 | TABLERO | KPIs y dashboard (automático) | Parcial* |
 | 8 | LIQUIDEZ | Vencimientos y flujo de caja (automático) | No |
 
-> *TABLERO tiene campos editables: SALDO_INICIAL para FAMILIA y NEUROTEA
+> *TABLERO tiene campos editables: SALDO_INICIAL y "Saldo Banco" para cada cuenta
 
 ---
 
@@ -66,6 +66,24 @@ gs/
 - ✅ **ANDE Casa** → Variable/Mensual → va a GASTOS_FIJOS (tiene BASE)
 - ✅ **Alquiler NT** → Fijo/Mensual → va a GASTOS_FIJOS
 - ✅ **Antivirus** → Fijo/Anual → va a GASTOS_FIJOS (solo 1 mes)
+- ✅ **Ahorro Clara** → AHORRO → va a CARGA_FAMILIA (transferencia a cuenta ahorro)
+
+---
+
+## Estructura de Columnas en GASTOS_FIJOS
+
+| # | Columna | Descripción |
+|---|---------|-------------|
+| A | CONCEPTO | Nombre del gasto fijo |
+| B | ENTIDAD | FAMILIA o NEUROTEA |
+| C | CATEGORÍA | Categoría del gasto |
+| D | FRECUENCIA | Fijo/Mensual, Variable/Mensual, etc. |
+| E | DÍA | Día del mes que vence |
+| F | **CUENTA** | Cuenta desde donde se paga |
+| G | BASE | Monto base (si mes vacío, usa este) |
+| H-S | ENE-DIC | Montos por mes (12 columnas) |
+
+> **DECISIÓN [2026-01-04]**: Se agregó columna CUENTA para saber de qué cuenta se debita cada gasto fijo.
 
 ---
 
@@ -144,6 +162,13 @@ gs/
 5. Navidad Papá Noel (Diciembre)
 6. Cena Fin de Año (Diciembre)
 7-16. Reserva 1 a Reserva 10 (renombrables)
+
+### FAMILIA - AHORRO (3 items)
+1. Ahorro Clara
+2. Ahorro Marco
+3. Fondo de Emergencia
+
+> **DECISIÓN [2026-01-04]**: AHORRO se carga desde CARGA_FAMILIA (no GASTOS_FIJOS) porque es una transferencia que se hace cuando realmente se ahorra.
 
 ---
 
@@ -228,10 +253,11 @@ CONFIG (listas maestras)
 
 ### Columna REAL (para gastos fijos)
 ```
-=IFERROR(IF(INDEX(GASTOS_FIJOS!$G:$R,MATCH("concepto",GASTOS_FIJOS!$A:$A,0),$L$3)<>"",
-  INDEX(GASTOS_FIJOS!$G:$R,MATCH("concepto",GASTOS_FIJOS!$A:$A,0),$L$3),
-  INDEX(GASTOS_FIJOS!$F:$F,MATCH("concepto",GASTOS_FIJOS!$A:$A,0))),0)
+=IFERROR(IF(INDEX(GASTOS_FIJOS!$H:$S,MATCH("concepto",GASTOS_FIJOS!$A:$A,0),$L$3)<>"",
+  INDEX(GASTOS_FIJOS!$H:$S,MATCH("concepto",GASTOS_FIJOS!$A:$A,0),$L$3),
+  INDEX(GASTOS_FIJOS!$G:$G,MATCH("concepto",GASTOS_FIJOS!$A:$A,0))),0)
 ```
+> **NOTA**: Columnas actualizadas por nueva estructura: H-S = meses, G = BASE (antes era G-R y F)
 
 ### Columna REAL (para variables puros)
 ```
@@ -259,9 +285,12 @@ CONFIG (listas maestras)
 | **INGRESOS** (de CARGA) | Fijo | No | "Recibido" |
 | **VARIABLES puros** (de CARGA) | Fijo | No | "Pagado" |
 | **EVENTOS** (de CARGA) | Fijo | No | "Pagado" |
+| **AHORRO** (de CARGA) | Fijo | No | "Ahorrado" |
 | **GASTOS_FIJOS** | Dropdown | Sí | Pendiente/Pagado/Cancelado |
 
 **Razón**: Si cargas un gasto en CARGA, es porque YA lo pagaste. No tiene sentido preguntar si está pendiente. Solo GASTOS_FIJOS (alquiler, salarios, cuotas) necesitan confirmación manual.
+
+> **DECISIÓN [2026-01-04]**: AHORRO tiene estado "Ahorrado" (color verde) porque es una transferencia positiva a cuenta de ahorro.
 
 **Estados para GASTOS_FIJOS:**
 - **Pendiente**: Monto suma a "EGRESOS PENDIENTES" (no afecta DISPONIBLE)
@@ -344,9 +373,10 @@ El sistema usa formato español/europeo para números:
 ## Sistema Anti-Burro (Validaciones en Cascada)
 
 1. **Si TIPO es Ingreso** → CATEGORÍA y SUBCATEGORÍA deshabilitadas
-2. **Si CATEGORÍA ≠ VARIABLES ni EVENTOS** → SUBCATEGORÍA deshabilitada
+2. **Si CATEGORÍA ≠ VARIABLES ni EVENTOS ni AHORRO** → SUBCATEGORÍA deshabilitada
 3. **Si CATEGORÍA = EVENTOS** → Muestra lista de 16 eventos
 4. **Si CATEGORÍA = VARIABLES** → Muestra subcategorías variables
+5. **Si CATEGORÍA = AHORRO** → Muestra subcategorías ahorro (Ahorro Clara, Ahorro Marco, Fondo de Emergencia)
 
 ---
 
@@ -411,14 +441,52 @@ El sistema usa formato español/europeo para números:
 
 ---
 
+## Hoja PRESUPUESTO - Cálculos Automáticos
+
+> **DECISIÓN [2026-01-04]**: PRESUPUESTO ahora tiene fórmulas calculadas según PLAN_MAESTRO §4.
+
+### Estructura FAMILIA:
+```
+▶ INGRESOS FAMILIA
+   Subtotal INGRESOS FAMILIA          ← SUM() automático
+📥 TOTAL INGRESOS FAMILIA             ← Fórmula
+
+▶ GASTOS FIJOS / CUOTAS / etc.
+   Subtotal por sección               ← SUM() automático
+📤 TOTAL EGRESOS FAMILIA              ← Suma de subtotales
+💰 BALANCE FAMILIA (Ing - Egr)        ← Fórmula
+```
+
+### Estructura NEUROTEA:
+```
+📥 TOTAL INGRESOS NEUROTEA
+📤 TOTAL EGRESOS NEUROTEA
+
+▶ GANANCIA NEUROTEA (META X%)         ← X desde METAS_NT.GANANCIA_MINIMA_PCT
+   Ganancia Calculada                 ← = Ingresos - Egresos
+   % Ganancia                         ← = Ganancia / Ingresos (formato %)
+   Estado Meta                        ← Semáforo:
+                                         🔴 PÉRDIDA (< 0%)
+                                         🟡 <7% (0-7%)
+                                         🟢 META (≥ 7%)
+   → Utilidad al propietario          ← = Ganancia × 33.33%
+   → Fondo de emergencia              ← = Ganancia × 33.33%
+   → Fondo de Inversión               ← = Ganancia × 33.34%
+
+💰 BALANCE NEUROTEA
+🔄 BALANCE TOTAL CONSOLIDADO FAM/NT   ← = Balance FAM + Balance NT
+```
+
+---
+
 ## Notas Críticas
 
-1. **PRESUPUESTO es 100% manual** - Usuario define lo que PLANEA gastar
-2. **GASTOS_FIJOS tiene arrastre** - Si mes vacío, usa último valor o BASE
+1. **PRESUPUESTO tiene cálculos automáticos** - Subtotales, totales, ganancia NT y semáforo
+2. **GASTOS_FIJOS tiene CUENTA** - Cada gasto indica de qué cuenta se paga
 3. **MOVIMIENTO es el corazón** - Compara Plan vs Real con fórmulas
-4. **TABLERO lee + SALDO_INICIAL editable** - Fórmulas dinámicas + campos manuales
+4. **TABLERO usa "Saldo Banco"** - Columna editable para verificar saldo real en banco
 5. **Variables PUROS van a CARGA** - Solo Supermercado, Combustible, etc.
-6. **Variables con BASE van a GASTOS_FIJOS** - ANDE, Cuotas variables, etc.
+6. **AHORRO va a CARGA** - Se registra cuando realmente se hace la transferencia
 7. **EST. PAGO es el GATILLO** - Controla si un gasto cuenta como PAGADO o PENDIENTE
 8. **LIQUIDEZ es 100% automática** - Usa TODAY() para calcular vencimientos
 
@@ -447,5 +515,5 @@ El sistema usa formato español/europeo para números:
 
 ---
 
-*Última actualización: 2026-01-03*
-*Versión: 3.1 - EST.PAGO diferenciado según origen, Cuentas NT corregidas (2 cuentas)*
+*Última actualización: 2026-01-04*
+*Versión: 4.0 - CUENTA en GASTOS_FIJOS, AHORRO desde CARGA, "Saldo Banco" en TABLERO, PRESUPUESTO con cálculos completos*

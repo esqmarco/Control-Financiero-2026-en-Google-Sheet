@@ -1,7 +1,7 @@
 {
   "project": {
     "name": "Control Financiero 2026 - NeuroTEA & Familia",
-    "version": "2.0.0",
+    "version": "4.0.0",
     "description": "Sistema de control financiero para clínica NeuroTEA y finanzas familiares en Google Sheets"
   },
   "context": {
@@ -40,11 +40,12 @@
   },
   "dataRules": {
     "frecuencias": {
-      "Variable": "CARGA sheets (SUMIFS)",
+      "Variable": "CARGA sheets (SUMPRODUCT)",
       "Fijo/Mensual": "GASTOS_FIJOS (INDEX/MATCH)",
       "Variable/Mensual": "GASTOS_FIJOS (INDEX/MATCH)",
       "Fijo/Anual": "GASTOS_FIJOS (mes específico)",
-      "Variable/Anual": "GASTOS_FIJOS (INDEX/MATCH)"
+      "Variable/Anual": "GASTOS_FIJOS (INDEX/MATCH)",
+      "AHORRO": "CARGA_FAMILIA (SUMPRODUCT)"
     },
     "variablesPuros": [
       "Supermercado",
@@ -56,7 +57,22 @@
       "Insumos y Papelería",
       "Gastos Cursos",
       "Gastos Varios Cumple"
-    ]
+    ],
+    "ahorro": [
+      "Ahorro Clara",
+      "Ahorro Marco",
+      "Fondo de Emergencia"
+    ],
+    "gastosFijosColumnas": {
+      "A": "CONCEPTO",
+      "B": "ENTIDAD",
+      "C": "CATEGORÍA",
+      "D": "FRECUENCIA",
+      "E": "DÍA",
+      "F": "CUENTA",
+      "G": "BASE",
+      "H-S": "ENE-DIC (meses)"
+    }
   },
   "metasNT": {
     "gananciaMinima": 0.07,
