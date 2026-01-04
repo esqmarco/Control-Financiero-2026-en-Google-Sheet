@@ -349,4 +349,72 @@ La versión anterior se marca como:
 
 ---
 
-*Última actualización: 2026-01-03 - Agregadas decisiones o, p (EST.PAGO diferenciado, cuentas NT)*
+---
+
+### [2026-01-04q] - Columna CUENTA en GASTOS_FIJOS
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- GASTOS_FIJOS ahora tiene columna F = CUENTA
+- Indica de qué cuenta bancaria se debita cada gasto fijo
+- Nueva estructura de columnas:
+  - A=CONCEPTO, B=ENTIDAD, C=CATEGORÍA, D=FRECUENCIA, E=DÍA
+  - **F=CUENTA** (nueva)
+  - G=BASE, H-S=ENE-DIC (meses desplazados)
+- Dropdown con opciones de CUENTAS_FAMILIA o CUENTAS_NT según entidad
+**Archivos afectados**: gs/Config.gs, gs/Sheets.gs, CLAUDE.md
+**Razón**: El usuario necesita saber de qué cuenta se paga cada gasto fijo para control de saldos.
+
+---
+
+### [2026-01-04r] - "Saldo Banco" en lugar de "Real" en TABLERO
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- En TABLERO, sección "SALDOS EN CUENTAS", la columna editable se renombró
+- Antes: "Real ✏️"
+- Ahora: "Saldo Banco ✏️"
+- Razón: "Real" se confundía con la columna REAL de MOVIMIENTO (que muestra gastos reales)
+- "Saldo Banco" es más claro: es el saldo que el usuario verifica en su banco/app
+**Archivos afectados**: gs/Tablero.gs, CLAUDE.md
+**Razón**: El usuario reportó confusión por tener "Real" en dos contextos con significados diferentes.
+
+---
+
+### [2026-01-04s] - AHORRO carga desde CARGA_FAMILIA (no GASTOS_FIJOS)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- AHORRO ya NO está en GASTOS_FIJOS
+- AHORRO se registra en CARGA_FAMILIA cuando efectivamente se hace la transferencia
+- Items de ahorro: Ahorro Clara, Ahorro Marco, Fondo de Emergencia
+- En MOVIMIENTO:
+  - Sección separada "AHORRO" (verde)
+  - EST.PAGO = "Ahorrado" (fijo, verde, cursiva) - no es "Pendiente"
+  - Fórmula: SUMPRODUCT desde CARGA_FAMILIA
+- En CARGA_FAMILIA:
+  - Si CATEGORÍA = AHORRO → muestra dropdown con subcategorías ahorro
+**Archivos afectados**: gs/Config.gs (AHORRO_FAMILIA array), gs/Sheets.gs, gs/Code.gs (onEdit)
+**Razón**: El ahorro es una transferencia positiva que se hace cuando hay dinero disponible. No tiene sentido tenerlo como "Pendiente" ya que no es una obligación fija.
+
+---
+
+### [2026-01-04t] - PRESUPUESTO con cálculos automáticos completos
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- PRESUPUESTO ahora incluye fórmulas calculadas según PLAN_MAESTRO §4:
+  - Subtotales por sección (SUM automático)
+  - TOTAL INGRESOS FAMILIA / EGRESOS FAMILIA / BALANCE FAMILIA
+  - TOTAL INGRESOS NEUROTEA / EGRESOS NEUROTEA
+  - **Ganancia Calculada** = Ingresos - Egresos
+  - **% Ganancia** = Ganancia / Ingresos (formato porcentaje)
+  - **Estado Meta** con semáforo:
+    - 🔴 PÉRDIDA: Ganancia < 0
+    - 🟡 <7%: Ganancia 0-7%
+    - 🟢 META: Ganancia ≥ 7%
+  - Distribución de utilidad: 33.33% cada fondo (lee de METAS_NT.GANANCIA_MINIMA_PCT)
+  - BALANCE NEUROTEA
+  - BALANCE CONSOLIDADO FAM/NT
+**Archivos afectados**: gs/Sheets.gs (crearHojaPRESUPUESTO, escribirSeccionPresupuesto, escribirSeccionEventos)
+**Razón**: El usuario identificó que PRESUPUESTO no tenía los cálculos especificados en PLAN_MAESTRO §4.
+
+---
+
+*Última actualización: 2026-01-04 - Agregadas decisiones q, r, s, t (CUENTA, Saldo Banco, AHORRO, PRESUPUESTO cálculos)*

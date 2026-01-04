@@ -1,6 +1,6 @@
 # PLAN MAESTRO: Sistema de Control Financiero 2026
 ## NeuroTEA & Familia - Google Sheets + Web App
-### Versión 2.4 - EST. PAGO como Gatillo, Hoja LIQUIDEZ, SALDO_INICIAL Manual
+### Versión 2.6 - CUENTA en GASTOS_FIJOS, AHORRO desde CARGA, Saldo Banco, PRESUPUESTO calculado
 
 ---
 
@@ -353,12 +353,15 @@ Los fondos de NeuroTEA (Utilidad, Fondo Emergencia, Fondo Inversión) son **VIRT
 | 12 | Reserva | - | - |
 | - | **SUBTOTAL VARIABLES** | - | - |
 
-#### ► EGRESO - AHORRO FAMILIA
-| # | Concepto | Tipo | Frecuencia |
-|---|----------|------|------------|
-| 1 | Ahorro Clara | Egreso | Variable/Mensual |
-| 2 | Ahorro Marco | Egreso | Variable/Mensual |
-| - | **SUBTOTAL AHORROS** | - | - |
+#### ► EGRESO - AHORRO FAMILIA (desde CARGA_FAMILIA)
+| # | Concepto | Tipo | Frecuencia | Origen |
+|---|----------|------|------------|--------|
+| 1 | Ahorro Clara | Egreso | Variable | CARGA_FAMILIA |
+| 2 | Ahorro Marco | Egreso | Variable | CARGA_FAMILIA |
+| 3 | Fondo de Emergencia | Egreso | Variable | CARGA_FAMILIA |
+| - | **SUBTOTAL AHORROS** | - | - | - |
+
+> **DECISIÓN [2026-01-04s]**: AHORRO se registra en CARGA_FAMILIA (no en GASTOS_FIJOS) porque es una transferencia que se hace cuando realmente hay dinero disponible. En MOVIMIENTO, EST.PAGO = "Ahorrado" (verde, fijo).
 
 | - | **TOTAL EGRESOS FAMILIA** | - | - |
 | - | **BALANCE FAMILIA (Ingresos - Egresos)** | - | - |
@@ -511,7 +514,7 @@ Las hojas CARGA_FAMILIA y CARGA_NT son SOLO para **variables puros** (compras pu
 ### 5.2 Estructura de la Hoja
 
 ```
-| CONCEPTO | ENTIDAD | CATEGORÍA | FRECUENCIA | DÍA | BASE | ENE | FEB | MAR | ABR | MAY | JUN | JUL | AGO | SEP | OCT | NOV | DIC |
+| CONCEPTO | ENTIDAD | CATEGORÍA | FRECUENCIA | DÍA | CUENTA | BASE | ENE | FEB | MAR | ... | DIC |
 ```
 
 | Columna | Descripción |
@@ -521,8 +524,11 @@ Las hojas CARGA_FAMILIA y CARGA_NT son SOLO para **variables puros** (compras pu
 | **CATEGORÍA** | Categoría del gasto (GASTOS FIJOS, CUOTAS, VARIABLES, etc.) |
 | **FRECUENCIA** | Fijo/Mensual, Fijo/Anual, Variable/Mensual, Variable/Anual |
 | **DÍA** | Día del mes en que vence (1-31) |
+| **CUENTA** | Cuenta desde donde se paga (dropdown según ENTIDAD) |
 | **BASE** | Monto base inicial |
 | **ENE-DIC** | Celdas opcionales para sobrescribir el BASE |
+
+> **DECISIÓN [2026-01-04q]**: Se agregó columna CUENTA para saber de qué cuenta se debita cada gasto fijo.
 
 ### 5.3 Tipos de Frecuencia en GASTOS_FIJOS
 
@@ -1250,13 +1256,15 @@ Comparar el saldo CALCULADO (según los movimientos cargados) con el saldo REAL 
 | Tipo | Fuente | Descripción |
 |------|--------|-------------|
 | **ESPERADO** | Calculado | Saldo inicial + Ingresos a cuenta - Egresos de cuenta |
-| **REAL** | Manual | Lo que el usuario ve en la app del banco |
-| **DIFERENCIA** | Calculado | REAL - ESPERADO |
+| **SALDO BANCO** | Manual | Lo que el usuario ve en la app del banco (antes "Real") |
+| **DIFERENCIA** | Calculado | SALDO BANCO - ESPERADO |
+
+> **DECISIÓN [2026-01-04r]**: Se renombró "Real" a "Saldo Banco" para evitar confusión con la columna REAL de MOVIMIENTO.
 
 ### 12.3 Estructura de la Sección
 
 ```
-| CUENTA | SALDO INICIAL | INGRESOS | EGRESOS | ESPERADO | REAL | DIFERENCIA | ESTADO |
+| CUENTA | SALDO INICIAL | INGRESOS | EGRESOS | ESPERADO | SALDO BANCO ✏️ | DIFERENCIA | ESTADO |
 ```
 
 ### 12.4 Cálculo del Saldo ESPERADO
@@ -1315,22 +1323,22 @@ DIFERENCIA:                Gs. -350.000 🔴
 ### 12.8 Visualización en Dashboard
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  CONCILIACIÓN BANCARIA - FAMILIA                        [Enero 2026]   │
-├─────────────────┬────────────┬────────────┬────────────┬───────────────┤
-│     CUENTA      │  ESPERADO  │    REAL    │ DIFERENCIA │    ESTADO     │
-├─────────────────┼────────────┼────────────┼────────────┼───────────────┤
-│ ITAU Marco      │ 12.500.000 │ 12.150.000 │  -350.000  │ 🔴 Revisar    │
-│ Coop. Univ.     │  2.300.000 │  2.300.000 │      0     │ ✅ OK         │
-│ ITAU Clara      │  1.800.000 │  1.850.000 │   +50.000  │ 🟢 Ingreso?   │
-│ Efectivo        │    400.000 │    350.000 │   -50.000  │ 🟡 Menor      │
-├─────────────────┼────────────┼────────────┼────────────┼───────────────┤
-│ **TOTAL**       │ 17.000.000 │ 16.650.000 │  -350.000  │               │
-└─────────────────┴────────────┴────────────┴────────────┴───────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  CONCILIACIÓN BANCARIA - FAMILIA                          [Enero 2026]     │
+├─────────────────┬────────────┬──────────────┬────────────┬─────────────────┤
+│     CUENTA      │  ESPERADO  │ SALDO BANCO  │ DIFERENCIA │     ESTADO      │
+├─────────────────┼────────────┼──────────────┼────────────┼─────────────────┤
+│ ITAU Marco      │ 12.500.000 │  12.150.000  │  -350.000  │ 🔴 Revisar      │
+│ Coop. Univ.     │  2.300.000 │   2.300.000  │      0     │ ✅ OK           │
+│ ITAU Clara      │  1.800.000 │   1.850.000  │   +50.000  │ 🟢 Ingreso?     │
+│ Efectivo        │    400.000 │     350.000  │   -50.000  │ 🟡 Menor        │
+├─────────────────┼────────────┼──────────────┼────────────┼─────────────────┤
+│ **TOTAL**       │ 17.000.000 │  16.650.000  │  -350.000  │                 │
+└─────────────────┴────────────┴──────────────┴────────────┴─────────────────┘
 ```
 
 ### 12.9 Frecuencia de Actualización Recomendada
-- **Semanal:** Actualizar REAL de cuentas principales (ITAU, Coop)
+- **Semanal:** Actualizar SALDO BANCO de cuentas principales (ITAU, Coop)
 - **Quincenal:** Actualizar tarjetas de crédito
 - **Fin de mes:** Conciliación completa de todas las cuentas
 
@@ -1410,13 +1418,25 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 34 | **Colores corregidos**: Verde/Rojo según contexto (ingreso = + verde, egreso = - verde) | ✅ |
 | 35 | WEB APP ya no es hoja, es popup HTML. LIQUIDEZ es la 8va hoja | ✅ |
 
-### Versión 2.5 (Actual)
+### Versión 2.5
 | # | Adición/Aclaración | Estado |
 |---|-------------------|--------|
 | 36 | **EST.PAGO diferenciado**: Items de CARGA = fijo ("Recibido"/"Pagado"), GASTOS_FIJOS = dropdown | ✅ |
 | 37 | **Cuentas NT corregidas**: Solo 2 cuentas (Atlas NeuroTEA, Caja Chica NT) | ✅ |
-| 38 | **SALDOS NT**: Columnas Esperado (automático) y Real ✏️ (manual) | ✅ |
+| 38 | **SALDOS NT**: Columnas Esperado (automático) y Saldo Banco ✏️ (manual) | ✅ |
 | 39 | **Selector mes**: Aviso en TABLERO que el mes se selecciona en MOVIMIENTO | ✅ |
+
+### Versión 2.6 (Actual)
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 40 | **CUENTA en GASTOS_FIJOS**: Nueva columna F para indicar de qué cuenta se debita | ✅ |
+| 41 | **"Saldo Banco" en TABLERO**: Renombrado de "Real" a "Saldo Banco" para evitar confusión | ✅ |
+| 42 | **AHORRO desde CARGA_FAMILIA**: AHORRO ya no está en GASTOS_FIJOS, se carga cuando se ahorra | ✅ |
+| 43 | **Fondo de Emergencia FAM**: Agregado como 3er item de ahorro familiar | ✅ |
+| 44 | **EST.PAGO = "Ahorrado"**: AHORRO tiene estado fijo verde, no es "Pendiente" | ✅ |
+| 45 | **PRESUPUESTO con cálculos**: Subtotales, totales, ganancia NT, % y semáforo automáticos | ✅ |
+| 46 | **Meta NT desde CONFIG**: El 7% de ganancia lee de METAS_NT.GANANCIA_MINIMA_PCT | ✅ |
+| 47 | **Balance Consolidado**: PRESUPUESTO muestra balance FAM + NT total | ✅ |
 
 ---
 
@@ -1430,5 +1450,5 @@ DIFERENCIA:                Gs. -350.000 🔴
 
 ---
 
-*Documento actualizado el 03 de enero de 2026*
-*Versión: 2.5 - EST.PAGO diferenciado, Cuentas NT corregidas*
+*Documento actualizado el 04 de enero de 2026*
+*Versión: 2.6 - CUENTA en GASTOS_FIJOS, AHORRO desde CARGA, Saldo Banco, PRESUPUESTO calculado*
