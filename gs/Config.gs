@@ -132,8 +132,7 @@ const CATEGORIAS_EGRESO_FAMILIA = [
   'OBLIGACIONES LEGALES',
   'SUSCRIPCIONES',
   'VARIABLES',
-  'AHORRO',
-  'FONDO DE EMERGENCIA'
+  'AHORRO'
 ];
 
 const CATEGORIAS_EGRESO_NT = [
@@ -160,6 +159,13 @@ const VARIABLES_FAMILIA = [
   'Salud y Medicamentos',
   'Gastos no identificados',
   'Devolución Familia → NT'
+];
+
+// Subcategorías de AHORRO para CARGA_FAMILIA
+const AHORRO_FAMILIA = [
+  'Ahorro Clara',
+  'Ahorro Marco',
+  'Fondo de Emergencia'
 ];
 
 const VARIABLES_NT = [
@@ -308,7 +314,8 @@ const VARIABLES_PRESUP_FAM = [
 
 const AHORRO_FAM = [
   { concepto: 'Ahorro Clara', categoria: 'AHORRO', frecuencia: 'Variable/Mensual', monto: 0 },
-  { concepto: 'Ahorro Marco', categoria: 'AHORRO', frecuencia: 'Variable/Mensual', monto: 0 }
+  { concepto: 'Ahorro Marco', categoria: 'AHORRO', frecuencia: 'Variable/Mensual', monto: 0 },
+  { concepto: 'Fondo de Emergencia', categoria: 'AHORRO', frecuencia: 'Variable/Mensual', monto: 0 }
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════

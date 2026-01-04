@@ -80,6 +80,10 @@ function crearHojaCONFIG() {
   escribirListaConfig(sheet, fila2, col, 'VARIABLES FAMILIA', VARIABLES_FAMILIA, C.FAM_HEADER);
   col += 2;
 
+  // ─── AHORRO FAMILIA ───
+  escribirListaConfig(sheet, fila2, col, 'AHORRO FAMILIA', AHORRO_FAMILIA, C.FAM_HEADER);
+  col += 2;
+
   // ─── VARIABLES NT ───
   escribirListaConfig(sheet, fila2, col, 'VARIABLES NT', VARIABLES_NT, C.NT_HEADER);
   col += 2;
@@ -143,6 +147,7 @@ function escribirListaConfig(sheet, row, col, titulo, lista, colorHeader) {
 function crearHojaPRESUPUESTO() {
   const sheet = crearOLimpiarHoja(NOMBRES_HOJAS.PRESUPUESTO);
   const C = COLORES;
+  const metaGanancia = METAS_NT.GANANCIA_MINIMA_PCT / 100; // 0.07
 
   // ─── HEADER PRINCIPAL ───
   sheet.getRange('A1:Q1').merge()
@@ -163,6 +168,7 @@ function crearHojaPRESUPUESTO() {
   });
 
   let row = 6;
+  let result;
 
   // ═══════════════════════════════════════════════════════════════════
   // SECCIÓN FAMILIA
@@ -175,20 +181,60 @@ function crearHojaPRESUPUESTO() {
   row += 2;
 
   // ─── INGRESOS FAMILIA ───
-  row = escribirSeccionPresupuesto(sheet, row, '▶ INGRESOS FAMILIA', INGRESOS_FAMILIA, 'Ingreso', C.FAM_FONDO, C.FAM_SUBTOTAL);
-  row++;
+  result = escribirSeccionPresupuesto(sheet, row, '▶ INGRESOS FAMILIA', INGRESOS_FAMILIA, 'Ingreso', C.FAM_FONDO, C.FAM_SUBTOTAL);
+  row = result.row;
+  const filaSubtotalIngresosFam = result.filaSubtotal;
+
+  // TOTAL INGRESOS FAMILIA
+  sheet.getRange(row, 1).setValue('📥 TOTAL INGRESOS FAMILIA').setFontWeight('bold').setFontSize(11);
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    sheet.getRange(row, col).setFormula(`=${colLetra}${filaSubtotalIngresosFam}`);
+  }
+  sheet.getRange(row, 1, 1, 16).setBackground(C.VERDE_FONDO);
+  const filaTotalIngresosFam = row;
+  row += 2;
 
   // ─── EGRESOS FAMILIA ───
-  row = escribirSeccionPresupuesto(sheet, row, '▶ GASTOS FIJOS', GASTOS_FIJOS_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionPresupuesto(sheet, row, '▶ CUOTAS Y PRÉSTAMOS', CUOTAS_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionPresupuesto(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionPresupuesto(sheet, row, '▶ SUSCRIPCIONES', SUSCRIPCIONES_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionPresupuesto(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionPresupuesto(sheet, row, '▶ AHORRO', AHORRO_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  const filasSubtotalesEgresosFam = [];
 
-  // BALANCE FAMILIA
-  sheet.getRange(row, 1).setValue('💰 BALANCE FAMILIA').setFontWeight('bold').setFontSize(11);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ GASTOS FIJOS', GASTOS_FIJOS_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
+
+  result = escribirSeccionPresupuesto(sheet, row, '▶ CUOTAS Y PRÉSTAMOS', CUOTAS_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
+
+  result = escribirSeccionPresupuesto(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
+
+  result = escribirSeccionPresupuesto(sheet, row, '▶ SUSCRIPCIONES', SUSCRIPCIONES_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
+
+  result = escribirSeccionPresupuesto(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
+
+  result = escribirSeccionPresupuesto(sheet, row, '▶ AHORRO', AHORRO_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
+
+  // TOTAL EGRESOS FAMILIA
+  sheet.getRange(row, 1).setValue('📤 TOTAL EGRESOS FAMILIA').setFontWeight('bold').setFontSize(11);
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    const sumaFilas = filasSubtotalesEgresosFam.map(f => `${colLetra}${f}`).join('+');
+    sheet.getRange(row, col).setFormula(`=${sumaFilas}`);
+  }
+  sheet.getRange(row, 1, 1, 16).setBackground(C.ROJO_FONDO);
+  const filaTotalEgresosFam = row;
+  row++;
+
+  // BALANCE FAMILIA = Ingresos - Egresos
+  sheet.getRange(row, 1).setValue('💰 BALANCE FAMILIA (Ingresos - Egresos)').setFontWeight('bold').setFontSize(11);
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    sheet.getRange(row, col).setFormula(`=${colLetra}${filaTotalIngresosFam}-${colLetra}${filaTotalEgresosFam}`);
+  }
   sheet.getRange(row, 1, 1, 16).setBackground(C.GANANCIA_FONDO);
+  const filaBalanceFam = row;
   row += 3;
 
   // ═══════════════════════════════════════════════════════════════════
@@ -202,54 +248,149 @@ function crearHojaPRESUPUESTO() {
   row += 2;
 
   // ─── INGRESOS NT ───
-  row = escribirSeccionPresupuesto(sheet, row, '▶ INGRESOS NEUROTEA', INGRESOS_NT, 'Ingreso', C.NT_FONDO, C.NT_SUBTOTAL);
-  row++;
+  result = escribirSeccionPresupuesto(sheet, row, '▶ INGRESOS NEUROTEA', INGRESOS_NT, 'Ingreso', C.NT_FONDO, C.NT_SUBTOTAL);
+  row = result.row;
+  const filaSubtotalIngresosNT = result.filaSubtotal;
+
+  // TOTAL INGRESOS NT
+  sheet.getRange(row, 1).setValue('📥 TOTAL INGRESOS NEUROTEA').setFontWeight('bold').setFontSize(11);
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    sheet.getRange(row, col).setFormula(`=${colLetra}${filaSubtotalIngresosNT}`);
+  }
+  sheet.getRange(row, 1, 1, 16).setBackground(C.VERDE_FONDO);
+  const filaTotalIngresosNT = row;
+  row += 2;
 
   // ─── EGRESOS NT ───
-  row = escribirSeccionPresupuesto(sheet, row, '▶ CLÍNICA', CLINICA_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
-  row = escribirSeccionPresupuesto(sheet, row, '▶ SUELDOS Y HONORARIOS', SUELDOS_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
-  row = escribirSeccionPresupuesto(sheet, row, '▶ TELEFONÍA E INTERNET', TELEFONIA_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
-  row = escribirSeccionPresupuesto(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  const filasSubtotalesEgresosNT = [];
+
+  result = escribirSeccionPresupuesto(sheet, row, '▶ CLÍNICA', CLINICA_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
+
+  result = escribirSeccionPresupuesto(sheet, row, '▶ SUELDOS Y HONORARIOS', SUELDOS_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
+
+  result = escribirSeccionPresupuesto(sheet, row, '▶ TELEFONÍA E INTERNET', TELEFONIA_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
+
+  result = escribirSeccionPresupuesto(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
 
   // EVENTOS NT (especial)
-  row = escribirSeccionEventos(sheet, row, C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  result = escribirSeccionEventos(sheet, row, C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
 
-  row = escribirSeccionPresupuesto(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
 
-  // GANANCIA NT (calculada)
+  // TOTAL EGRESOS NT (sin ganancia)
+  sheet.getRange(row, 1).setValue('📤 TOTAL EGRESOS NEUROTEA').setFontWeight('bold').setFontSize(11);
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    const sumaFilas = filasSubtotalesEgresosNT.map(f => `${colLetra}${f}`).join('+');
+    sheet.getRange(row, col).setFormula(`=${sumaFilas}`);
+  }
+  sheet.getRange(row, 1, 1, 16).setBackground(C.ROJO_FONDO);
+  const filaTotalEgresosNT = row;
+  row += 2;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // GANANCIA NT (CALCULADA AUTOMÁTICAMENTE)
+  // ═══════════════════════════════════════════════════════════════════
   sheet.getRange(row, 1, 1, 16).merge()
-    .setValue('▶ GANANCIA (7% META)')
+    .setValue(`▶ GANANCIA NEUROTEA (META ${METAS_NT.GANANCIA_MINIMA_PCT}%)`)
     .setFontWeight('bold').setBackground(C.GANANCIA_FONDO);
   row++;
 
-  const gananciaItems = [
-    ['Ganancia Calculada', 'Calculado', '-'],
-    ['→ Utilidad al propietario (33.33%)', 'Calculado', '-'],
-    ['→ Fondo de emergencia (33.33%)', 'Calculado', '-'],
-    ['→ Fondo de Inversión (33.33%)', 'Calculado', '-']
+  // Ganancia Calculada = Ingresos - Egresos
+  sheet.getRange(row, 1).setValue('Ganancia Calculada').setFontWeight('bold');
+  sheet.getRange(row, 2).setValue('Calculado');
+  sheet.getRange(row, 3).setValue('-');
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    sheet.getRange(row, col).setFormula(`=${colLetra}${filaTotalIngresosNT}-${colLetra}${filaTotalEgresosNT}`);
+  }
+  const filaGananciaCalculada = row;
+  row++;
+
+  // % Ganancia = Ganancia / Ingresos
+  sheet.getRange(row, 1).setValue('% Ganancia').setFontWeight('bold');
+  sheet.getRange(row, 2).setValue('Calculado');
+  sheet.getRange(row, 3).setValue('-');
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    sheet.getRange(row, col).setFormula(`=IFERROR(${colLetra}${filaGananciaCalculada}/${colLetra}${filaTotalIngresosNT};0)`);
+  }
+  sheet.getRange(row, 4, 1, 13).setNumberFormat('0.00%');
+  const filaPctGanancia = row;
+  row++;
+
+  // Semáforo de estado
+  sheet.getRange(row, 1).setValue('Estado Meta').setFontWeight('bold');
+  sheet.getRange(row, 2).setValue('Calculado');
+  sheet.getRange(row, 3).setValue('-');
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    // Semáforo: <0% = Rojo (Pérdida), 0-7% = Amarillo, >=7% = Verde
+    sheet.getRange(row, col).setFormula(
+      `=IF(${colLetra}${filaPctGanancia}<0;"🔴 PÉRDIDA";IF(${colLetra}${filaPctGanancia}<${metaGanancia.toString().replace('.',',')};"🟡 <${METAS_NT.GANANCIA_MINIMA_PCT}%";"🟢 META"))`
+    );
+  }
+  const filaEstadoMeta = row;
+  row++;
+
+  // Distribución de ganancia
+  const distItems = [
+    { nombre: `→ Utilidad al propietario (${METAS_NT.DIST_UTILIDAD_DUEÑO}%)`, pct: METAS_NT.DIST_UTILIDAD_DUEÑO / 100 },
+    { nombre: `→ Fondo de emergencia (${METAS_NT.DIST_FONDO_EMERGENCIA}%)`, pct: METAS_NT.DIST_FONDO_EMERGENCIA / 100 },
+    { nombre: `→ Fondo de Inversión (${METAS_NT.DIST_FONDO_INVERSION}%)`, pct: METAS_NT.DIST_FONDO_INVERSION / 100 }
   ];
-  gananciaItems.forEach(item => {
-    sheet.getRange(row, 1).setValue(item[0]).setFontStyle('italic');
-    sheet.getRange(row, 2).setValue(item[1]);
-    sheet.getRange(row, 3).setValue(item[2]);
+  distItems.forEach(item => {
+    sheet.getRange(row, 1).setValue(item.nombre).setFontStyle('italic');
+    sheet.getRange(row, 2).setValue('Calculado');
+    sheet.getRange(row, 3).setValue('-');
+    for (let col = 4; col <= 16; col++) {
+      const colLetra = String.fromCharCode(64 + col);
+      // Solo distribuir si ganancia > 0
+      sheet.getRange(row, col).setFormula(
+        `=IF(${colLetra}${filaGananciaCalculada}>0;${colLetra}${filaGananciaCalculada}*${item.pct.toString().replace('.',',')};0)`
+      );
+    }
     row++;
   });
   row++;
 
-  // BALANCE NT
+  // BALANCE NT = Ingresos - Egresos (igual a Ganancia)
   sheet.getRange(row, 1).setValue('💰 BALANCE NEUROTEA').setFontWeight('bold').setFontSize(11);
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    sheet.getRange(row, col).setFormula(`=${colLetra}${filaGananciaCalculada}`);
+  }
   sheet.getRange(row, 1, 1, 16).setBackground(C.GANANCIA_FONDO);
+  const filaBalanceNT = row;
   row += 2;
 
-  // BALANCE CONSOLIDADO
+  // BALANCE CONSOLIDADO FAM + NT
   sheet.getRange(row, 1).setValue('🔄 BALANCE TOTAL CONSOLIDADO FAM/NT').setFontWeight('bold').setFontSize(12);
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    sheet.getRange(row, col).setFormula(`=${colLetra}${filaBalanceFam}+${colLetra}${filaBalanceNT}`);
+  }
   sheet.getRange(row, 1, 1, 16).setBackground(C.BALANCE_FONDO);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FORMATO FINAL
+  // ═══════════════════════════════════════════════════════════════════
 
   // Formato de números
   sheet.getRange('D:P').setNumberFormat('#,##0');
 
+  // Restaurar formato % en fila de porcentaje
+  sheet.getRange(filaPctGanancia, 4, 1, 13).setNumberFormat('0.00%');
+
   // Anchos de columna
-  sheet.setColumnWidth(1, 280);
+  sheet.setColumnWidth(1, 300);
   sheet.setColumnWidth(2, 80);
   sheet.setColumnWidth(3, 80);
   for (let i = 4; i <= 15; i++) sheet.setColumnWidth(i, 85);
@@ -268,6 +409,8 @@ function escribirSeccionPresupuesto(sheet, row, titulo, items, tipo, colorFondo,
     .setBackground(colorFondo);
   row++;
 
+  const filaInicio = row; // Guardar fila inicio para subtotales
+
   // Items
   items.forEach(item => {
     sheet.getRange(row, 1).setValue(item.concepto);
@@ -285,19 +428,27 @@ function escribirSeccionPresupuesto(sheet, row, titulo, items, tipo, colorFondo,
           sheet.getRange(row, m).setValue(monto);
         }
       }
-      // Total año
-      const formula = `=SUM(D${row}:O${row})`;
-      sheet.getRange(row, 16).setFormula(formula);
     }
+    // Total año por fila (siempre, para que sume lo que el usuario ingrese)
+    sheet.getRange(row, 16).setFormula(`=SUM(D${row}:O${row})`);
     row++;
   });
 
-  // Subtotal
+  const filaFin = row - 1;
+
+  // Subtotal con fórmulas SUM() para cada columna
   sheet.getRange(row, 1).setValue('Subtotal ' + titulo.replace('▶ ', '')).setFontWeight('bold').setFontStyle('italic');
+  // Fórmulas para meses (D-O) y total año (P)
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col); // D=68, E=69, etc.
+    sheet.getRange(row, col).setFormula(`=SUM(${colLetra}${filaInicio}:${colLetra}${filaFin})`);
+  }
   sheet.getRange(row, 1, 1, 16).setBackground(colorSubtotal);
+  const filaSubtotal = row;
   row++;
 
-  return row;
+  // Devolver objeto con fila siguiente y fila del subtotal (para totales)
+  return { row: row, filaSubtotal: filaSubtotal };
 }
 
 function escribirSeccionEventos(sheet, row, colorFondo, colorSubtotal) {
@@ -307,6 +458,8 @@ function escribirSeccionEventos(sheet, row, colorFondo, colorSubtotal) {
     .setBackground(colorFondo);
   row++;
 
+  const filaInicio = row;
+
   EVENTOS_NT.forEach(evento => {
     sheet.getRange(row, 1).setValue(evento.nombre);
     sheet.getRange(row, 2).setValue('Egreso');
@@ -315,11 +468,19 @@ function escribirSeccionEventos(sheet, row, colorFondo, colorSubtotal) {
     row++;
   });
 
+  const filaFin = row - 1;
+
+  // Subtotal con fórmulas SUM()
   sheet.getRange(row, 1).setValue('Subtotal EVENTOS').setFontWeight('bold').setFontStyle('italic');
+  for (let col = 4; col <= 16; col++) {
+    const colLetra = String.fromCharCode(64 + col);
+    sheet.getRange(row, col).setFormula(`=SUM(${colLetra}${filaInicio}:${colLetra}${filaFin})`);
+  }
   sheet.getRange(row, 1, 1, 16).setBackground(colorSubtotal);
+  const filaSubtotal = row;
   row++;
 
-  return row;
+  return { row: row, filaSubtotal: filaSubtotal };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -536,10 +697,10 @@ function aplicarValidacionesCargaFamilia(sheet) {
       .build()
   );
 
-  // SUBCATEGORÍA (columna D)
+  // SUBCATEGORÍA (columna D) - incluye VARIABLES y AHORRO
   sheet.getRange('D4:D500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['-', ...VARIABLES_FAMILIA], true)
+      .requireValueInList(['-', ...VARIABLES_FAMILIA, ...AHORRO_FAMILIA], true)
       .setAllowInvalid(false)
       .build()
   );
@@ -723,7 +884,7 @@ function crearHojaMOVIMIENTO() {
   row = escribirSeccionMovimientoEgresos(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
   row = escribirSeccionMovimientoEgresos(sheet, row, '▶ SUSCRIPCIONES', SUSCRIPCIONES_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
   row = escribirSeccionMovimientoVariables(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
-  row = escribirSeccionMovimientoEgresos(sheet, row, '▶ AHORRO', AHORRO_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  row = escribirSeccionMovimientoAhorro(sheet, row, '▶ AHORRO', AHORRO_FAM, 'FAMILIA', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
 
   // Balance Familia
   const filaBalanceFam = row;
@@ -981,6 +1142,60 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
     sheet.getRange(row, 9).setValue('Pagado')
       .setFontStyle('italic')
       .setFontColor('#6B7280');
+
+    row++;
+  });
+
+  // Subtotal
+  const filaFin = row - 1;
+  sheet.getRange(row, 1).setValue('Subtotal').setFontWeight('bold').setFontStyle('italic');
+  sheet.getRange(row, 4).setFormula(`=IFERROR(SUM(D${filaInicio}:D${filaFin}),0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(SUM(E${filaInicio}:E${filaFin}),0)`);
+  sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+  sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,0,E${row}/D${row})`);
+  sheet.getRange(row, 1, 1, 10).setBackground(colorSubtotal);
+  row++;
+
+  return row;
+}
+
+// ─── SECCIÓN AHORRO (viene de CARGA, EST.PAGO = "Ahorrado") ───
+function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
+  sheet.getRange(row, 1, 1, 10).merge()
+    .setValue(titulo)
+    .setFontWeight('bold')
+    .setBackground(colorFondo);
+  row++;
+
+  const filaInicio = row;
+  const hojaCarga = entidad === 'FAMILIA' ? 'CARGA_FAMILIA' : 'CARGA_NT';
+
+  items.forEach(item => {
+    sheet.getRange(row, 1).setValue(item.concepto);
+    sheet.getRange(row, 2).setValue('Egreso');
+    sheet.getRange(row, 3).setValue(item.frecuencia || 'Variable/Mensual');
+
+    // PRESUPUESTO: Busca en hoja PRESUPUESTO según mes seleccionado
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("${item.concepto}",PRESUPUESTO!$A:$A,0),$L$3),0)`;
+    sheet.getRange(row, 4).setFormula(formulaPresup);
+
+    // REAL: SUMPRODUCT desde CARGA según subcategoría y mes
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$D$4:$D$500="${item.concepto}")*(MONTH(${hojaCarga}!$A$4:$A$500)=$L$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500)),0)`;
+    sheet.getRange(row, 5).setFormula(formulaReal);
+
+    // DIFERENCIA
+    sheet.getRange(row, 6).setFormula(`=E${row}-D${row}`);
+
+    // %
+    sheet.getRange(row, 7).setFormula(`=IF(D${row}=0,0,E${row}/D${row})`);
+
+    // ESTADO (Ahorro: ahorrar MÁS es bueno, verde si real >= presupuesto)
+    sheet.getRange(row, 8).setFormula(`=IF(E${row}>=D${row},"✓","⚠")`);
+
+    // EST. PAGO: Ahorro viene de CARGA = ya está "Ahorrado" (sin dropdown)
+    sheet.getRange(row, 9).setValue('Ahorrado')
+      .setFontStyle('italic')
+      .setFontColor('#059669'); // Verde para ahorro
 
     row++;
   });
