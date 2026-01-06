@@ -2,7 +2,10 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * WEBAPP.GS - DASHBOARD HTML/CSS PROFESIONAL
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 5.0 - Dashboard Dinámico con datos reales
+ * Versión 5.1 - Dashboard Dinámico con datos reales (actualizado para v4.1)
+ *
+ * CAMBIOS v5.1:
+ * - Actualizado para nueva estructura MOVIMIENTO (D=DÍA, E=PRESUPUESTO, F=REAL)
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -629,32 +632,33 @@ function obtenerDatosDashboard() {
   }
 
   // PRESUPUESTO VS REAL POR CATEGORÍAS (desde MOVIMIENTO)
+  // ACTUALIZADO v4.1: Nueva estructura columnas - A=CONCEPTO, D=DÍA, E=PRESUPUESTO, F=REAL
   var presupuestoFamilia = [];
   var presupuestoNT = [];
 
   if (movimiento) {
-    var datosFam = movimiento.getRange('A9:E70').getValues();
+    var datosFam = movimiento.getRange('A9:F70').getValues();  // A hasta F (6 columnas)
     for (var m = 0; m < datosFam.length; m++) {
       var row = datosFam[m];
       var concepto = row[0];
       if (concepto && concepto.toString().indexOf('►') >= 0) {
         presupuestoFamilia.push({
           categoria: concepto.toString().replace('►', '').trim(),
-          presupuesto: Number(row[3]) || 0,
-          real: Number(row[4]) || 0
+          presupuesto: Number(row[4]) || 0,  // Columna E (índice 4) = PRESUPUESTO
+          real: Number(row[5]) || 0          // Columna F (índice 5) = REAL
         });
       }
     }
 
-    var datosNTMov = movimiento.getRange('A73:E150').getValues();
+    var datosNTMov = movimiento.getRange('A73:F150').getValues();  // A hasta F (6 columnas)
     for (var n = 0; n < datosNTMov.length; n++) {
       var rowNTMov = datosNTMov[n];
       var conceptoNT = rowNTMov[0];
       if (conceptoNT && conceptoNT.toString().indexOf('►') >= 0) {
         presupuestoNT.push({
           categoria: conceptoNT.toString().replace('►', '').trim(),
-          presupuesto: Number(rowNTMov[3]) || 0,
-          real: Number(rowNTMov[4]) || 0
+          presupuesto: Number(rowNTMov[4]) || 0,  // Columna E (índice 4) = PRESUPUESTO
+          real: Number(rowNTMov[5]) || 0          // Columna F (índice 5) = REAL
         });
       }
     }
