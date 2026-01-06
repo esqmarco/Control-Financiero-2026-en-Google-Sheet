@@ -478,7 +478,7 @@ function crearHojaTABLERO() {
 
   // Valor Ganancia
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setFormula(`=IFERROR(I${filaIngresosNT}-K${filaIngresosNT},0)`)
+    .setFormula(`=IFERROR(H${filaIngresosNT}-J${filaIngresosNT},0)`)
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -490,7 +490,7 @@ function crearHojaTABLERO() {
 
   // Valor Meta 7%
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(I${filaIngresosNT}*0,07;0)`)
+    .setFormula(`=IFERROR(H${filaIngresosNT}*0,07;0)`)
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -509,7 +509,7 @@ function crearHojaTABLERO() {
 
   // Barra de progreso: % Gastos sobre Ingresos
   sheet.getRange(rowNT, 8, 1, 4).merge()
-    .setFormula(`="📊 % Gastos: "&TEXT(IFERROR(IF(I${filaIngresosNT}>0,K${filaIngresosNT}/I${filaIngresosNT},0),0),"0%")&" de 93% máximo"`)
+    .setFormula(`="📊 % Gastos: "&TEXT(IFERROR(IF(H${filaIngresosNT}>0;J${filaIngresosNT}/H${filaIngresosNT};0);0);"0%")&" de 93% máximo"`)
     .setFontSize(11)
     .setBackground('#E0F2FE')
     .setHorizontalAlignment('center')
@@ -520,7 +520,7 @@ function crearHojaTABLERO() {
 
   // Estado de meta (badge grande)
   sheet.getRange(rowNT, 8, 1, 4).merge()
-    .setFormula(`=IFERROR(IF(I${filaGananciaNT}>=K${filaGananciaNT},"✅ META CUMPLIDA - Superávit: Gs. "&TEXT(I${filaGananciaNT}-K${filaGananciaNT},"#,##0"),"⚠️ META NO CUMPLIDA - Falta: Gs. "&TEXT(K${filaGananciaNT}-I${filaGananciaNT},"#,##0")),"⏳ Sin datos")`)
+    .setFormula(`=IFERROR(IF(H${filaGananciaNT}>=J${filaGananciaNT};"✅ META CUMPLIDA - Superávit: Gs. "&TEXT(H${filaGananciaNT}-J${filaGananciaNT};"#,##0");"⚠️ META NO CUMPLIDA - Falta: Gs. "&TEXT(J${filaGananciaNT}-H${filaGananciaNT};"#,##0"));"⏳ Sin datos")`)
     .setFontSize(11)
     .setFontWeight('bold')
     .setHorizontalAlignment('center')
@@ -536,7 +536,7 @@ function crearHojaTABLERO() {
 
   // Distribución de Ganancia - Título
   sheet.getRange(rowNT, 8, 1, 4).merge()
-    .setFormula(`="💰 Distribución Ganancia (Meta: Gs. "&TEXT(IFERROR(K${filaGananciaNT},0),"#,##0")&")"`)
+    .setFormula(`="💰 Distribución Ganancia (Meta: Gs. "&TEXT(IFERROR(J${filaGananciaNT};0);"#.##0")&")"`)
     .setFontSize(10)
     .setFontWeight('bold')
     .setBackground(UI.NT_TITULO)
@@ -567,20 +567,20 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Valores de distribución
-  sheet.getRange(rowNT, 8).setFormula(`=IFERROR(I${filaGananciaNT}*0,3333;0)`)
+  sheet.getRange(rowNT, 8).setFormula(`=IFERROR(H${filaGananciaNT}*0,3333;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#F3E8FF')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(I${filaGananciaNT}*0,3333;0)`)
+  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(H${filaGananciaNT}*0,3333;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#FFEDD5')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(I${filaGananciaNT}*0,3334;0)`)
+    .setFormula(`=IFERROR(H${filaGananciaNT}*0,3334;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#CFFAFE')
