@@ -37,7 +37,7 @@ gs/
 |---|------|---------|----------|
 | 1 | CONFIG | Listas maestras para desplegables | Sí |
 | 2 | PRESUPUESTO | Plan anual con cálculos automáticos (subtotales, totales, ganancia NT) | Sí (montos) |
-| 3 | GASTOS_FIJOS | Montos recurrentes con CUENTA, BASE y meses | Sí |
+| 3 | GASTOS_FIJOS | Montos recurrentes con CUENTA y meses (sin BASE) | Sí |
 | 4 | CARGA_FAMILIA | Transacciones variables puras + AHORRO | Sí |
 | 5 | CARGA_NT | Transacciones variables + eventos | Sí |
 | 6 | MOVIMIENTO | Real vs Presupuesto (automático) | Parcial |
@@ -63,9 +63,9 @@ gs/
 ### Ejemplos concretos:
 - ✅ **Supermercado** → Variable puro → va a CARGA_FAMILIA
 - ✅ **Combustible** → Variable puro → va a CARGA_FAMILIA
-- ✅ **ANDE Casa** → Variable/Mensual → va a GASTOS_FIJOS (tiene BASE)
+- ✅ **ANDE Casa** → Variable/Mensual → va a GASTOS_FIJOS (monto mensual directo)
 - ✅ **Alquiler NT** → Fijo/Mensual → va a GASTOS_FIJOS
-- ✅ **Antivirus** → Fijo/Anual → va a GASTOS_FIJOS (solo 1 mes)
+- ✅ **Antivirus** → Fijo/Anual → va a GASTOS_FIJOS (solo 1 mes con valor)
 - ✅ **Ahorro Clara** → AHORRO → va a CARGA_FAMILIA (transferencia a cuenta ahorro)
 
 ---
@@ -79,11 +79,10 @@ gs/
 | C | CATEGORÍA | Categoría del gasto |
 | D | FRECUENCIA | Fijo/Mensual, Variable/Mensual, etc. |
 | E | DÍA | Día del mes que vence |
-| F | **CUENTA** | Cuenta desde donde se paga |
-| G | BASE | Monto base (si mes vacío, usa este) |
-| H-S | ENE-DIC | Montos por mes (12 columnas) |
+| F | CUENTA | Cuenta desde donde se paga |
+| G-R | ENE-DIC | Montos por mes (12 columnas) |
 
-> **DECISIÓN [2026-01-04]**: Se agregó columna CUENTA para saber de qué cuenta se debita cada gasto fijo.
+> **DECISIÓN [2026-01-05]**: Se eliminó columna BASE. Ahora cada mes tiene su valor directo. MOVIMIENTO copia el DÍA a columna D para que LIQUIDEZ y TABLERO lean directamente sin INDEX/MATCH.
 
 ---
 
@@ -227,53 +226,58 @@ CONFIG (listas maestras)
 | A | CONCEPTO | Nombre del ingreso/egreso |
 | B | TIPO | Ingreso / Egreso |
 | C | FREC. | Frecuencia del concepto |
-| D | PRESUPUESTO | Monto planeado (desde PRESUPUESTO) |
-| E | REAL | Monto real (desde GASTOS_FIJOS o CARGA) |
-| F | DIFERENCIA | REAL - PRESUPUESTO |
-| G | % | Porcentaje de ejecución |
-| H | ESTADO | ✓ (OK) o ⚠ (Alerta) |
-| I | EST. PAGO | Pendiente / Pagado / Cancelado |
-| J | 🚦 | Semáforo visual |
-| K | (oculta) | Etiqueta MES_NUM |
-| L | (oculta) | Número de mes calculado |
+| D | DÍA | Día de vencimiento (copiado de GASTOS_FIJOS o 0) |
+| E | PRESUPUESTO | Monto planeado (desde PRESUPUESTO) |
+| F | REAL | Monto real (desde GASTOS_FIJOS o CARGA) |
+| G | DIFERENCIA | REAL - PRESUPUESTO |
+| H | % | Porcentaje de ejecución |
+| I | ESTADO | ✓ (OK) o ⚠ (Alerta) |
+| J | EST. PAGO | Pendiente / Pagado / Cancelado |
+| K | 🚦 | Semáforo visual |
+| L-M | (ocultas) | Columnas vacías |
+| N | (oculta) | Número de mes calculado (MES_NUM)
 
 ---
 
 ## Fórmulas Clave en MOVIMIENTO
 
-### Celda L3 (número de mes oculto)
+### Celda N3 (número de mes oculto - MES_NUM)
 ```
-=MATCH(B3,{"Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"},0)
-```
-
-### Columna PRESUPUESTO
-```
-=IFERROR(INDEX(PRESUPUESTO!$D:$O,MATCH("concepto",PRESUPUESTO!$A:$A,0),$L$3),0)
+=MATCH(B3;{"Enero";"Febrero";"Marzo";"Abril";"Mayo";"Junio";"Julio";"Agosto";"Septiembre";"Octubre";"Noviembre";"Diciembre"};0)
 ```
 
-### Columna REAL (para gastos fijos)
+### Columna DÍA (D) - para gastos fijos
 ```
-=IFERROR(IF(INDEX(GASTOS_FIJOS!$H:$S,MATCH("concepto",GASTOS_FIJOS!$A:$A,0),$L$3)<>"",
-  INDEX(GASTOS_FIJOS!$H:$S,MATCH("concepto",GASTOS_FIJOS!$A:$A,0),$L$3),
-  INDEX(GASTOS_FIJOS!$G:$G,MATCH("concepto",GASTOS_FIJOS!$A:$A,0))),0)
+=IFERROR(INDEX(GASTOS_FIJOS!$E:$E;MATCH("concepto";GASTOS_FIJOS!$A:$A;0));0)
 ```
-> **NOTA**: Columnas actualizadas por nueva estructura: H-S = meses, G = BASE (antes era G-R y F)
+> Para variables/ahorro/eventos: valor fijo 0 (no tienen día de vencimiento)
 
-### Columna REAL (para variables puros)
+### Columna PRESUPUESTO (E)
 ```
-=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$D$4:$D$500="concepto")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=$L$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500)),0)
+=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH("concepto";PRESUPUESTO!$A:$A;0);$N$3);0)
+```
+
+### Columna REAL (F) - para gastos fijos
+```
+=IFERROR(INDEX(GASTOS_FIJOS!$G:$R;MATCH("concepto";GASTOS_FIJOS!$A:$A;0);$N$3);0)
+```
+> **NOTA**: G-R = meses ENE-DIC (ya no hay columna BASE)
+
+### Columna REAL (F) - para variables puros
+```
+=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$D$4:$D$500="concepto")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)
 ```
 > **IMPORTANTE**: Se usa SUMPRODUCT en lugar de SUMIFS porque SUMIFS no acepta funciones como MONTH()/YEAR() en criterios.
 
-### Columna DIFERENCIA
+### Columna DIFERENCIA (G)
 ```
-=E{row}-D{row}
+=F{row}-E{row}
 ```
 
-### Columna ESTADO
+### Columna ESTADO (I)
 ```
-=IF(E{row}>=D{row},"✓","⚠")  // Para Ingresos
-=IF(E{row}<=D{row},"✓","⚠")  // Para Egresos
+=IF(F{row}>=E{row};"✓";"⚠")  // Para Ingresos
+=IF(F{row}<=E{row};"✓";"⚠")  // Para Egresos
 ```
 
 ### Columna EST. PAGO (GATILLO de contabilización)
@@ -299,11 +303,12 @@ CONFIG (listas maestras)
 
 **Fórmulas en TABLERO:**
 ```
-EGRESOS_PAGADOS = SUMIFS(MOVIMIENTO!E:E;MOVIMIENTO!B:B;"Egreso";MOVIMIENTO!I:I;"Pagado")
-EGRESOS_PENDIENTES = SUMIFS(MOVIMIENTO!E:E;MOVIMIENTO!B:B;"Egreso";MOVIMIENTO!I:I;"Pendiente")
+EGRESOS_PAGADOS = SUMIFS(MOVIMIENTO!F:F;MOVIMIENTO!B:B;"Egreso";MOVIMIENTO!J:J;"Pagado")
+EGRESOS_PENDIENTES = SUMIFS(MOVIMIENTO!F:F;MOVIMIENTO!B:B;"Egreso";MOVIMIENTO!J:J;"Pendiente")
 DISPONIBLE = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS
 PROYECCIÓN = DISPONIBLE - EGRESOS_PENDIENTES
 ```
+> **NOTA**: Columna F=REAL, J=EST.PAGO (estructura actualizada v4.1)
 
 > **IMPORTANTE**: Todas las fórmulas usan `IFERROR(...,0)` para evitar errores #VALUE! cuando no hay datos.
 
@@ -311,24 +316,28 @@ PROYECCIÓN = DISPONIBLE - EGRESOS_PENDIENTES
 
 ## Hoja LIQUIDEZ (8va hoja)
 
-**Propósito**: Mostrar gastos según vencimiento usando fórmulas con `TODAY()`.
+**Propósito**: Mostrar gastos según vencimiento leyendo DÍA directamente de MOVIMIENTO (sin INDEX/MATCH desde GASTOS_FIJOS).
 
 ### Estructura:
 | Sección | Descripción | Fórmula clave |
 |---------|-------------|---------------|
-| 🔴 ATRASADOS | DÍA < DAY(TODAY()) y EST.PAGO = "Pendiente" | `=SUMPRODUCT((DAY(TODAY())>DÍA)*(EST.PAGO="Pendiente")*(MONTO))` |
-| 🟡 ESTA SEMANA | DÍA entre HOY y HOY+7 | `=SUMPRODUCT((DÍA>=DAY(TODAY()))*(DÍA<=DAY(TODAY())+7)*(EST.PAGO="Pendiente")*(MONTO))` |
+| 🔴 ATRASADOS | DÍA < DAY(TODAY()) y EST.PAGO = "Pendiente" | `=SUMPRODUCT((MOVIMIENTO!D>0)*(MOVIMIENTO!D<DAY(TODAY()))*(MOVIMIENTO!J="Pendiente")*(MOVIMIENTO!F))` |
+| 🟡 ESTA SEMANA | DÍA entre HOY y HOY+7 | `=SUMPRODUCT((MOVIMIENTO!D>0)*(MOVIMIENTO!D>=DAY(TODAY()))*(MOVIMIENTO!D<=DAY(TODAY())+7)*(MOVIMIENTO!J="Pendiente")*(MOVIMIENTO!F))` |
 | 🟢 PRÓXIMA SEMANA | DÍA entre HOY+8 y HOY+14 | Similar con rango +8 a +14 |
+| 🔵 SEMANA 3 | DÍA entre HOY+15 y HOY+21 | Similar con rango +15 a +21 |
+
+> **NOTA**: Se filtra `(MOVIMIENTO!D>0)` para excluir variables/ahorro que tienen DÍA=0
 
 ### Flujo de datos:
 ```
-MOVIMIENTO (columna H=DÍA, I=EST.PAGO, E=REAL)
+MOVIMIENTO (columna D=DÍA, J=EST.PAGO, F=REAL)
     │
-    └──► LIQUIDEZ (fórmulas TODAY() auto-actualizables)
+    └──► LIQUIDEZ/TABLERO (lectura directa, sin INDEX/MATCH)
             │
             ├── ATRASADOS (urgentes)
             ├── ESTA SEMANA (próximos)
-            └── PRÓXIMA SEMANA (planificar)
+            ├── PRÓXIMA SEMANA (planificar)
+            └── SEMANA 3 (horizonte)
 ```
 
 ---
@@ -482,13 +491,13 @@ El sistema usa formato español/europeo para números:
 ## Notas Críticas
 
 1. **PRESUPUESTO tiene cálculos automáticos** - Subtotales, totales, ganancia NT y semáforo
-2. **GASTOS_FIJOS tiene CUENTA** - Cada gasto indica de qué cuenta se paga
-3. **MOVIMIENTO es el corazón** - Compara Plan vs Real con fórmulas
+2. **GASTOS_FIJOS sin BASE** - Cada mes tiene su valor directo (columnas G-R = ENE-DIC)
+3. **MOVIMIENTO tiene columna DÍA** - Columna D copia el día de vencimiento para acceso directo
 4. **TABLERO usa "Saldo Banco"** - Columna editable para verificar saldo real en banco
 5. **Variables PUROS van a CARGA** - Solo Supermercado, Combustible, etc.
 6. **AHORRO va a CARGA** - Se registra cuando realmente se hace la transferencia
 7. **EST. PAGO es el GATILLO** - Controla si un gasto cuenta como PAGADO o PENDIENTE
-8. **LIQUIDEZ es 100% automática** - Usa TODAY() para calcular vencimientos
+8. **LIQUIDEZ lee de MOVIMIENTO** - Sin INDEX/MATCH, fórmulas simplificadas con DÍA en columna D
 
 ---
 
@@ -515,5 +524,5 @@ El sistema usa formato español/europeo para números:
 
 ---
 
-*Última actualización: 2026-01-04*
-*Versión: 4.0 - CUENTA en GASTOS_FIJOS, AHORRO desde CARGA, "Saldo Banco" en TABLERO, PRESUPUESTO con cálculos completos*
+*Última actualización: 2026-01-06*
+*Versión: 4.1 - Sin BASE en GASTOS_FIJOS, DÍA en MOVIMIENTO (col D), fórmulas LIQUIDEZ simplificadas*

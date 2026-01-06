@@ -1,7 +1,7 @@
 {
   "project": {
     "name": "Control Financiero 2026 - NeuroTEA & Familia",
-    "version": "4.0.0",
+    "version": "4.1.0",
     "description": "Sistema de control financiero para clínica NeuroTEA y finanzas familiares en Google Sheets"
   },
   "context": {
@@ -70,8 +70,21 @@
       "D": "FRECUENCIA",
       "E": "DÍA",
       "F": "CUENTA",
-      "G": "BASE",
-      "H-S": "ENE-DIC (meses)"
+      "G-R": "ENE-DIC (meses, sin BASE)"
+    },
+    "movimientoColumnas": {
+      "A": "CONCEPTO",
+      "B": "TIPO",
+      "C": "FREC",
+      "D": "DÍA",
+      "E": "PRESUPUESTO",
+      "F": "REAL",
+      "G": "DIFERENCIA",
+      "H": "%",
+      "I": "ESTADO",
+      "J": "EST.PAGO",
+      "K": "🚦",
+      "N": "MES_NUM (oculta)"
     }
   },
   "metasNT": {
@@ -96,8 +109,9 @@
     "criticalChecks": [
       "CONFIG contiene todas las listas del PLAN_MAESTRO",
       "MOVIMIENTO usa fórmulas dinámicas (no valores fijos)",
+      "MOVIMIENTO tiene columna DÍA (D) para acceso directo desde LIQUIDEZ/TABLERO",
       "TABLERO lee de MOVIMIENTO (no tiene datos propios)",
-      "GASTOS_FIJOS tiene lógica de arrastre BASE",
+      "LIQUIDEZ lee DÍA directamente de MOVIMIENTO!D (sin INDEX/MATCH)",
       "Sistema Anti-Burro funciona en CARGA sheets"
     ]
   },
