@@ -622,8 +622,10 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 25);
   rowFam++;
 
-  // SALDO INICIAL (editable - azul) - Manual por mes
-  sheet.getRange(rowFam, 2).setValue('📥 SALDO INICIAL ✏️')
+  // SALDO INICIAL (desde CONFIG - independiente por mes)
+  // Decisión [2026-01-06]: Cada mes tiene su saldo inicial en CONFIG!A48:C59
+  // La fórmula usa INDEX/MATCH para traer el valor del mes seleccionado
+  sheet.getRange(rowFam, 2).setValue('📥 SALDO INICIAL')
     .setBackground(UI.GRIS_INFO)
     .setFontWeight('bold')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
@@ -631,14 +633,15 @@ function crearHojaTABLERO() {
     .setBackground(UI.GRIS_INFO)
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 4).setValue(0)
+  // Fórmula: Lee el saldo inicial del mes desde CONFIG (columna B = FAMILIA)
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(INDEX(CONFIG!$B$48:$B$59;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$48:$A$59;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.GRIS_INFO)
     .setHorizontalAlignment('right')
     .setFontColor(UI.NT_EDITABLE)
     .setFontWeight('bold')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 5).setValue('Manual')
+  sheet.getRange(rowFam, 5).setValue('→ CONFIG')
     .setBackground(UI.GRIS_INFO)
     .setHorizontalAlignment('center')
     .setFontStyle('italic')
@@ -895,8 +898,9 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 25);
   rowNT++;
 
-  // SALDO INICIAL NT (editable - azul)
-  sheet.getRange(rowNT, 8).setValue('📥 SALDO INICIAL ✏️')
+  // SALDO INICIAL NT (desde CONFIG - independiente por mes)
+  // Decisión [2026-01-06]: Cada mes tiene su saldo inicial en CONFIG!A48:C59
+  sheet.getRange(rowNT, 8).setValue('📥 SALDO INICIAL')
     .setBackground(UI.GRIS_INFO)
     .setFontWeight('bold')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
@@ -904,14 +908,15 @@ function crearHojaTABLERO() {
     .setBackground(UI.GRIS_INFO)
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 10).setValue(0)
+  // Fórmula: Lee el saldo inicial del mes desde CONFIG (columna C = NEUROTEA)
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(INDEX(CONFIG!$C$48:$C$59;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$48:$A$59;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.GRIS_INFO)
     .setHorizontalAlignment('right')
     .setFontColor(UI.NT_EDITABLE)
     .setFontWeight('bold')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 11).setValue('Manual')
+  sheet.getRange(rowNT, 11).setValue('→ CONFIG')
     .setBackground(UI.GRIS_INFO)
     .setHorizontalAlignment('center')
     .setFontStyle('italic')

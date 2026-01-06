@@ -342,21 +342,35 @@ MOVIMIENTO (columna D=DÍA, J=EST.PAGO, F=REAL)
 
 ---
 
-## SALDO_INICIAL Manual por Mes
+## SALDO_INICIAL Independiente por Mes
 
-**Decisión [2026-01-03m]**: El saldo inicial de cada mes se ingresa manualmente.
+**Decisión [2026-01-06]**: Cada mes tiene su propio saldo inicial almacenado en CONFIG.
 
-### Flujo de cierre de mes:
-1. Ver saldo final del mes actual en TABLERO
-2. Cambiar selector de mes a siguiente mes
-3. Ingresar saldo final anterior como SALDO_INICIAL del nuevo mes
-
-### Fórmula de DISPONIBLE:
+### Ubicación de los saldos iniciales:
 ```
+CONFIG → Sección "SALDOS INICIALES POR MES" (filas 46-59)
+| MES       | FAMILIA    | NEUROTEA   |
+|-----------|------------|------------|
+| Enero     | [editable] | [editable] |
+| Febrero   | [editable] | [editable] |
+| ...       | ...        | ...        |
+| Diciembre | [editable] | [editable] |
+```
+
+### Fórmulas en TABLERO:
+```
+SALDO_INICIAL_FAM = INDEX(CONFIG!$B$48:$B$59;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$48:$A$59;0))
+SALDO_INICIAL_NT = INDEX(CONFIG!$C$48:$C$59;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$48:$A$59;0))
 DISPONIBLE = SALDO_INICIAL + INGRESOS_MES - EGRESOS_PAGADOS
 ```
 
-> **NOTA**: NO hay arrastre automático. El usuario controla manualmente el cierre de mes.
+### Flujo de cierre de mes:
+1. Ver saldo final del mes actual en TABLERO (DISPONIBLE - PENDIENTES)
+2. Ir a CONFIG → "SALDOS INICIALES POR MES"
+3. Ingresar el saldo final como SALDO_INICIAL del mes siguiente
+4. Al cambiar el mes en MOVIMIENTO, TABLERO mostrará automáticamente el saldo correcto
+
+> **NOTA**: Cada mes queda "congelado" con su histórico independiente.
 
 ---
 
@@ -493,11 +507,12 @@ El sistema usa formato español/europeo para números:
 1. **PRESUPUESTO tiene cálculos automáticos** - Subtotales, totales, ganancia NT y semáforo
 2. **GASTOS_FIJOS sin BASE** - Cada mes tiene su valor directo (columnas G-R = ENE-DIC)
 3. **MOVIMIENTO tiene columna DÍA** - Columna D copia el día de vencimiento para acceso directo
-4. **TABLERO usa "Saldo Banco"** - Columna editable para verificar saldo real en banco
-5. **Variables PUROS van a CARGA** - Solo Supermercado, Combustible, etc.
-6. **AHORRO va a CARGA** - Se registra cuando realmente se hace la transferencia
-7. **EST. PAGO es el GATILLO** - Controla si un gasto cuenta como PAGADO o PENDIENTE
-8. **LIQUIDEZ lee de MOVIMIENTO** - Sin INDEX/MATCH, fórmulas simplificadas con DÍA en columna D
+4. **SALDO_INICIAL independiente por mes** - Cada mes tiene su saldo en CONFIG (filas 48-59)
+5. **TABLERO usa "Saldo Banco"** - Columna editable para verificar saldo real en banco
+6. **Variables PUROS van a CARGA** - Solo Supermercado, Combustible, etc.
+7. **AHORRO va a CARGA** - Se registra cuando realmente se hace la transferencia
+8. **EST. PAGO es el GATILLO** - Controla si un gasto cuenta como PAGADO o PENDIENTE
+9. **LIQUIDEZ lee de MOVIMIENTO** - Sin INDEX/MATCH, fórmulas simplificadas con DÍA en columna D
 
 ---
 
@@ -525,4 +540,4 @@ El sistema usa formato español/europeo para números:
 ---
 
 *Última actualización: 2026-01-06*
-*Versión: 4.1 - Sin BASE en GASTOS_FIJOS, DÍA en MOVIMIENTO (col D), fórmulas LIQUIDEZ simplificadas*
+*Versión: 4.2 - Saldos iniciales independientes por mes en CONFIG, WebApp actualizado*

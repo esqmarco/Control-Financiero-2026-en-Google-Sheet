@@ -118,6 +118,39 @@ function crearHojaCONFIG() {
   sheet.getRange(filaMetas + 1, 1, metas.length, 3).setValues(metas);
   sheet.getRange(filaMetas + 1, 1, 1, 3).setFontWeight('bold').setBackground(C.GRIS_FONDO);
 
+  // ─── SALDOS INICIALES POR MES ───
+  // Decisión [2026-01-06]: Cada mes tiene su propio saldo inicial independiente
+  const filaSaldos = 46;
+  sheet.getRange(filaSaldos, 1, 1, 4).merge()
+    .setValue('💰 SALDOS INICIALES POR MES')
+    .setFontSize(12).setFontWeight('bold')
+    .setBackground(C.BALANCE_HEADER).setFontColor(C.BLANCO);
+
+  sheet.getRange(filaSaldos + 1, 1, 1, 3)
+    .setValues([['MES', 'FAMILIA', 'NEUROTEA']])
+    .setFontWeight('bold')
+    .setBackground(C.GRIS_FONDO)
+    .setHorizontalAlignment('center');
+
+  // Filas de meses con valores editables (inicializados en 0)
+  MESES.forEach((mes, i) => {
+    const filaMes = filaSaldos + 2 + i;
+    sheet.getRange(filaMes, 1).setValue(mes);
+    sheet.getRange(filaMes, 2).setValue(0)
+      .setNumberFormat('#,##0')
+      .setBackground(C.FAM_FONDO)
+      .setFontWeight('bold');
+    sheet.getRange(filaMes, 3).setValue(0)
+      .setNumberFormat('#,##0')
+      .setBackground(C.NT_FONDO)
+      .setFontWeight('bold');
+  });
+
+  // Nota explicativa
+  sheet.getRange(filaSaldos + 14, 1, 1, 3).merge()
+    .setValue('✏️ Ingrese aquí el saldo inicial de cada mes. Al cambiar el mes en MOVIMIENTO, TABLERO usará el saldo correspondiente.')
+    .setFontSize(9).setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
+
   // Formato general
   sheet.setColumnWidths(1, 14, 160);
   sheet.setFrozenRows(3);
