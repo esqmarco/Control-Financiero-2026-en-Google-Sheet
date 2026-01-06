@@ -1265,8 +1265,8 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 32);
   rowNT++;
 
-  // Headers
-  ['Categoría', 'Monto', '%', ''].forEach((h, i) => {
+  // Headers (ahora con columna Barra)
+  ['Categoría', 'Monto', '%', 'Barra'].forEach((h, i) => {
     sheet.getRange(rowNT, 8 + i)
       .setValue(h)
       .setFontSize(10)
@@ -1299,9 +1299,12 @@ function crearHojaTABLERO() {
       .setBackground(cat.color)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Monto: suma gastos pagados de esta categoría en MOVIMIENTO NT
+    // Monto: GASTOS_FIJOS (mes actual) + CARGA_NT (variables del mes)
+    // GASTOS_FIJOS: B=ENTIDAD, C=CATEGORÍA, G-R=ENE-DIC
+    // CARGA_NT: B=TIPO, C=CATEGORÍA, F=MONTO, A=FECHA
+    const formulaMonto = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="NEUROTEA")*(GASTOS_FIJOS!$C$4:$C$100="${cat.nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_NT!$B$4:$B$500="Egreso NT")*(CARGA_NT!$C$4:$C$500="${cat.nombre}")*(MONTH(CARGA_NT!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!$A$4:$A$500)=${AÑO})*(CARGA_NT!$F$4:$F$500));0)`;
     sheet.getRange(rowNT, 9)
-      .setFormula(`=IFERROR(SUMIFS(MOVIMIENTO!F73:F150;MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!J73:J150;"Pagado";MOVIMIENTO!C73:C150;"${cat.nombre}");0)`)
+      .setFormula(formulaMonto)
       .setNumberFormat('#,##0')
       .setBackground(cat.color)
       .setHorizontalAlignment('right')
@@ -1315,9 +1318,13 @@ function crearHojaTABLERO() {
       .setHorizontalAlignment('center')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Barra visual (vacía por ahora)
-    sheet.getRange(rowNT, 11).setValue('')
+    // Barra visual con texto (█░)
+    sheet.getRange(rowNT, 11)
+      .setFormula(`=REPT("█";ROUND(J${rowNT}*10))&REPT("░";10-ROUND(J${rowNT}*10))`)
+      .setFontFamily('Courier New')
+      .setFontSize(10)
       .setBackground(cat.color)
+      .setHorizontalAlignment('left')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
     sheet.setRowHeight(rowNT, 21);
@@ -1341,8 +1348,12 @@ function crearHojaTABLERO() {
     .setBackground(UI.NT_SUBTOTAL)
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 11).setValue('')
+  sheet.getRange(rowNT, 11).setValue('██████████')
+    .setFontFamily('Courier New')
+    .setFontSize(10)
+    .setFontWeight('bold')
     .setBackground(UI.NT_SUBTOTAL)
+    .setHorizontalAlignment('left')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowNT, 25);
   rowNT += 2;
@@ -1493,6 +1504,114 @@ function crearHojaTABLERO() {
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowFam, 26);
+  rowFam += 2;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SECCIÓN FAMILIA: % GASTOS POR CATEGORÍA
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Título sección
+  sheet.getRange(rowFam, 2, 1, 4).merge()
+    .setValue('📊 % GASTOS POR CATEGORÍA')
+    .setFontSize(12)
+    .setFontWeight('bold')
+    .setFontColor(UI.FAM_TEXTO)
+    .setBackground(UI.FAM_TITULO)
+    .setVerticalAlignment('middle');
+  sheet.setRowHeight(rowFam, 32);
+  rowFam++;
+
+  // Headers (con columna Barra)
+  ['Categoría', 'Monto', '%', 'Barra'].forEach((h, i) => {
+    sheet.getRange(rowFam, 2 + i)
+      .setValue(h)
+      .setFontSize(10)
+      .setFontWeight('bold')
+      .setBackground(UI.FAM_FILA_PAR)
+      .setHorizontalAlignment(i === 0 ? 'left' : 'center')
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  });
+  sheet.setRowHeight(rowFam, 25);
+  rowFam++;
+
+  // Referencia al total de egresos pagados FAMILIA (columna C de indicadores)
+  const filaTotalGastosFam = filaIngresosFam; // C${filaIngresosFam} tiene GASTOS PAGADOS
+
+  // Categorías FAMILIA con sus colores
+  const categoriasFAM = [
+    { nombre: 'GASTOS FIJOS', color: '#D1FAE5' },
+    { nombre: 'CUOTAS Y PRÉSTAMOS', color: '#A7F3D0' },
+    { nombre: 'OBLIGACIONES LEGALES', color: '#6EE7B7' },
+    { nombre: 'SUSCRIPCIONES', color: '#34D399' },
+    { nombre: 'VARIABLES', color: '#FEF3C7' },
+    { nombre: 'AHORRO', color: '#DBEAFE' }
+  ];
+
+  const filaInicioCatFam = rowFam;
+  categoriasFAM.forEach((cat, idx) => {
+    // Nombre categoría
+    sheet.getRange(rowFam, 2).setValue(cat.nombre)
+      .setFontSize(9)
+      .setBackground(cat.color)
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+    // Monto: GASTOS_FIJOS (FAMILIA) + CARGA_FAMILIA (variables/ahorro del mes)
+    // GASTOS_FIJOS: B=ENTIDAD, C=CATEGORÍA, G-R=ENE-DIC
+    // CARGA_FAMILIA: B=TIPO, C=CATEGORÍA, F=MONTO, A=FECHA
+    const formulaMontoFam = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="FAMILIA")*(GASTOS_FIJOS!$C$4:$C$100="${cat.nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500="Egreso Familiar")*(CARGA_FAMILIA!$C$4:$C$500="${cat.nombre}")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=${AÑO})*(CARGA_FAMILIA!$F$4:$F$500));0)`;
+    sheet.getRange(rowFam, 3)
+      .setFormula(formulaMontoFam)
+      .setNumberFormat('#,##0')
+      .setBackground(cat.color)
+      .setHorizontalAlignment('right')
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+    // %: monto / total gastos
+    sheet.getRange(rowFam, 4)
+      .setFormula(`=IFERROR(IF(C${filaTotalGastosFam}>0;C${rowFam}/C${filaTotalGastosFam};0);0)`)
+      .setNumberFormat('0%')
+      .setBackground(cat.color)
+      .setHorizontalAlignment('center')
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+    // Barra visual con texto (█░)
+    sheet.getRange(rowFam, 5)
+      .setFormula(`=REPT("█";ROUND(D${rowFam}*10))&REPT("░";10-ROUND(D${rowFam}*10))`)
+      .setFontFamily('Courier New')
+      .setFontSize(10)
+      .setBackground(cat.color)
+      .setHorizontalAlignment('left')
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+    sheet.setRowHeight(rowFam, 21);
+    rowFam++;
+  });
+
+  // Total categorías FAMILIA
+  sheet.getRange(rowFam, 2).setValue('TOTAL')
+    .setFontWeight('bold')
+    .setBackground(UI.FAM_SUBTOTAL)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 3).setFormula(`=IFERROR(SUM(C${filaInicioCatFam}:C${rowFam-1}),0)`)
+    .setNumberFormat('#,##0')
+    .setFontWeight('bold')
+    .setBackground(UI.FAM_SUBTOTAL)
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 4).setFormula(`=IFERROR(SUM(D${filaInicioCatFam}:D${rowFam-1}),0)`)
+    .setNumberFormat('0%')
+    .setFontWeight('bold')
+    .setBackground(UI.FAM_SUBTOTAL)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 5).setValue('██████████')
+    .setFontFamily('Courier New')
+    .setFontSize(10)
+    .setFontWeight('bold')
+    .setBackground(UI.FAM_SUBTOTAL)
+    .setHorizontalAlignment('left')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowFam, 25);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SECCIÓN INFERIOR: BALANCE CRUZADO NT ↔ FAMILIA
