@@ -378,13 +378,102 @@ function crearHojaTABLERO() {
   rowFam += 2;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SECCIÓN NEUROTEA: INDICADORES DE METAS (Filas 6-17)
+  // SECCIÓN NEUROTEA: SALDOS EN CUENTAS (PRIMERO)
   // ═══════════════════════════════════════════════════════════════════════════
 
   let rowNT = 6;
 
   // Título sección
-  sheet.getRange('H6:K6').merge()
+  sheet.getRange(rowNT, 8, 1, 4).merge()
+    .setValue('💰 SALDOS EN CUENTAS')
+    .setFontSize(12)
+    .setFontWeight('bold')
+    .setFontColor(UI.NT_TEXTO)
+    .setBackground(UI.NT_TITULO)
+    .setVerticalAlignment('middle');
+  sheet.setRowHeight(rowNT, 32);
+  rowNT++;
+
+  // Headers
+  ['Cuenta', 'Esperado', 'Saldo Banco ✏️', 'Estado'].forEach((h, i) => {
+    sheet.getRange(rowNT, 8 + i)
+      .setValue(h)
+      .setFontSize(10)
+      .setFontWeight('bold')
+      .setBackground(UI.NT_FILA_PAR)
+      .setHorizontalAlignment(i === 0 ? 'left' : (i === 3 ? 'center' : 'right'))
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  });
+  sheet.setRowHeight(rowNT, 25);
+  rowNT++;
+
+  // Filas de cuentas NT
+  const filaInicioCuentasNT = rowNT;
+  CUENTAS_NT.forEach((cuenta, idx) => {
+    const bgColor = (idx % 2 === 0) ? UI.NT_FILA_PAR : UI.BLANCO;
+
+    sheet.getRange(rowNT, 8).setValue(cuenta)
+      .setBackground(bgColor)
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+    // Esperado (fórmula: Ingresos - Egresos de CARGA_NT para esta cuenta)
+    const formulaEsperado = `=IFERROR(SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500<>"Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500))-SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500="Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500));0)`;
+    sheet.getRange(rowNT, 9).setFormula(formulaEsperado)
+      .setNumberFormat('#,##0')
+      .setBackground(bgColor)
+      .setHorizontalAlignment('right')
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+    // Saldo Banco ✏️ (editable)
+    sheet.getRange(rowNT, 10).setValue(0)
+      .setNumberFormat('#,##0')
+      .setBackground(bgColor)
+      .setHorizontalAlignment('right')
+      .setFontColor(UI.NT_EDITABLE)
+      .setFontWeight('bold')
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+    // Estado
+    sheet.getRange(rowNT, 11).setFormula(`=IF(J${rowNT}>=I${rowNT};"✓";"⚠")`)
+      .setBackground(bgColor)
+      .setHorizontalAlignment('center')
+      .setFontWeight('bold')
+      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+    sheet.setRowHeight(rowNT, 21);
+    rowNT++;
+  });
+
+  // Total NT
+  const filaTotalCuentasNT = rowNT;
+  sheet.getRange(rowNT, 8).setValue('💵 TOTAL DISPONIBLE')
+    .setFontWeight('bold')
+    .setBackground(UI.NT_SUBTOTAL)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(SUM(I${filaInicioCuentasNT}:I${rowNT-1}),0)`)
+    .setNumberFormat('#,##0')
+    .setFontWeight('bold')
+    .setBackground(UI.NT_SUBTOTAL)
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 10).setFormula(`=IFERROR(SUM(J${filaInicioCuentasNT}:J${rowNT-1}),0)`)
+    .setNumberFormat('#,##0')
+    .setFontWeight('bold')
+    .setBackground(UI.NT_SUBTOTAL)
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowNT, 11).setValue('')
+    .setBackground(UI.NT_SUBTOTAL)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowNT, 25);
+  rowNT += 2;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SECCIÓN NEUROTEA: INDICADORES DE METAS (SEGUNDO)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Título sección
+  sheet.getRange(rowNT, 8, 1, 4).merge()
     .setValue('🎯 INDICADORES DE METAS')
     .setFontSize(12)
     .setFontWeight('bold')
@@ -829,98 +918,6 @@ function crearHojaTABLERO() {
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowFam, 28);
   rowFam += 2;
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SECCIÓN NEUROTEA: SALDOS EN CUENTAS (Filas 20+)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  rowNT += 2; // Espaciador
-
-  // Título sección
-  sheet.getRange(rowNT, 8, 1, 4).merge()
-    .setValue('💰 SALDOS EN CUENTAS')
-    .setFontSize(12)
-    .setFontWeight('bold')
-    .setFontColor(UI.NT_TEXTO)
-    .setBackground(UI.NT_TITULO)
-    .setVerticalAlignment('middle');
-  sheet.setRowHeight(rowNT, 32);
-  rowNT++;
-
-  // Headers
-  ['Cuenta', 'Esperado', 'Saldo Banco ✏️', 'Estado'].forEach((h, i) => {
-    sheet.getRange(rowNT, 8 + i)
-      .setValue(h)
-      .setFontSize(10)
-      .setFontWeight('bold')
-      .setBackground(UI.NT_FILA_PAR)
-      .setHorizontalAlignment(i === 0 ? 'left' : (i === 3 ? 'center' : 'right'))
-      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  });
-  sheet.setRowHeight(rowNT, 25);
-  rowNT++;
-
-  // Filas de cuentas NT
-  const filaInicioCuentasNT = rowNT;
-  CUENTAS_NT.forEach((cuenta, idx) => {
-    const bgColor = (idx % 2 === 0) ? UI.NT_FILA_PAR : UI.BLANCO;
-
-    sheet.getRange(rowNT, 8).setValue(cuenta)
-      .setBackground(bgColor)
-      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-
-    // Esperado (fórmula: Ingresos - Egresos de CARGA_NT para esta cuenta)
-    // ACTUALIZADO: $N$3 es el nuevo MES_NUM en MOVIMIENTO v5.1
-    // Saldo = (Ingresos a esta cuenta) - (Egresos de esta cuenta)
-    const formulaEsperado = `=IFERROR(SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500<>"Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500))-SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500="Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500));0)`;
-    sheet.getRange(rowNT, 9).setFormula(formulaEsperado)
-      .setNumberFormat('#,##0')
-      .setBackground(bgColor)
-      .setHorizontalAlignment('right')
-      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-
-    // Saldo Banco ✏️ (editable - manual: lo que verificás en tu cuenta bancaria)
-    sheet.getRange(rowNT, 10).setValue(0)
-      .setNumberFormat('#,##0')
-      .setBackground(bgColor)
-      .setHorizontalAlignment('right')
-      .setFontColor(UI.NT_EDITABLE)
-      .setFontWeight('bold')
-      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-
-    // Estado (fórmula: Real >= Esperado)
-    sheet.getRange(rowNT, 11).setFormula(`=IF(J${rowNT}>=I${rowNT};"✓";"⚠")`)
-      .setBackground(bgColor)
-      .setHorizontalAlignment('center')
-      .setFontWeight('bold')
-      .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-
-    sheet.setRowHeight(rowNT, 21);
-    rowNT++;
-  });
-
-  // Total NT
-  sheet.getRange(rowNT, 8).setValue('💵 TOTAL DISPONIBLE')
-    .setFontWeight('bold')
-    .setBackground(UI.NT_SUBTOTAL)
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(SUM(I${filaInicioCuentasNT}:I${rowNT-1}),0)`)
-    .setNumberFormat('#,##0')
-    .setFontWeight('bold')
-    .setBackground(UI.NT_SUBTOTAL)
-    .setHorizontalAlignment('right')
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 10).setFormula(`=IFERROR(SUM(J${filaInicioCuentasNT}:J${rowNT-1}),0)`)
-    .setNumberFormat('#,##0')
-    .setFontWeight('bold')
-    .setBackground(UI.NT_SUBTOTAL)
-    .setHorizontalAlignment('right')
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 11).setValue('')
-    .setBackground(UI.NT_SUBTOTAL)
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.setRowHeight(rowNT, 25);
-  rowNT += 2;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SECCIÓN NEUROTEA: FLUJO DE CAJA DEL MES
