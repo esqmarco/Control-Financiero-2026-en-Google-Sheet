@@ -520,7 +520,7 @@ function crearHojaTABLERO() {
 
   // Estado de meta (badge grande)
   sheet.getRange(rowNT, 8, 1, 4).merge()
-    .setFormula(`=IFERROR(IF(H${filaGananciaNT}>=J${filaGananciaNT};"✅ META CUMPLIDA - Superávit: Gs. "&TEXT(H${filaGananciaNT}-J${filaGananciaNT};"#.##0");"⚠️ META NO CUMPLIDA - Falta: Gs. "&TEXT(J${filaGananciaNT}-H${filaGananciaNT};"#.##0"));"⏳ Sin datos")`)
+    .setFormula(`=IFERROR(IF(H${filaGananciaNT}>=J${filaGananciaNT};"✅ META CUMPLIDA - Superávit: Gs. "&TEXT(H${filaGananciaNT}-J${filaGananciaNT};"#,##0");"⚠️ META NO CUMPLIDA - Falta: Gs. "&TEXT(J${filaGananciaNT}-H${filaGananciaNT};"#,##0"));"⏳ Sin datos")`)
     .setFontSize(11)
     .setFontWeight('bold')
     .setHorizontalAlignment('center')
