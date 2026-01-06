@@ -434,9 +434,9 @@ function crearHojaTABLERO() {
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
   // Valor Gastos NEUROTEA (rango específico: filas 73-150)
-  // ACTUALIZADO: F=REAL en MOVIMIENTO v5.1
+  // ACTUALIZADO: Solo egresos PAGADOS (columna J = EST.PAGO)
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIF(MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!F73:F150);0)')
+    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F73:F150;MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!J73:J150;"Pagado");0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
