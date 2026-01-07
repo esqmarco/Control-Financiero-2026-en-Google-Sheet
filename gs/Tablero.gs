@@ -11,39 +11,63 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const UI = {
-  // FAMILIA - Verdes
-  FAM_HEADER: '#059669',
-  FAM_TITULO: '#D1FAE5',
-  FAM_TEXTO: '#059669',
-  FAM_FILA_PAR: '#ECFDF5',
-  FAM_SUBTOTAL: '#A7F3D0',
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PALETA SOBRIA Y PROFESIONAL
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  // NEUROTEA - Azules
-  NT_HEADER: '#1E40AF',
-  NT_TITULO: '#DBEAFE',
-  NT_TEXTO: '#1E40AF',
-  NT_FILA_PAR: '#EFF6FF',
-  NT_SUBTOTAL: '#93C5FD',
-  NT_EDITABLE: '#3B82F6',
+  // Entidades - Solo para headers principales
+  FAM_HEADER: '#1F2937',       // Gris oscuro
+  FAM_TITULO: '#F9FAFB',       // Gris muy claro
+  FAM_TEXTO: '#374151',        // Gris medio
+  FAM_FILA_PAR: '#F9FAFB',     // Gris muy claro
+  FAM_SUBTOTAL: '#E5E7EB',     // Gris claro
 
-  // Estados
+  NT_HEADER: '#1F2937',        // Gris oscuro
+  NT_TITULO: '#F9FAFB',        // Gris muy claro
+  NT_TEXTO: '#374151',         // Gris medio
+  NT_FILA_PAR: '#F9FAFB',      // Gris muy claro
+  NT_SUBTOTAL: '#E5E7EB',      // Gris claro
+  NT_EDITABLE: '#3B82F6',      // Azul para editables
+
+  // ═══ TARJETAS DE ESTADO (únicos colores fuertes) ═══
+  // Ingresos - Azul
+  INGRESO: '#3B82F6',
+  INGRESO_FONDO: '#DBEAFE',
+  INGRESO_TEXTO: '#1E40AF',
+
+  // Egresos Pagados - Rojo
+  PAGADO: '#EF4444',
+  PAGADO_FONDO: '#FEE2E2',
+  PAGADO_TEXTO: '#B91C1C',
+
+  // Pendientes - Naranja
+  PENDIENTE: '#F59E0B',
+  PENDIENTE_FONDO: '#FEF3C7',
+  PENDIENTE_TEXTO: '#B45309',
+
+  // Proyección/Disponible - Gris
+  PROYECCION: '#6B7280',
+  PROYECCION_FONDO: '#F3F4F6',
+  PROYECCION_TEXTO: '#374151',
+
+  // Estados OK/Alerta (solo para indicadores)
   VERDE: '#22C55E',
   VERDE_FONDO: '#DCFCE7',
   AMARILLO: '#F59E0B',
   AMARILLO_FONDO: '#FEF3C7',
   ROJO: '#DC2626',
-  ROJO_FONDO: '#FEF2F2',
+  ROJO_FONDO: '#FEE2E2',
 
-  // Balance Cruzado
-  PURPURA_HEADER: '#7C3AED',
-  PURPURA_FONDO: '#EDE9FE',
+  // Balance Cruzado - Morado suave
+  PURPURA_HEADER: '#6B7280',
+  PURPURA_FONDO: '#F3F4F6',
 
   // Neutros
-  HEADER_DARK: '#1E40AF',
-  GRIS_INFO: '#F3F4F6',
-  GRIS_BORDE: '#E5E7EB',
+  HEADER_DARK: '#1F2937',
+  GRIS_INFO: '#F9FAFB',
+  GRIS_BORDE: '#D1D5DB',
   BLANCO: '#FFFFFF',
-  NEGRO: '#1F2937'
+  NEGRO: '#111827'
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -252,23 +276,23 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 32);
   rowFam++;
 
-  // ROW 1: Labels
+  // ROW 1: Labels - Tarjetas con colores distintivos
   sheet.getRange(rowFam, 2, 1, 2).merge()
-    .setValue('INGRESOS DEL MES')
+    .setValue('💵 INGRESOS DEL MES')
     .setFontSize(9)
-    .setFontColor(UI.FAM_TEXTO)
-    .setBackground(UI.FAM_FILA_PAR)
+    .setFontColor(UI.INGRESO_TEXTO)
+    .setBackground(UI.INGRESO_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowFam, 4, 1, 2).merge()
-    .setValue('EGRESOS PAGADOS')
+    .setValue('📤 EGRESOS PAGADOS')
     .setFontSize(9)
-    .setFontColor(UI.NEGRO)
-    .setBackground(UI.GRIS_INFO)
+    .setFontColor(UI.PAGADO_TEXTO)
+    .setBackground(UI.PAGADO_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.PAGADO, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowFam, 22);
   rowFam++;
 
@@ -280,11 +304,11 @@ function crearHojaTABLERO() {
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
-    .setFontColor(UI.FAM_TEXTO)
-    .setBackground(UI.FAM_FILA_PAR)
+    .setFontColor(UI.INGRESO_TEXTO)
+    .setBackground(UI.INGRESO_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
   const filaValorIngresosFamInd = rowFam;
 
   // Egresos Pagados FAMILIA (filtrado por EST.PAGO = "Pagado" en MOVIMIENTO)
@@ -294,11 +318,11 @@ function crearHojaTABLERO() {
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
-    .setFontColor(UI.NEGRO)
-    .setBackground(UI.GRIS_INFO)
+    .setFontColor(UI.PAGADO_TEXTO)
+    .setBackground(UI.PAGADO_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.PAGADO, SpreadsheetApp.BorderStyle.SOLID);
   const filaValorEgresosFamInd = rowFam;
   sheet.setRowHeight(rowFam, 35);
   rowFam++;
@@ -486,26 +510,26 @@ function crearHojaTABLERO() {
   // Espaciador
   rowNT++;
 
-  // KPI ROW 1: Ingresos del Mes | Gastos del Mes
+  // KPI ROW 1: Ingresos del Mes | Gastos Pagados - Tarjetas con colores distintivos
   // Label Ingresos
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setValue('INGRESOS DEL MES')
+    .setValue('💵 INGRESOS DEL MES')
     .setFontSize(9)
-    .setFontColor(UI.NT_TEXTO)
-    .setBackground(UI.NT_FILA_PAR)
+    .setFontColor(UI.INGRESO_TEXTO)
+    .setBackground(UI.INGRESO_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
 
   // Label Gastos (solo pagados)
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setValue('GASTOS PAGADOS')
+    .setValue('📤 GASTOS PAGADOS')
     .setFontSize(9)
-    .setFontColor(UI.NEGRO)
-    .setBackground(UI.GRIS_INFO)
+    .setFontColor(UI.PAGADO_TEXTO)
+    .setBackground(UI.PAGADO_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.PAGADO, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowNT, 22);
   rowNT++;
 
@@ -516,11 +540,11 @@ function crearHojaTABLERO() {
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
-    .setFontColor(UI.NT_TEXTO)
-    .setBackground(UI.NT_FILA_PAR)
+    .setFontColor(UI.INGRESO_TEXTO)
+    .setBackground(UI.INGRESO_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
 
   // Valor Gastos NEUROTEA (rango específico: filas 73-150)
   // ACTUALIZADO: Solo egresos PAGADOS (columna J = EST.PAGO)
@@ -529,11 +553,11 @@ function crearHojaTABLERO() {
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
-    .setFontColor(UI.NEGRO)
-    .setBackground(UI.GRIS_INFO)
+    .setFontColor(UI.PAGADO_TEXTO)
+    .setBackground(UI.PAGADO_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.PAGADO, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowNT, 35);
   const filaIngresosNT = rowNT;
   rowNT++;
@@ -545,23 +569,23 @@ function crearHojaTABLERO() {
   // KPI ROW 2: Egresos Pendientes | Proyección Fin Mes
   // Label Egresos Pendientes
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setValue('EGRESOS PENDIENTES')
+    .setValue('⏳ EGRESOS PENDIENTES')
     .setFontSize(9)
-    .setFontColor(UI.ROJO)
-    .setBackground(UI.ROJO_FONDO)
+    .setFontColor(UI.PENDIENTE_TEXTO)
+    .setBackground(UI.PENDIENTE_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, UI.ROJO, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.PENDIENTE, SpreadsheetApp.BorderStyle.SOLID);
 
   // Label Proyección
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setValue('PROYECCIÓN FIN MES')
+    .setValue('📊 PROYECCIÓN FIN MES')
     .setFontSize(9)
-    .setFontColor('#7c3aed')
-    .setBackground('#EDE9FE')
+    .setFontColor(UI.PROYECCION_TEXTO)
+    .setBackground(UI.PROYECCION_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, '#7c3aed', SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.PROYECCION, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowNT, 22);
   rowNT++;
 
@@ -571,11 +595,11 @@ function crearHojaTABLERO() {
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
-    .setFontColor(UI.ROJO)
-    .setBackground(UI.ROJO_FONDO)
+    .setFontColor(UI.PENDIENTE_TEXTO)
+    .setBackground(UI.PENDIENTE_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, UI.ROJO, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.PENDIENTE, SpreadsheetApp.BorderStyle.SOLID);
 
   // Valor Proyección = Ingresos - Gastos Pagados - Egresos Pendientes
   sheet.getRange(rowNT, 10, 1, 2).merge()
@@ -583,11 +607,11 @@ function crearHojaTABLERO() {
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
-    .setFontColor('#7c3aed')
-    .setBackground('#EDE9FE')
+    .setFontColor(UI.PROYECCION_TEXTO)
+    .setBackground(UI.PROYECCION_FONDO)
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, false, false, '#7c3aed', SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, UI.PROYECCION, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowNT, 35);
   const filaEgresosPendNT = rowNT;
   rowNT++;
@@ -1281,32 +1305,34 @@ function crearHojaTABLERO() {
   // Referencia al total de gastos pagados (de los indicadores)
   const filaTotalGastosNT = filaIngresosNT; // J${filaIngresosNT} tiene GASTOS PAGADOS
 
-  // Categorías NT con sus fórmulas
+  // Categorías NT con sus fórmulas - Estilo sobrio (sin colores individuales)
   const categoriasNT = [
-    { nombre: 'CLÍNICA', color: '#E0F2FE' },
-    { nombre: 'SUELDOS Y HONORARIOS', color: '#DBEAFE' },
-    { nombre: 'TELEFONÍA E INTERNET', color: '#E0E7FF' },
-    { nombre: 'OBLIGACIONES LEGALES', color: '#EDE9FE' },
-    { nombre: 'EVENTOS', color: '#FCE7F3' },
-    { nombre: 'VARIABLES', color: '#FEF3C7' }
+    'CLÍNICA',
+    'SUELDOS Y HONORARIOS',
+    'TELEFONÍA E INTERNET',
+    'OBLIGACIONES LEGALES',
+    'EVENTOS',
+    'VARIABLES'
   ];
 
   const filaInicioCatNT = rowNT;
-  categoriasNT.forEach((cat, idx) => {
+  categoriasNT.forEach((nombre, idx) => {
+    const bgColor = (idx % 2 === 0) ? UI.FAM_FILA_PAR : UI.BLANCO;
+
     // Nombre categoría
-    sheet.getRange(rowNT, 8).setValue(cat.nombre)
+    sheet.getRange(rowNT, 8).setValue(nombre)
       .setFontSize(9)
-      .setBackground(cat.color)
+      .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
     // Monto: GASTOS_FIJOS (mes actual) + CARGA_NT (variables del mes)
     // GASTOS_FIJOS: B=ENTIDAD, C=CATEGORÍA, G-R=ENE-DIC
     // CARGA_NT: B=TIPO, C=CATEGORÍA, F=MONTO, A=FECHA
-    const formulaMonto = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="NEUROTEA")*(GASTOS_FIJOS!$C$4:$C$100="${cat.nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_NT!$B$4:$B$500="Egreso NT")*(CARGA_NT!$C$4:$C$500="${cat.nombre}")*(MONTH(CARGA_NT!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!$A$4:$A$500)=${AÑO})*(CARGA_NT!$F$4:$F$500));0)`;
+    const formulaMonto = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="NEUROTEA")*(GASTOS_FIJOS!$C$4:$C$100="${nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_NT!$B$4:$B$500="Egreso NT")*(CARGA_NT!$C$4:$C$500="${nombre}")*(MONTH(CARGA_NT!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!$A$4:$A$500)=${AÑO})*(CARGA_NT!$F$4:$F$500));0)`;
     sheet.getRange(rowNT, 9)
       .setFormula(formulaMonto)
       .setNumberFormat('#,##0')
-      .setBackground(cat.color)
+      .setBackground(bgColor)
       .setHorizontalAlignment('right')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
@@ -1314,7 +1340,7 @@ function crearHojaTABLERO() {
     sheet.getRange(rowNT, 10)
       .setFormula(`=IFERROR(IF(J${filaTotalGastosNT}>0;I${rowNT}/J${filaTotalGastosNT};0);0)`)
       .setNumberFormat('0%')
-      .setBackground(cat.color)
+      .setBackground(bgColor)
       .setHorizontalAlignment('center')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
@@ -1323,7 +1349,7 @@ function crearHojaTABLERO() {
       .setFormula(`=REPT("█";ROUND(J${rowNT}*10))&REPT("░";10-ROUND(J${rowNT}*10))`)
       .setFontFamily('Courier New')
       .setFontSize(10)
-      .setBackground(cat.color)
+      .setBackground(bgColor)
       .setHorizontalAlignment('left')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
@@ -1534,43 +1560,45 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 25);
   rowFam++;
 
-  // Referencia al total de egresos pagados FAMILIA (columna C de indicadores)
-  const filaTotalGastosFam = filaIngresosFam; // C${filaIngresosFam} tiene GASTOS PAGADOS
+  // Referencia al total de egresos pagados FAMILIA (columna D de Egresos Pagados)
+  const filaTotalGastosFam = filaEgresosPagadosFam; // D${filaEgresosPagadosFam} tiene GASTOS PAGADOS
 
-  // Categorías FAMILIA con sus colores
+  // Categorías FAMILIA - Estilo sobrio (sin colores individuales)
   const categoriasFAM = [
-    { nombre: 'GASTOS FIJOS', color: '#D1FAE5' },
-    { nombre: 'CUOTAS Y PRÉSTAMOS', color: '#A7F3D0' },
-    { nombre: 'OBLIGACIONES LEGALES', color: '#6EE7B7' },
-    { nombre: 'SUSCRIPCIONES', color: '#34D399' },
-    { nombre: 'VARIABLES', color: '#FEF3C7' },
-    { nombre: 'AHORRO', color: '#DBEAFE' }
+    'GASTOS FIJOS',
+    'CUOTAS Y PRÉSTAMOS',
+    'OBLIGACIONES LEGALES',
+    'SUSCRIPCIONES',
+    'VARIABLES',
+    'AHORRO'
   ];
 
   const filaInicioCatFam = rowFam;
-  categoriasFAM.forEach((cat, idx) => {
+  categoriasFAM.forEach((nombre, idx) => {
+    const bgColor = (idx % 2 === 0) ? UI.FAM_FILA_PAR : UI.BLANCO;
+
     // Nombre categoría
-    sheet.getRange(rowFam, 2).setValue(cat.nombre)
+    sheet.getRange(rowFam, 2).setValue(nombre)
       .setFontSize(9)
-      .setBackground(cat.color)
+      .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
     // Monto: GASTOS_FIJOS (FAMILIA) + CARGA_FAMILIA (variables/ahorro del mes)
     // GASTOS_FIJOS: B=ENTIDAD, C=CATEGORÍA, G-R=ENE-DIC
     // CARGA_FAMILIA: B=TIPO, C=CATEGORÍA, F=MONTO, A=FECHA
-    const formulaMontoFam = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="FAMILIA")*(GASTOS_FIJOS!$C$4:$C$100="${cat.nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500="Egreso Familiar")*(CARGA_FAMILIA!$C$4:$C$500="${cat.nombre}")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=${AÑO})*(CARGA_FAMILIA!$F$4:$F$500));0)`;
+    const formulaMontoFam = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="FAMILIA")*(GASTOS_FIJOS!$C$4:$C$100="${nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500="Egreso Familiar")*(CARGA_FAMILIA!$C$4:$C$500="${nombre}")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=${AÑO})*(CARGA_FAMILIA!$F$4:$F$500));0)`;
     sheet.getRange(rowFam, 3)
       .setFormula(formulaMontoFam)
       .setNumberFormat('#,##0')
-      .setBackground(cat.color)
+      .setBackground(bgColor)
       .setHorizontalAlignment('right')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // %: monto / total gastos
+    // %: monto / total gastos (columna D tiene el REAL)
     sheet.getRange(rowFam, 4)
-      .setFormula(`=IFERROR(IF(C${filaTotalGastosFam}>0;C${rowFam}/C${filaTotalGastosFam};0);0)`)
+      .setFormula(`=IFERROR(IF(D${filaTotalGastosFam}>0;C${rowFam}/D${filaTotalGastosFam};0);0)`)
       .setNumberFormat('0%')
-      .setBackground(cat.color)
+      .setBackground(bgColor)
       .setHorizontalAlignment('center')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
@@ -1579,7 +1607,7 @@ function crearHojaTABLERO() {
       .setFormula(`=REPT("█";ROUND(D${rowFam}*10))&REPT("░";10-ROUND(D${rowFam}*10))`)
       .setFontFamily('Courier New')
       .setFontSize(10)
-      .setBackground(cat.color)
+      .setBackground(bgColor)
       .setHorizontalAlignment('left')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
