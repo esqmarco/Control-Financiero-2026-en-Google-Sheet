@@ -1349,7 +1349,7 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 25);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SECCIÓN INFERIOR: BALANCE CRUZADO NT ↔ FAMILIA
+  // SECCIÓN INFERIOR: BALANCE CRUZADO NT ↔ FAMILIA (Bidireccional v6.2)
   // ═══════════════════════════════════════════════════════════════════════════
 
   const rowBalance = Math.max(rowFam, rowNT) + 3;
@@ -1377,92 +1377,150 @@ function crearHojaTABLERO() {
   });
   sheet.setRowHeight(rowBalance + 1, 25);
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // FLUJO 1: NT PRESTA A FAMILIA (FAM debe a NT)
+  // ─────────────────────────────────────────────────────────────────────────
+
   // Préstamo NT → Familia
-  // ACTUALIZADO: N3=MES_NUM en MOVIMIENTO v5.1
-  sheet.getRange(rowBalance + 2, 2).setValue('Préstamo NT → Familia')
+  sheet.getRange(rowBalance + 2, 2).setValue('↗️ Préstamo NT → Familia')
     .setBackground(UI.ROJO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 2, 3)
     .setFormula(`=IFERROR(SUMPRODUCT((CARGA_NT!D4:D500="Préstamo NT → Familia")*(MONTH(CARGA_NT!A4:A500)=MOVIMIENTO!N3)*(YEAR(CARGA_NT!A4:A500)=${AÑO})*(CARGA_NT!F4:F500));0)`)
-    .setNumberFormat('#,##0')
-    .setFontColor(UI.ROJO)
-    .setBackground(UI.ROJO_FONDO)
-    .setHorizontalAlignment('right')
+    .setNumberFormat('#,##0').setFontColor(UI.ROJO).setBackground(UI.ROJO_FONDO).setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 2, 4)
     .setFormula(`=IFERROR(SUMIF(CARGA_NT!D:D;"Préstamo NT → Familia";CARGA_NT!F:F);0)`)
-    .setNumberFormat('#,##0')
-    .setFontColor(UI.ROJO)
-    .setFontWeight('bold')
-    .setBackground(UI.ROJO_FONDO)
-    .setHorizontalAlignment('right')
+    .setNumberFormat('#,##0').setFontColor(UI.ROJO).setFontWeight('bold').setBackground(UI.ROJO_FONDO).setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowBalance + 2, 24);
 
   // Devolución Familia → NT
-  sheet.getRange(rowBalance + 3, 2).setValue('Devolución Familia → NT')
+  sheet.getRange(rowBalance + 3, 2).setValue('↩️ Devolución Familia → NT')
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 3, 3)
     .setFormula(`=IFERROR(SUMPRODUCT((CARGA_FAMILIA!D4:D500="Devolución Familia → NT")*(MONTH(CARGA_FAMILIA!A4:A500)=MOVIMIENTO!N3)*(YEAR(CARGA_FAMILIA!A4:A500)=${AÑO})*(CARGA_FAMILIA!F4:F500));0)`)
-    .setNumberFormat('#,##0')
-    .setFontColor(UI.VERDE)
-    .setBackground(UI.VERDE_FONDO)
-    .setHorizontalAlignment('right')
+    .setNumberFormat('#,##0').setFontColor(UI.VERDE).setBackground(UI.VERDE_FONDO).setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 3, 4)
-    .setFormula(`=IFERROR(SUMIF(CARGA_FAMILIA!D:D,"Devolución Familia → NT",CARGA_FAMILIA!F:F),0)`)
-    .setNumberFormat('#,##0')
-    .setFontColor(UI.VERDE)
-    .setFontWeight('bold')
-    .setBackground(UI.VERDE_FONDO)
-    .setHorizontalAlignment('right')
+    .setFormula(`=IFERROR(SUMIF(CARGA_FAMILIA!D:D;"Devolución Familia → NT";CARGA_FAMILIA!F:F);0)`)
+    .setNumberFormat('#,##0').setFontColor(UI.VERDE).setFontWeight('bold').setBackground(UI.VERDE_FONDO).setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowBalance + 3, 24);
 
-  // Saldo Neto
-  sheet.getRange(rowBalance + 4, 2).setValue('📊 SALDO NETO')
-    .setFontWeight('bold')
-    .setBackground(UI.PURPURA_FONDO)
+  // Subtotal: FAM debe a NT
+  sheet.getRange(rowBalance + 4, 2).setValue('📊 Deuda FAM → NT')
+    .setFontWeight('bold').setFontStyle('italic').setBackground(UI.GRIS_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 4, 3)
-    .setFormula(`=IFERROR(C${rowBalance+2}-C${rowBalance+3},0)`)
-    .setNumberFormat('#,##0')
-    .setFontWeight('bold')
-    .setBackground(UI.PURPURA_FONDO)
-    .setHorizontalAlignment('right')
+    .setFormula(`=IFERROR(C${rowBalance+2}-C${rowBalance+3};0)`)
+    .setNumberFormat('#,##0').setFontWeight('bold').setBackground(UI.GRIS_FONDO).setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 4, 4)
-    .setFormula(`=IFERROR(D${rowBalance+2}-D${rowBalance+3},0)`)
-    .setNumberFormat('#,##0')
-    .setFontWeight('bold')
-    .setBackground(UI.PURPURA_FONDO)
-    .setHorizontalAlignment('right')
+    .setFormula(`=IFERROR(D${rowBalance+2}-D${rowBalance+3};0)`)
+    .setNumberFormat('#,##0').setFontWeight('bold').setBackground(UI.GRIS_FONDO).setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.setRowHeight(rowBalance + 4, 28);
+  sheet.setRowHeight(rowBalance + 4, 26);
 
-  // Alerta Visual Grande
-  sheet.getRange(rowBalance + 1, 6, 4, 6).merge()
-    .setFormula(`=IFERROR(IF(D${rowBalance+4}>0,"⚠️ NT SUBSIDIA A FAMILIA"&CHAR(10)&CHAR(10)&"Gs. "&TEXT(D${rowBalance+4},"#,##0")&CHAR(10)&CHAR(10)&"El salario de administrador no cubre los gastos familiares","✅ BALANCE EQUILIBRADO"&CHAR(10)&CHAR(10)&"Familia no debe a NeuroTEA"),"")`)
+  // ─────────────────────────────────────────────────────────────────────────
+  // FLUJO 2: FAMILIA PRESTA A NT (NT debe a FAM)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Préstamo Familia → NT
+  sheet.getRange(rowBalance + 5, 2).setValue('↗️ Préstamo Familia → NT')
+    .setBackground(UI.AMARILLO_FONDO)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowBalance + 5, 3)
+    .setFormula(`=IFERROR(SUMPRODUCT((CARGA_FAMILIA!D4:D500="Préstamo Familia → NT")*(MONTH(CARGA_FAMILIA!A4:A500)=MOVIMIENTO!N3)*(YEAR(CARGA_FAMILIA!A4:A500)=${AÑO})*(CARGA_FAMILIA!F4:F500));0)`)
+    .setNumberFormat('#,##0').setFontColor(UI.AMARILLO).setBackground(UI.AMARILLO_FONDO).setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowBalance + 5, 4)
+    .setFormula(`=IFERROR(SUMIF(CARGA_FAMILIA!D:D;"Préstamo Familia → NT";CARGA_FAMILIA!F:F);0)`)
+    .setNumberFormat('#,##0').setFontColor(UI.AMARILLO).setFontWeight('bold').setBackground(UI.AMARILLO_FONDO).setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowBalance + 5, 24);
+
+  // Devolución NT → Familia
+  sheet.getRange(rowBalance + 6, 2).setValue('↩️ Devolución NT → Familia')
+    .setBackground(UI.VERDE_FONDO)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowBalance + 6, 3)
+    .setFormula(`=IFERROR(SUMPRODUCT((CARGA_NT!D4:D500="Devolución NT → Familia")*(MONTH(CARGA_NT!A4:A500)=MOVIMIENTO!N3)*(YEAR(CARGA_NT!A4:A500)=${AÑO})*(CARGA_NT!F4:F500));0)`)
+    .setNumberFormat('#,##0').setFontColor(UI.VERDE).setBackground(UI.VERDE_FONDO).setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowBalance + 6, 4)
+    .setFormula(`=IFERROR(SUMIF(CARGA_NT!D:D;"Devolución NT → Familia";CARGA_NT!F:F);0)`)
+    .setNumberFormat('#,##0').setFontColor(UI.VERDE).setFontWeight('bold').setBackground(UI.VERDE_FONDO).setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowBalance + 6, 24);
+
+  // Subtotal: NT debe a FAM
+  sheet.getRange(rowBalance + 7, 2).setValue('📊 Deuda NT → FAM')
+    .setFontWeight('bold').setFontStyle('italic').setBackground(UI.GRIS_FONDO)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowBalance + 7, 3)
+    .setFormula(`=IFERROR(C${rowBalance+5}-C${rowBalance+6};0)`)
+    .setNumberFormat('#,##0').setFontWeight('bold').setBackground(UI.GRIS_FONDO).setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowBalance + 7, 4)
+    .setFormula(`=IFERROR(D${rowBalance+5}-D${rowBalance+6};0)`)
+    .setNumberFormat('#,##0').setFontWeight('bold').setBackground(UI.GRIS_FONDO).setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowBalance + 7, 26);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BALANCE NETO FINAL
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Balance Neto = (FAM debe a NT) - (NT debe a FAM)
+  // Si > 0: FAM debe a NT (NT subsidia)
+  // Si < 0: NT debe a FAM (FAM subsidia)
+  // Si = 0: Equilibrado
+  sheet.getRange(rowBalance + 8, 2).setValue('💰 BALANCE NETO')
+    .setFontWeight('bold').setFontSize(11).setBackground(UI.PURPURA_FONDO)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowBalance + 8, 3)
+    .setFormula(`=IFERROR(C${rowBalance+4}-C${rowBalance+7};0)`)
+    .setNumberFormat('#,##0').setFontWeight('bold').setFontSize(11).setBackground(UI.PURPURA_FONDO).setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowBalance + 8, 4)
+    .setFormula(`=IFERROR(D${rowBalance+4}-D${rowBalance+7};0)`)
+    .setNumberFormat('#,##0').setFontWeight('bold').setFontSize(11).setBackground(UI.PURPURA_FONDO).setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowBalance + 8, 30);
+
+  // Alerta Visual Grande (actualizada para flujo bidireccional)
+  sheet.getRange(rowBalance + 1, 6, 8, 6).merge()
+    .setFormula(`=IFERROR(IF(D${rowBalance+8}>0;"⚠️ FAMILIA DEBE A NT"&CHAR(10)&CHAR(10)&"Gs. "&TEXT(D${rowBalance+8};"#,##0")&CHAR(10)&CHAR(10)&"NT subsidia gastos familiares";IF(D${rowBalance+8}<0;"🔄 NT DEBE A FAMILIA"&CHAR(10)&CHAR(10)&"Gs. "&TEXT(ABS(D${rowBalance+8});"#,##0")&CHAR(10)&CHAR(10)&"Familia subsidia a NeuroTEA";"✅ BALANCE EQUILIBRADO"&CHAR(10)&CHAR(10)&"No hay deudas pendientes"));"")`)
     .setFontSize(12)
     .setFontWeight('bold')
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
     .setWrap(true);
 
-  // Formato condicional para alerta
+  // Formato condicional para alerta (FAM debe a NT = Rojo)
   const reglaAlertaRojo = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied(`=$D$${rowBalance+4}>0`)
+    .whenFormulaSatisfied(`=$D$${rowBalance+8}>0`)
     .setBackground(UI.ROJO_FONDO)
     .setFontColor(UI.ROJO)
-    .setRanges([sheet.getRange(rowBalance + 1, 6, 4, 6)])
+    .setRanges([sheet.getRange(rowBalance + 1, 6, 8, 6)])
     .build();
 
+  // Formato condicional (NT debe a FAM = Amarillo)
+  const reglaAlertaAmarillo = SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied(`=$D$${rowBalance+8}<0`)
+    .setBackground(UI.AMARILLO_FONDO)
+    .setFontColor('#92400E')
+    .setRanges([sheet.getRange(rowBalance + 1, 6, 8, 6)])
+    .build();
+
+  // Formato condicional (Equilibrado = Verde)
   const reglaAlertaVerde = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied(`=$D$${rowBalance+4}<=0`)
+    .whenFormulaSatisfied(`=$D$${rowBalance+8}=0`)
     .setBackground(UI.VERDE_FONDO)
     .setFontColor(UI.VERDE)
-    .setRanges([sheet.getRange(rowBalance + 1, 6, 4, 6)])
+    .setRanges([sheet.getRange(rowBalance + 1, 6, 8, 6)])
     .build();
 
   // Formato condicional para estados ✓ y ⚠
@@ -1492,7 +1550,7 @@ function crearHojaTABLERO() {
     .build();
 
   sheet.setConditionalFormatRules([
-    reglaAlertaRojo, reglaAlertaVerde,
+    reglaAlertaRojo, reglaAlertaAmarillo, reglaAlertaVerde,
     reglaEstadoOK, reglaEstadoAlerta,
     reglaDifPositiva, reglaDifNegativa
   ]);
@@ -1501,9 +1559,9 @@ function crearHojaTABLERO() {
   // FOOTER
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const rowFooter = rowBalance + 6;
+  const rowFooter = rowBalance + 10;  // Actualizado para balance cruzado bidireccional
   sheet.getRange(rowFooter, 2, 1, 10).merge()
-    .setValue('📝 Los campos marcados con ✏️ son editables manualmente  |  Sistema de Control Financiero v5.0  |  © 2026')
+    .setValue('📝 Los campos marcados con ✏️ son editables manualmente  |  Sistema de Control Financiero v6.3  |  © 2026')
     .setFontSize(9)
     .setFontColor('#9CA3AF')
     .setBackground(UI.GRIS_INFO)
