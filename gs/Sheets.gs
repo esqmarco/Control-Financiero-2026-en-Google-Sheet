@@ -1525,17 +1525,20 @@ function crearHojaLIQUIDEZ() {
   });
   row++;
 
-  // DISPONIBLE INICIAL FAMILIA (editable)
-  sheet.getRange(row, 1).setValue('💵 DISPONIBLE INICIAL ✏️')
+  // DISPONIBLE ACTUAL FAMILIA (calculado: Ingresos recibidos - Egresos pagados)
+  // Muestra el dinero disponible HOY para pagar compromisos
+  sheet.getRange(row, 1).setValue('💵 DISPONIBLE ACTUAL')
     .setFontWeight('bold').setBackground(C.FAM_FONDO);
   sheet.getRange(row, 2).setValue('-').setHorizontalAlignment('center').setBackground(C.FAM_FONDO);
   sheet.getRange(row, 3).setValue('-').setHorizontalAlignment('center').setBackground(C.FAM_FONDO);
-  sheet.getRange(row, 4).setValue(0)
+  // Fórmula: Ingresos del mes - Egresos pagados del mes
+  sheet.getRange(row, 4)
+    .setFormula('=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500<>"Egreso Familiar")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500))-SUMIFS(MOVIMIENTO!$F$9:$F$70;MOVIMIENTO!$B$9:$B$70;"Egreso";MOVIMIENTO!$J$9:$J$70;"Pagado");0)')
     .setNumberFormat('#,##0')
     .setFontColor(C.NT_HEADER).setFontWeight('bold')
     .setBackground(C.FAM_FONDO)
     .setHorizontalAlignment('right');
-  sheet.getRange(row, 5).setValue('✏️ Editar')
+  sheet.getRange(row, 5).setValue('Calculado')
     .setFontStyle('italic').setHorizontalAlignment('center').setBackground(C.FAM_FONDO);
   sheet.getRange(row, 1, 1, 5).setBorder(true, true, true, true, false, false, C.FAM_BORDER, SpreadsheetApp.BorderStyle.SOLID);
   const filaDispFam = row;
@@ -1623,17 +1626,20 @@ function crearHojaLIQUIDEZ() {
   });
   row++;
 
-  // DISPONIBLE INICIAL NT (editable)
-  sheet.getRange(row, 1).setValue('💵 DISPONIBLE INICIAL ✏️')
+  // DISPONIBLE ACTUAL NT (calculado: Ingresos recibidos - Egresos pagados)
+  // Muestra el dinero disponible HOY para pagar compromisos
+  sheet.getRange(row, 1).setValue('💵 DISPONIBLE ACTUAL')
     .setFontWeight('bold').setBackground(C.NT_FONDO);
   sheet.getRange(row, 2).setValue('-').setHorizontalAlignment('center').setBackground(C.NT_FONDO);
   sheet.getRange(row, 3).setValue('-').setHorizontalAlignment('center').setBackground(C.NT_FONDO);
-  sheet.getRange(row, 4).setValue(0)
+  // Fórmula: Ingresos del mes - Egresos pagados del mes (rango NT: filas 73-150)
+  sheet.getRange(row, 4)
+    .setFormula('=IFERROR(SUMIF(MOVIMIENTO!$B$73:$B$150;"Ingreso";MOVIMIENTO!$F$73:$F$150)-SUMIFS(MOVIMIENTO!$F$73:$F$150;MOVIMIENTO!$B$73:$B$150;"Egreso";MOVIMIENTO!$J$73:$J$150;"Pagado");0)')
     .setNumberFormat('#,##0')
     .setFontColor(C.NT_HEADER).setFontWeight('bold')
     .setBackground(C.NT_FONDO)
     .setHorizontalAlignment('right');
-  sheet.getRange(row, 5).setValue('✏️ Editar')
+  sheet.getRange(row, 5).setValue('Calculado')
     .setFontStyle('italic').setHorizontalAlignment('center').setBackground(C.NT_FONDO);
   sheet.getRange(row, 1, 1, 5).setBorder(true, true, true, true, false, false, C.NT_BORDER, SpreadsheetApp.BorderStyle.SOLID);
   const filaDispNT = row;
