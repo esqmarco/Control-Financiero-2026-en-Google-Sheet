@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CONFIG.GS - DATOS MAESTROS Y CONFIGURACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.0 - LIQUIDEZ semanal separada por entidad
+ * Versión 6.1 - Estilo sobrio profesional (gris/blanco, colores solo estados)
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '6.0';
+const VERSION = '6.1';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -21,34 +21,45 @@ const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const COLORES = {
-  // FAMILIA - Tonos Verdes
-  FAM_HEADER: '#059669',      // Verde esmeralda oscuro
-  FAM_HEADER_LIGHT: '#10b981', // Verde esmeralda
-  FAM_FONDO: '#d1fae5',       // Verde muy claro
-  FAM_FONDO_ALT: '#ecfdf5',   // Verde casi blanco
-  FAM_SUBTOTAL: '#a7f3d0',    // Verde pastel
-  FAM_BORDER: '#34d399',      // Verde medio
+  // ═══════════════════════════════════════════════════════════════════
+  // ESTILO SOBRIO PROFESIONAL - Headers neutros, colores solo estados
+  // ═══════════════════════════════════════════════════════════════════
 
-  // NEUROTEA - Tonos Azules
-  NT_HEADER: '#1d4ed8',       // Azul intenso
-  NT_HEADER_LIGHT: '#3b82f6', // Azul medio
-  NT_FONDO: '#dbeafe',        // Azul muy claro
-  NT_FONDO_ALT: '#eff6ff',    // Azul casi blanco
-  NT_SUBTOTAL: '#93c5fd',     // Azul pastel
-  NT_BORDER: '#60a5fa',       // Azul medio
+  // HEADERS (Gris neutro para todas las entidades)
+  FAM_HEADER: '#1f2937',      // Gris oscuro (sobrio)
+  FAM_HEADER_LIGHT: '#374151', // Gris medio
+  FAM_FONDO: '#f9fafb',       // Gris muy claro
+  FAM_FONDO_ALT: '#ffffff',   // Blanco
+  FAM_SUBTOTAL: '#e5e7eb',    // Gris claro
+  FAM_BORDER: '#d1d5db',      // Gris borde
 
-  // BALANCE CRUZADO - Tonos Púrpura
-  BALANCE_HEADER: '#7c3aed',  // Púrpura
-  BALANCE_FONDO: '#ede9fe',   // Púrpura claro
-  BALANCE_SUBTOTAL: '#c4b5fd', // Púrpura pastel
+  NT_HEADER: '#1f2937',       // Gris oscuro (sobrio)
+  NT_HEADER_LIGHT: '#374151', // Gris medio
+  NT_FONDO: '#f9fafb',        // Gris muy claro
+  NT_FONDO_ALT: '#ffffff',    // Blanco
+  NT_SUBTOTAL: '#e5e7eb',     // Gris claro
+  NT_BORDER: '#d1d5db',       // Gris borde
 
-  // ESTADOS / SEMÁFORO
+  // BALANCE CRUZADO (mismo estilo sobrio)
+  BALANCE_HEADER: '#1f2937',  // Gris oscuro
+  BALANCE_FONDO: '#f3f4f6',   // Gris claro
+  BALANCE_SUBTOTAL: '#e5e7eb', // Gris pastel
+
+  // ESTADOS / SEMÁFORO (colores SOLO para estados)
   VERDE: '#22c55e',           // OK / Cumplido
   VERDE_FONDO: '#dcfce7',
   AMARILLO: '#f59e0b',        // Advertencia
   AMARILLO_FONDO: '#fef3c7',
   ROJO: '#dc2626',            // Alerta / Déficit
-  ROJO_FONDO: '#fef2f2',
+  ROJO_FONDO: '#fee2e2',
+
+  // INDICADORES DE ESTADO
+  INGRESO_COLOR: '#3b82f6',   // Azul para ingresos
+  INGRESO_FONDO: '#dbeafe',
+  PAGADO_COLOR: '#22c55e',    // Verde para pagado
+  PAGADO_FONDO: '#dcfce7',
+  PENDIENTE_COLOR: '#f59e0b', // Naranja para pendiente
+  PENDIENTE_FONDO: '#fef3c7',
 
   // NEUTROS
   HEADER_DARK: '#1f2937',     // Gris muy oscuro
@@ -58,11 +69,11 @@ const COLORES = {
   GRIS_BORDE: '#e5e7eb',      // Gris borde
   BLANCO: '#ffffff',
 
-  // ESPECIALES
-  INGRESO: '#15803d',         // Verde oscuro para ingresos
-  EGRESO: '#b91c1c',          // Rojo oscuro para egresos
-  GANANCIA: '#ca8a04',        // Dorado para ganancia
-  GANANCIA_FONDO: '#fef9c3'   // Amarillo claro
+  // ESPECIALES (para indicadores financieros)
+  INGRESO: '#3b82f6',         // Azul para ingresos
+  EGRESO: '#ef4444',          // Rojo para egresos
+  GANANCIA: '#22c55e',        // Verde para ganancia
+  GANANCIA_FONDO: '#dcfce7'   // Verde claro
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

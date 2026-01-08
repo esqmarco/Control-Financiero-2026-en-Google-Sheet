@@ -2,10 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * WEBAPP.GS - DASHBOARD HTML/CSS PROFESIONAL
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 5.1 - Dashboard Dinámico con datos reales (actualizado para v4.1)
- *
- * CAMBIOS v5.1:
- * - Actualizado para nueva estructura MOVIMIENTO (D=DÍA, E=PRESUPUESTO, F=REAL)
+ * Versión 6.1 - Estilo sobrio profesional (gris/blanco, colores solo estados)
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 

@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * TABLERO.GS - DASHBOARD PROFESIONAL DE CONTROL FINANCIERO
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 5.0 - Diseño UI/UX Profesional
+ * Versión 6.1 - Estilo sobrio profesional (gris/blanco, colores solo estados)
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 

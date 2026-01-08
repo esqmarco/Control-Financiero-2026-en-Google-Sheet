@@ -1,8 +1,8 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * SHEETS.GS - CREACIÓN DE LAS 8 HOJAS PRINCIPALES
+ * SHEETS.GS - CREACIÓN DE LAS 9 HOJAS PRINCIPALES
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 5.0 - EST.PAGO como Gatillo, LIQUIDEZ automática, SALDO_INICIAL
+ * Versión 6.1 - Estilo sobrio profesional (gris/blanco, colores solo estados)
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 

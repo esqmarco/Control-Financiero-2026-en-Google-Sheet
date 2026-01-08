@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * UTILS.GS - FUNCIONES UTILITARIAS Y CÁLCULOS
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 4.0 - Arquitectura Modular Profesional
+ * Versión 6.1 - Estilo sobrio profesional
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
