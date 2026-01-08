@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CONFIG.GS - DATOS MAESTROS Y CONFIGURACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 4.0 - Arquitectura Modular Profesional
+ * Versión 6.0 - LIQUIDEZ semanal separada por entidad
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '4.0';
+const VERSION = '6.0';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -409,5 +409,6 @@ const NOMBRES_HOJAS = {
   CARGA_NT: 'CARGA_NT',
   MOVIMIENTO: 'MOVIMIENTO',
   TABLERO: 'TABLERO',
-  LIQUIDEZ: 'LIQUIDEZ'   // Nueva hoja v5.0
+  LIQUIDEZ_FAM: 'LIQUIDEZ_FAMILIA',   // Nueva v6.0
+  LIQUIDEZ_NT: 'LIQUIDEZ_NT'          // Nueva v6.0
 };
