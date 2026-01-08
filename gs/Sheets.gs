@@ -1488,7 +1488,7 @@ function aplicarFormatoCondicionalMovimiento(sheet) {
  */
 function crearHojaLIQUIDEZ_FAMILIA() {
   const sheet = crearOLimpiarHoja(NOMBRES_HOJAS.LIQUIDEZ_FAM);
-  return crearHojaLiquidezEntidad(sheet, 'FAMILIA', COLORES.FAM_HEADER, COLORES.FAM_FONDO, COLORES.FAM_SUBTOTAL, COLORES.FAM_BORDER, 9, 70);
+  return crearHojaLiquidezEntidad(sheet, 'FAMILIA', '🏠', 9, 70);
 }
 
 /**
@@ -1497,280 +1497,291 @@ function crearHojaLIQUIDEZ_FAMILIA() {
  */
 function crearHojaLIQUIDEZ_NT() {
   const sheet = crearOLimpiarHoja(NOMBRES_HOJAS.LIQUIDEZ_NT);
-  return crearHojaLiquidezEntidad(sheet, 'NEUROTEA', COLORES.NT_HEADER, COLORES.NT_FONDO, COLORES.NT_SUBTOTAL, COLORES.NT_BORDER, 73, 150);
+  return crearHojaLiquidezEntidad(sheet, 'NEUROTEA', '🏥', 73, 150);
 }
 
 /**
  * Función genérica para crear una hoja de liquidez por entidad
+ * ESTILO SOBRIO PROFESIONAL: Gris/blanco, colores solo para estados
  */
-function crearHojaLiquidezEntidad(sheet, entidad, colorHeader, colorFondo, colorSubtotal, colorBorde, filaInicioMov, filaFinMov) {
-  const C = COLORES;
+function crearHojaLiquidezEntidad(sheet, entidad, icono, filaInicioMov, filaFinMov) {
+  // Paleta sobria profesional (igual que TABLERO)
+  const UI = {
+    HEADER_DARK: '#1F2937',      // Gris oscuro para headers
+    HEADER_LIGHT: '#374151',     // Gris medio
+    FONDO_CLARO: '#F9FAFB',      // Gris muy claro
+    FONDO_ALT: '#FFFFFF',        // Blanco
+    SUBTOTAL: '#E5E7EB',         // Gris claro
+    BORDE: '#D1D5DB',            // Gris borde
+    BLANCO: '#FFFFFF',
+    NEGRO: '#111827',
+    TEXTO: '#374151',
+    TEXTO_CLARO: '#6B7280',
+
+    // Colores SOLO para estados/alertas
+    INGRESO: '#3B82F6',          // Azul
+    INGRESO_FONDO: '#DBEAFE',
+    PAGADO: '#22C55E',           // Verde
+    PAGADO_FONDO: '#DCFCE7',
+    PENDIENTE: '#F59E0B',        // Naranja
+    PENDIENTE_FONDO: '#FEF3C7',
+    DEFICIT: '#EF4444',          // Rojo
+    DEFICIT_FONDO: '#FEE2E2',
+    PROYECCION: '#6B7280',       // Gris
+    PROYECCION_FONDO: '#F3F4F6'
+  };
+
   const esFamilia = entidad === 'FAMILIA';
-  const icono = esFamilia ? '🏠' : '🏥';
 
   // ─── HEADER PRINCIPAL ───
-  sheet.getRange('A1:G1').merge()
-    .setValue(`💰 LIQUIDEZ ${entidad} - Control Semanal de Pagos`)
+  sheet.getRange('A1:F1').merge()
+    .setValue(`${icono} LIQUIDEZ ${entidad} - Control Semanal`)
     .setFontSize(14).setFontWeight('bold')
-    .setBackground(colorHeader).setFontColor(C.BLANCO)
+    .setBackground(UI.HEADER_DARK).setFontColor(UI.BLANCO)
     .setHorizontalAlignment('center');
 
-  sheet.getRange('A2:G2').merge()
-    .setValue('Gastos fijos organizados por semana del mes • Estado desde MOVIMIENTO')
-    .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic')
+  sheet.getRange('A2:F2').merge()
+    .setValue('Gastos fijos por semana • Estado desde MOVIMIENTO')
+    .setFontSize(10).setFontColor(UI.TEXTO_CLARO).setFontStyle('italic')
+    .setBackground(UI.FONDO_CLARO)
     .setHorizontalAlignment('center');
 
   // ─── INFO DE FECHA ───
-  sheet.getRange('A4').setValue('📅 HOY:').setFontWeight('bold');
+  sheet.getRange('A4').setValue('📅 Hoy:').setFontWeight('bold').setFontColor(UI.TEXTO);
   sheet.getRange('B4').setFormula('=TODAY()').setNumberFormat('dd/mm/yyyy');
-  sheet.getRange('D4').setValue('📋 MES:').setFontWeight('bold');
+  sheet.getRange('D4').setValue('📋 Mes:').setFontWeight('bold').setFontColor(UI.TEXTO);
   sheet.getRange('E4').setFormula('=MOVIMIENTO!B3');
 
   let row = 6;
 
   // ═══════════════════════════════════════════════════════════════════
-  // INDICADORES CLAVE (arriba)
+  // INDICADORES CLAVE (tarjetas con colores de estado)
   // ═══════════════════════════════════════════════════════════════════
-  sheet.getRange(row, 1, 1, 7).merge()
-    .setValue(`${icono} INDICADORES CLAVE`)
+  sheet.getRange(row, 1, 1, 6).merge()
+    .setValue('INDICADORES CLAVE')
     .setFontSize(11).setFontWeight('bold')
-    .setBackground(colorHeader).setFontColor(C.BLANCO)
+    .setBackground(UI.HEADER_DARK).setFontColor(UI.BLANCO)
     .setHorizontalAlignment('center');
   row++;
 
-  // Headers indicadores
-  ['Indicador', 'Monto', 'Estado'].forEach((h, i) => {
-    sheet.getRange(row, 1 + i)
-      .setValue(h).setFontWeight('bold')
-      .setBackground(C.GRIS_FONDO)
-      .setHorizontalAlignment(i === 0 ? 'left' : 'center')
-      .setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
-  });
-  row++;
-
-  // Saldo Disponible (Ingresos - Egresos Pagados)
+  // Saldo Disponible (tarjeta azul - ingresos)
   const formulaSaldo = esFamilia
     ? `=IFERROR(SUMIF(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov};"Ingreso";MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov})-SUMIFS(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov};MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov};"Egreso";MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov};"Pagado")-SUMIFS(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov};MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov};"Egreso";MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov};"Ahorrado");0)`
     : `=IFERROR(SUMIF(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov};"Ingreso";MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov})-SUMIFS(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov};MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov};"Egreso";MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov};"Pagado");0)`;
 
-  sheet.getRange(row, 1).setValue('💵 SALDO DISPONIBLE')
-    .setFontWeight('bold').setBackground(C.VERDE_FONDO);
-  sheet.getRange(row, 2).setFormula(formulaSaldo)
-    .setNumberFormat('#,##0').setFontWeight('bold')
-    .setBackground(C.VERDE_FONDO).setHorizontalAlignment('right');
-  sheet.getRange(row, 3).setValue('Ingresos - Pagados')
-    .setFontStyle('italic').setBackground(C.VERDE_FONDO).setHorizontalAlignment('center');
-  sheet.getRange(row, 1, 1, 3).setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(row, 1, 1, 2).merge()
+    .setValue('💵 Saldo Disponible')
+    .setFontWeight('bold').setBackground(UI.INGRESO_FONDO).setFontColor(UI.INGRESO);
+  sheet.getRange(row, 3, 1, 2).merge()
+    .setFormula(formulaSaldo)
+    .setNumberFormat('#,##0').setFontWeight('bold').setFontSize(12)
+    .setBackground(UI.INGRESO_FONDO).setFontColor(UI.INGRESO).setHorizontalAlignment('right');
+  sheet.getRange(row, 5, 1, 2).merge()
+    .setValue('Ing - Pagados')
+    .setFontStyle('italic').setBackground(UI.INGRESO_FONDO).setFontColor(UI.TEXTO_CLARO).setHorizontalAlignment('center');
+  sheet.getRange(row, 1, 1, 6).setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
   const filaSaldoDisp = row;
   row++;
 
-  // Ya Pagado
-  sheet.getRange(row, 1).setValue('✅ Ya Pagado')
-    .setBackground(C.GRIS_FONDO);
-  sheet.getRange(row, 2).setFormula(`=IFERROR(SUMIFS(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov};MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov};"Egreso";MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov};"Pagado")${esFamilia ? '+SUMIFS(MOVIMIENTO!$F$'+filaInicioMov+':$F$'+filaFinMov+';MOVIMIENTO!$B$'+filaInicioMov+':$B$'+filaFinMov+';"Egreso";MOVIMIENTO!$J$'+filaInicioMov+':$J$'+filaFinMov+';"Ahorrado")' : ''};0)`)
-    .setNumberFormat('#,##0').setBackground(C.GRIS_FONDO).setHorizontalAlignment('right');
-  sheet.getRange(row, 3).setValue('-')
-    .setBackground(C.GRIS_FONDO).setHorizontalAlignment('center');
-  sheet.getRange(row, 1, 1, 3).setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
-  row++;
-
-  // Pendiente Total
-  sheet.getRange(row, 1).setValue('⏳ Pendiente Total')
-    .setBackground(C.AMARILLO_FONDO);
-  sheet.getRange(row, 2).setFormula(`=IFERROR(SUMIFS(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov};MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov};"Egreso";MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov};"Pendiente");0)`)
-    .setNumberFormat('#,##0').setFontWeight('bold')
-    .setBackground(C.AMARILLO_FONDO).setHorizontalAlignment('right');
-  sheet.getRange(row, 3).setFormula(`=IF(B${row}=0;"✓";"⚠ Por pagar")`)
-    .setBackground(C.AMARILLO_FONDO).setHorizontalAlignment('center');
-  sheet.getRange(row, 1, 1, 3).setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+  // Pendiente Total (tarjeta naranja)
+  sheet.getRange(row, 1, 1, 2).merge()
+    .setValue('⏳ Pendiente Total')
+    .setFontWeight('bold').setBackground(UI.PENDIENTE_FONDO).setFontColor(UI.PENDIENTE);
+  sheet.getRange(row, 3, 1, 2).merge()
+    .setFormula(`=IFERROR(SUMIFS(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov};MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov};"Egreso";MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov};"Pendiente");0)`)
+    .setNumberFormat('#,##0').setFontWeight('bold').setFontSize(12)
+    .setBackground(UI.PENDIENTE_FONDO).setFontColor(UI.PENDIENTE).setHorizontalAlignment('right');
+  sheet.getRange(row, 5, 1, 2).merge()
+    .setFormula(`=IF(C${row}=0;"✓ Todo pagado";"⚠ Por pagar")`)
+    .setBackground(UI.PENDIENTE_FONDO).setFontColor(UI.TEXTO_CLARO).setHorizontalAlignment('center');
+  sheet.getRange(row, 1, 1, 6).setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
   const filaPendienteTotal = row;
   row++;
 
-  // Proyección (Saldo - Pendientes)
-  sheet.getRange(row, 1).setValue('📊 PROYECCIÓN FINAL')
-    .setFontWeight('bold').setBackground(colorSubtotal);
-  sheet.getRange(row, 2).setFormula(`=B${filaSaldoDisp}-B${filaPendienteTotal}`)
-    .setNumberFormat('#,##0').setFontWeight('bold').setFontSize(11)
-    .setBackground(colorSubtotal).setHorizontalAlignment('right');
-  sheet.getRange(row, 3).setFormula(`=IF(B${row}>=0;"✅ LIQUIDEZ OK";"⚠️ DÉFICIT")`)
-    .setFontWeight('bold').setBackground(colorSubtotal).setHorizontalAlignment('center');
-  sheet.getRange(row, 1, 1, 3).setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+  // Proyección Final (tarjeta gris o roja si déficit)
+  sheet.getRange(row, 1, 1, 2).merge()
+    .setValue('📊 Proyección Final')
+    .setFontWeight('bold').setBackground(UI.PROYECCION_FONDO).setFontColor(UI.PROYECCION);
+  sheet.getRange(row, 3, 1, 2).merge()
+    .setFormula(`=C${filaSaldoDisp}-C${filaPendienteTotal}`)
+    .setNumberFormat('#,##0').setFontWeight('bold').setFontSize(12)
+    .setBackground(UI.PROYECCION_FONDO).setHorizontalAlignment('right');
+  sheet.getRange(row, 5, 1, 2).merge()
+    .setFormula(`=IF(C${row}>=0;"✅ OK";"⚠️ DÉFICIT")`)
+    .setFontWeight('bold').setBackground(UI.PROYECCION_FONDO).setHorizontalAlignment('center');
+  sheet.getRange(row, 1, 1, 6).setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+  // Formato condicional para proyección negativa
+  const reglaProyNeg = SpreadsheetApp.newConditionalFormatRule()
+    .whenNumberLessThan(0)
+    .setBackground(UI.DEFICIT_FONDO)
+    .setFontColor(UI.DEFICIT)
+    .setRanges([sheet.getRange(row, 3, 1, 2)])
+    .build();
+
   row += 2;
 
   // ═══════════════════════════════════════════════════════════════════
-  // SEMANAS DEL MES
+  // SEMANAS DEL MES (estilo sobrio gris/blanco)
   // ═══════════════════════════════════════════════════════════════════
   const semanas = [
-    { nombre: 'SEMANA 1', rango: 'Días 1-7', diaMin: 1, diaMax: 7, color: C.ROJO_FONDO },
-    { nombre: 'SEMANA 2', rango: 'Días 8-14', diaMin: 8, diaMax: 14, color: C.AMARILLO_FONDO },
-    { nombre: 'SEMANA 3', rango: 'Días 15-21', diaMin: 15, diaMax: 21, color: C.VERDE_FONDO },
-    { nombre: 'SEMANA 4', rango: 'Días 22-31', diaMin: 22, diaMax: 31, color: colorFondo }
+    { nombre: 'SEMANA 1', rango: 'Días 1-7', diaMin: 1, diaMax: 7 },
+    { nombre: 'SEMANA 2', rango: 'Días 8-14', diaMin: 8, diaMax: 14 },
+    { nombre: 'SEMANA 3', rango: 'Días 15-21', diaMin: 15, diaMax: 21 },
+    { nombre: 'SEMANA 4', rango: 'Días 22-31', diaMin: 22, diaMax: 31 }
   ];
 
-  const filasSubtotales = [];
-
   semanas.forEach((semana, idx) => {
-    // Header de semana
-    sheet.getRange(row, 1, 1, 7).merge()
-      .setValue(`📅 ${semana.nombre} (${semana.rango})`)
-      .setFontSize(11).setFontWeight('bold')
-      .setBackground(semana.color)
+    // Header de semana (gris oscuro)
+    sheet.getRange(row, 1, 1, 6).merge()
+      .setValue(`${semana.nombre} (${semana.rango})`)
+      .setFontSize(10).setFontWeight('bold')
+      .setBackground(UI.HEADER_LIGHT).setFontColor(UI.BLANCO)
       .setHorizontalAlignment('left');
     row++;
 
-    // Headers tabla
-    ['Concepto', 'Día', 'Monto', 'Estado'].forEach((h, i) => {
-      const col = i === 0 ? 1 : (i === 1 ? 3 : (i === 2 ? 4 : 5));
-      const width = i === 0 ? 2 : 1;
-      if (width > 1) {
-        sheet.getRange(row, col, 1, width).merge();
-      }
-      sheet.getRange(row, col)
-        .setValue(h).setFontSize(9).setFontWeight('bold')
-        .setBackground(C.GRIS_FONDO)
-        .setHorizontalAlignment(i === 0 ? 'left' : 'center')
-        .setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+    // Headers tabla (gris claro)
+    const headers = [
+      { texto: 'Concepto', col: 1, span: 2, align: 'left' },
+      { texto: 'Día', col: 3, span: 1, align: 'center' },
+      { texto: 'Monto', col: 4, span: 1, align: 'right' },
+      { texto: 'Estado', col: 5, span: 2, align: 'center' }
+    ];
+    headers.forEach(h => {
+      if (h.span > 1) sheet.getRange(row, h.col, 1, h.span).merge();
+      sheet.getRange(row, h.col)
+        .setValue(h.texto).setFontSize(9).setFontWeight('bold')
+        .setBackground(UI.FONDO_CLARO).setFontColor(UI.TEXTO)
+        .setHorizontalAlignment(h.align)
+        .setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
     });
     row++;
 
-    // Gastos de esta semana (usando FILTER dinámico desde MOVIMIENTO)
-    // Concepto | Día | Monto | Estado
-    // Filtramos gastos fijos con DÍA en el rango de la semana
-    const formulaConcepto = `=IFERROR(INDEX(FILTER(MOVIMIENTO!$A$${filaInicioMov}:$A$${filaFinMov};(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0));ROW()-${row});"")`;
-    const formulaDia = `=IFERROR(INDEX(FILTER(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov};(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0));ROW()-${row});"")`;
-    const formulaMonto = `=IFERROR(INDEX(FILTER(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov};(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0));ROW()-${row});"")`;
-    const formulaEstado = `=IFERROR(INDEX(FILTER(MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov};(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0));ROW()-${row});"")`;
-
-    // Filas para items de la semana (máximo 15 items por semana)
+    // Filas de datos (máximo 12 items por semana, alternando blanco/gris)
     const filaInicioSemana = row;
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 12; i++) {
+      const bgColor = i % 2 === 0 ? UI.FONDO_ALT : UI.FONDO_CLARO;
+
+      // Concepto
       sheet.getRange(row, 1, 1, 2).merge()
-        .setFormula(formulaConcepto.replace(`ROW()-${filaInicioSemana}`, `${i+1}`))
-        .setBackground(i % 2 === 0 ? C.BLANCO : C.GRIS_FONDO)
-        .setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+        .setFormula(`=IFERROR(INDEX(FILTER(MOVIMIENTO!$A$${filaInicioMov}:$A$${filaFinMov};(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0));${i+1});"")`)
+        .setBackground(bgColor).setFontColor(UI.TEXTO)
+        .setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+      // Día
       sheet.getRange(row, 3)
-        .setFormula(formulaDia.replace(`ROW()-${filaInicioSemana}`, `${i+1}`))
-        .setHorizontalAlignment('center')
-        .setBackground(i % 2 === 0 ? C.BLANCO : C.GRIS_FONDO)
-        .setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+        .setFormula(`=IFERROR(INDEX(FILTER(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov};(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0));${i+1});"")`)
+        .setHorizontalAlignment('center').setBackground(bgColor).setFontColor(UI.TEXTO)
+        .setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+      // Monto
       sheet.getRange(row, 4)
-        .setFormula(formulaMonto.replace(`ROW()-${filaInicioSemana}`, `${i+1}`))
-        .setNumberFormat('#,##0')
-        .setHorizontalAlignment('right')
-        .setBackground(i % 2 === 0 ? C.BLANCO : C.GRIS_FONDO)
-        .setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
-      sheet.getRange(row, 5)
-        .setFormula(formulaEstado.replace(`ROW()-${filaInicioSemana}`, `${i+1}`))
-        .setHorizontalAlignment('center')
-        .setBackground(i % 2 === 0 ? C.BLANCO : C.GRIS_FONDO)
-        .setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+        .setFormula(`=IFERROR(INDEX(FILTER(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov};(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0));${i+1});"")`)
+        .setNumberFormat('#,##0').setHorizontalAlignment('right').setBackground(bgColor).setFontColor(UI.TEXTO)
+        .setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
+      // Estado
+      sheet.getRange(row, 5, 1, 2).merge()
+        .setFormula(`=IFERROR(INDEX(FILTER(MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov};(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0));${i+1});"")`)
+        .setHorizontalAlignment('center').setBackground(bgColor).setFontColor(UI.TEXTO)
+        .setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
+
       row++;
     }
 
-    // Subtotal de semana
+    // Subtotal de semana (gris subtotal)
     sheet.getRange(row, 1, 1, 2).merge()
-      .setValue(`Subtotal ${semana.nombre}`)
-      .setFontWeight('bold').setBackground(semana.color);
-    sheet.getRange(row, 3).setValue('-')
-      .setHorizontalAlignment('center').setBackground(semana.color);
-    // Total semana (suma de gastos con DÍA en rango)
+      .setValue(`Subtotal`)
+      .setFontWeight('bold').setBackground(UI.SUBTOTAL).setFontColor(UI.TEXTO);
+    sheet.getRange(row, 3)
+      .setValue('-').setHorizontalAlignment('center').setBackground(UI.SUBTOTAL);
     sheet.getRange(row, 4)
       .setFormula(`=IFERROR(SUMPRODUCT((MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0)*(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov}));0)`)
-      .setNumberFormat('#,##0').setFontWeight('bold')
-      .setHorizontalAlignment('right').setBackground(semana.color);
-    // Conteo de estados
-    sheet.getRange(row, 5)
-      .setFormula(`=IFERROR("✓"&SUMPRODUCT((MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0)*(MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov}="Pagado"))&" | ⏳"&SUMPRODUCT((MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0)*(MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov}="Pendiente"));"-")`)
-      .setHorizontalAlignment('center').setBackground(semana.color);
-    sheet.getRange(row, 1, 1, 5).setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
-    filasSubtotales.push(row);
+      .setNumberFormat('#,##0').setFontWeight('bold').setHorizontalAlignment('right').setBackground(UI.SUBTOTAL);
+    sheet.getRange(row, 5, 1, 2).merge()
+      .setFormula(`="✓"&SUMPRODUCT((MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0)*(MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov}="Pagado"))&" | ⏳"&SUMPRODUCT((MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>=${semana.diaMin})*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<=${semana.diaMax})*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0)*(MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov}="Pendiente"))`)
+      .setHorizontalAlignment('center').setBackground(UI.SUBTOTAL).setFontColor(UI.TEXTO_CLARO);
+    sheet.getRange(row, 1, 1, 6).setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
     row += 2;
   });
 
   // ═══════════════════════════════════════════════════════════════════
   // RESUMEN MENSUAL
   // ═══════════════════════════════════════════════════════════════════
-  sheet.getRange(row, 1, 1, 7).merge()
-    .setValue(`📊 RESUMEN MENSUAL ${entidad}`)
+  sheet.getRange(row, 1, 1, 6).merge()
+    .setValue('RESUMEN MENSUAL')
     .setFontSize(11).setFontWeight('bold')
-    .setBackground(colorHeader).setFontColor(C.BLANCO)
+    .setBackground(UI.HEADER_DARK).setFontColor(UI.BLANCO)
     .setHorizontalAlignment('center');
   row++;
 
-  // Headers
-  ['Concepto', 'Monto'].forEach((h, i) => {
-    sheet.getRange(row, 1 + i)
-      .setValue(h).setFontWeight('bold')
-      .setBackground(C.GRIS_FONDO)
-      .setHorizontalAlignment(i === 0 ? 'left' : 'right')
-      .setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
-  });
-  row++;
-
-  // Ingresos del mes
-  sheet.getRange(row, 1).setValue('📥 Ingresos del Mes').setBackground(C.VERDE_FONDO);
-  sheet.getRange(row, 2)
+  // Ingresos
+  sheet.getRange(row, 1, 1, 3).merge()
+    .setValue('📥 Ingresos del Mes').setBackground(UI.FONDO_CLARO).setFontColor(UI.TEXTO);
+  sheet.getRange(row, 4, 1, 3).merge()
     .setFormula(`=IFERROR(SUMIF(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov};"Ingreso";MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov});0)`)
-    .setNumberFormat('#,##0').setBackground(C.VERDE_FONDO).setHorizontalAlignment('right');
-  sheet.getRange(row, 1, 1, 2).setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+    .setNumberFormat('#,##0').setBackground(UI.FONDO_CLARO).setFontColor(UI.INGRESO).setHorizontalAlignment('right');
+  sheet.getRange(row, 1, 1, 6).setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
   row++;
 
-  // Egresos Fijos (todas las semanas)
-  sheet.getRange(row, 1).setValue('📤 Egresos Fijos').setBackground(C.ROJO_FONDO);
-  sheet.getRange(row, 2)
+  // Egresos Fijos
+  sheet.getRange(row, 1, 1, 3).merge()
+    .setValue('📤 Egresos Fijos').setBackground(UI.FONDO_ALT).setFontColor(UI.TEXTO);
+  sheet.getRange(row, 4, 1, 3).merge()
     .setFormula(`=IFERROR(SUMPRODUCT((MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0)*(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov}));0)`)
-    .setNumberFormat('#,##0').setBackground(C.ROJO_FONDO).setHorizontalAlignment('right');
-  sheet.getRange(row, 1, 1, 2).setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+    .setNumberFormat('#,##0').setBackground(UI.FONDO_ALT).setFontColor(UI.DEFICIT).setHorizontalAlignment('right');
+  sheet.getRange(row, 1, 1, 6).setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
   row++;
 
-  // Variables (DÍA = 0)
-  sheet.getRange(row, 1).setValue('🔄 Gastos Variables').setBackground(C.AMARILLO_FONDO);
-  sheet.getRange(row, 2)
+  // Variables
+  sheet.getRange(row, 1, 1, 3).merge()
+    .setValue('🔄 Gastos Variables').setBackground(UI.FONDO_CLARO).setFontColor(UI.TEXTO);
+  sheet.getRange(row, 4, 1, 3).merge()
     .setFormula(`=IFERROR(SUMPRODUCT((MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}=0)*(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov}));0)`)
-    .setNumberFormat('#,##0').setBackground(C.AMARILLO_FONDO).setHorizontalAlignment('right');
-  sheet.getRange(row, 1, 1, 2).setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+    .setNumberFormat('#,##0').setBackground(UI.FONDO_CLARO).setFontColor(UI.PENDIENTE).setHorizontalAlignment('right');
+  sheet.getRange(row, 1, 1, 6).setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
   row++;
 
-  // Balance del Mes
-  sheet.getRange(row, 1).setValue('💰 BALANCE DEL MES').setFontWeight('bold').setBackground(colorSubtotal);
-  sheet.getRange(row, 2)
-    .setFormula(`=B${row-3}-B${row-2}-B${row-1}`)
+  // Balance
+  sheet.getRange(row, 1, 1, 3).merge()
+    .setValue('💰 BALANCE').setFontWeight('bold').setBackground(UI.SUBTOTAL).setFontColor(UI.TEXTO);
+  sheet.getRange(row, 4, 1, 3).merge()
+    .setFormula(`=D${row-3}-D${row-2}-D${row-1}`)
     .setNumberFormat('#,##0').setFontWeight('bold').setFontSize(11)
-    .setBackground(colorSubtotal).setHorizontalAlignment('right');
-  sheet.getRange(row, 1, 1, 2).setBorder(true, true, true, true, false, false, colorBorde, SpreadsheetApp.BorderStyle.SOLID);
+    .setBackground(UI.SUBTOTAL).setHorizontalAlignment('right');
+  sheet.getRange(row, 1, 1, 6).setBorder(true, true, true, true, false, false, UI.BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
   // ─── CONFIGURACIÓN FINAL ───
-  sheet.setColumnWidth(1, 150);
+  sheet.setColumnWidth(1, 120);
   sheet.setColumnWidth(2, 100);
   sheet.setColumnWidth(3, 50);
   sheet.setColumnWidth(4, 100);
-  sheet.setColumnWidth(5, 120);
-  sheet.setColumnWidth(6, 50);
-  sheet.setColumnWidth(7, 50);
+  sheet.setColumnWidth(5, 70);
+  sheet.setColumnWidth(6, 70);
 
-  // Formato condicional para estados
-  const reglasPagado = SpreadsheetApp.newConditionalFormatRule()
+  // Formato condicional para estados en columna E
+  const reglaPagado = SpreadsheetApp.newConditionalFormatRule()
     .whenTextEqualTo('Pagado')
-    .setBackground(C.VERDE_FONDO)
-    .setFontColor(C.VERDE)
-    .setRanges([sheet.getRange('E:E')])
+    .setBackground(UI.PAGADO_FONDO)
+    .setFontColor(UI.PAGADO)
+    .setRanges([sheet.getRange('E:F')])
     .build();
 
-  const reglasPendiente = SpreadsheetApp.newConditionalFormatRule()
+  const reglaPendiente = SpreadsheetApp.newConditionalFormatRule()
     .whenTextEqualTo('Pendiente')
-    .setBackground(C.AMARILLO_FONDO)
-    .setFontColor(C.AMARILLO)
-    .setRanges([sheet.getRange('E:E')])
+    .setBackground(UI.PENDIENTE_FONDO)
+    .setFontColor(UI.PENDIENTE)
+    .setRanges([sheet.getRange('E:F')])
     .build();
 
-  const reglasAhorrado = SpreadsheetApp.newConditionalFormatRule()
+  const reglaAhorrado = SpreadsheetApp.newConditionalFormatRule()
     .whenTextEqualTo('Ahorrado')
-    .setBackground(C.VERDE_FONDO)
-    .setFontColor(C.VERDE)
-    .setRanges([sheet.getRange('E:E')])
+    .setBackground(UI.PAGADO_FONDO)
+    .setFontColor(UI.PAGADO)
+    .setRanges([sheet.getRange('E:F')])
     .build();
 
-  sheet.setConditionalFormatRules([reglasPagado, reglasPendiente, reglasAhorrado]);
+  sheet.setConditionalFormatRules([reglaProyNeg, reglaPagado, reglaPendiente, reglaAhorrado]);
 
   sheet.setFrozenRows(5);
 
