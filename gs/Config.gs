@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '6.2';
+const VERSION = '6.3';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -123,6 +123,7 @@ const TIPOS_INGRESO_FAMILIA = [
   'PL Itaipu Marco',
   'Honorarios Clara NeuroTEA',
   'Préstamo NeuroTEA',
+  'Devolución NeuroTEA',        // NT devuelve préstamo a Familia
   'Préstamo Otros Bancos'
 ];
 
@@ -130,7 +131,8 @@ const TIPOS_INGRESO_NT = [
   'Aporte NeuroTEA Terapeutas',
   'Cursos NeuroTEA',
   'Otros',
-  'Devolución Familia → NT'
+  'Devolución Familia → NT',
+  'Préstamo Familia'            // Familia presta a NT
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -169,7 +171,8 @@ const VARIABLES_FAMILIA = [
   'Recreación (Pizza, hamburguesa, helados, etc)',
   'Salud y Medicamentos',
   'Gastos no identificados',
-  'Devolución Familia → NT'
+  'Devolución Familia → NT',
+  'Préstamo Familia → NT'       // Familia presta a NT
 ];
 
 // Subcategorías de AHORRO para CARGA_FAMILIA
@@ -185,7 +188,8 @@ const VARIABLES_NT = [
   'Mantenimiento Aire',
   'Gastos Cursos',
   'Gastos Varios Cumple (Tortas, bocaditos, meriendas)',
-  'Préstamo NT → Familia'
+  'Préstamo NT → Familia',
+  'Devolución NT → Familia'     // NT devuelve préstamo a Familia
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -228,6 +232,7 @@ const INGRESOS_FAMILIA = [
   { concepto: 'PL Itaipu Marco', frecuencia: 'Variable/Anual', monto: 0 },
   { concepto: 'Honorarios Clara NeuroTEA', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Préstamo NeuroTEA', frecuencia: 'Variable', monto: 0 },
+  { concepto: 'Devolución NeuroTEA', frecuencia: 'Variable', monto: 0 },  // NT devuelve a Familia
   { concepto: 'Préstamo Otros Bancos', frecuencia: 'Variable', monto: 0 }
 ];
 
@@ -318,6 +323,7 @@ const VARIABLES_PRESUP_FAM = [
   { concepto: 'Salud y Medicamentos', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Gastos no identificados', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Devolución Familia → NT', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
+  { concepto: 'Préstamo Familia → NT', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },  // Familia presta a NT
   { concepto: 'Reserva Var. 1', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
   { concepto: 'Reserva Var. 2', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
   { concepto: 'Reserva Var. 3', categoria: 'VARIABLES', frecuencia: '-', monto: 0 }
@@ -338,6 +344,7 @@ const INGRESOS_NT = [
   { concepto: 'Cursos NeuroTEA', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Otros', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Devolución Familia → NT', frecuencia: 'Variable', monto: 0 },
+  { concepto: 'Préstamo Familia', frecuencia: 'Variable', monto: 0 },  // Familia presta a NT
   { concepto: 'Reserva Ing. 1', frecuencia: '-', monto: 0 },
   { concepto: 'Reserva Ing. 2', frecuencia: '-', monto: 0 },
   { concepto: 'Reserva Ing. 3', frecuencia: '-', monto: 0 }
@@ -391,6 +398,7 @@ const VARIABLES_PRESUP_NT = [
   { concepto: 'Gastos Cursos', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Gastos Varios Cumple (Tortas, bocaditos, meriendas)', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Préstamo NT → Familia', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
+  { concepto: 'Devolución NT → Familia', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },  // NT devuelve a Familia
   { concepto: 'Reserva Var. 1', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
   { concepto: 'Reserva Var. 2', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
   { concepto: 'Reserva Var. 3', categoria: 'VARIABLES', frecuencia: '-', monto: 0 }
