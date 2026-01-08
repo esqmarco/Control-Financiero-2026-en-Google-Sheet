@@ -643,9 +643,9 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 22);
   rowNT++;
 
-  // Valor Ganancia
+  // Valor Ganancia = Ingresos - Egresos Pagados - Egresos Pendientes (consistente con MOVIMIENTO)
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setFormula(`=IFERROR(H${filaIngresosNT}-J${filaIngresosNT},0)`)
+    .setFormula(`=IFERROR(H${filaIngresosNT}-J${filaIngresosNT}-H${filaEgresosPendNT};0)`)
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
