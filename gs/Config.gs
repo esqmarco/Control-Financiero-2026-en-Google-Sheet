@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '6.1';
+const VERSION = '6.2';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
