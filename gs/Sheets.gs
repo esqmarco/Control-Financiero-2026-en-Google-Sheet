@@ -360,6 +360,8 @@ function crearHojaPRESUPUESTO() {
   row++;
 
   // Semáforo de estado
+  // NOTA: Usamos "0,07" directamente como string para evitar problemas de locale
+  const metaGananciaStr = '0,07'; // 7% en formato español (coma decimal)
   sheet.getRange(row, 1).setValue('Estado Meta').setFontWeight('bold');
   sheet.getRange(row, 2).setValue('Calculado');
   sheet.getRange(row, 3).setValue('-');
@@ -367,7 +369,7 @@ function crearHojaPRESUPUESTO() {
     const colLetra = String.fromCharCode(64 + col);
     // Semáforo: <0% = Rojo (Pérdida), 0-7% = Amarillo, >=7% = Verde
     sheet.getRange(row, col).setFormula(
-      `=IF(${colLetra}${filaPctGanancia}<0;"🔴 PÉRDIDA";IF(${colLetra}${filaPctGanancia}<${metaGanancia.toString().replace('.',',')};"🟡 <${METAS_NT.GANANCIA_MINIMA_PCT}%";"🟢 META"))`
+      `=IF(${colLetra}${filaPctGanancia}<0;"🔴 PÉRDIDA";IF(${colLetra}${filaPctGanancia}<${metaGananciaStr};"🟡 <7%";"🟢 META"))`
     );
   }
   const filaEstadoMeta = row;

@@ -1305,30 +1305,28 @@ function crearHojaTABLERO() {
   // Referencia al total de gastos pagados (de los indicadores)
   const filaTotalGastosNT = filaIngresosNT; // J${filaIngresosNT} tiene GASTOS PAGADOS
 
-  // Categorías NT con sus fórmulas - Estilo sobrio (sin colores individuales)
+  // Categorías NT con colores financieros para las barras
   const categoriasNT = [
-    'CLÍNICA',
-    'SUELDOS Y HONORARIOS',
-    'TELEFONÍA E INTERNET',
-    'OBLIGACIONES LEGALES',
-    'EVENTOS',
-    'VARIABLES'
+    { nombre: 'CLÍNICA', barColor: '#2563EB' },              // Azul - operaciones
+    { nombre: 'SUELDOS Y HONORARIOS', barColor: '#1E3A8A' }, // Azul oscuro - nómina
+    { nombre: 'TELEFONÍA E INTERNET', barColor: '#0891B2' }, // Cyan - servicios
+    { nombre: 'OBLIGACIONES LEGALES', barColor: '#7C3AED' }, // Púrpura - legal
+    { nombre: 'EVENTOS', barColor: '#DB2777' },              // Rosa - ocasional
+    { nombre: 'VARIABLES', barColor: '#D97706' }             // Naranja - variable
   ];
 
   const filaInicioCatNT = rowNT;
-  categoriasNT.forEach((nombre, idx) => {
+  categoriasNT.forEach((cat, idx) => {
     const bgColor = (idx % 2 === 0) ? UI.FAM_FILA_PAR : UI.BLANCO;
 
     // Nombre categoría
-    sheet.getRange(rowNT, 8).setValue(nombre)
+    sheet.getRange(rowNT, 8).setValue(cat.nombre)
       .setFontSize(9)
       .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
     // Monto: GASTOS_FIJOS (mes actual) + CARGA_NT (variables del mes)
-    // GASTOS_FIJOS: B=ENTIDAD, C=CATEGORÍA, G-R=ENE-DIC
-    // CARGA_NT: B=TIPO, C=CATEGORÍA, F=MONTO, A=FECHA
-    const formulaMonto = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="NEUROTEA")*(GASTOS_FIJOS!$C$4:$C$100="${nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_NT!$B$4:$B$500="Egreso NT")*(CARGA_NT!$C$4:$C$500="${nombre}")*(MONTH(CARGA_NT!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!$A$4:$A$500)=${AÑO})*(CARGA_NT!$F$4:$F$500));0)`;
+    const formulaMonto = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="NEUROTEA")*(GASTOS_FIJOS!$C$4:$C$100="${cat.nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_NT!$B$4:$B$500="Egreso NT")*(CARGA_NT!$C$4:$C$500="${cat.nombre}")*(MONTH(CARGA_NT!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!$A$4:$A$500)=${AÑO})*(CARGA_NT!$F$4:$F$500));0)`;
     sheet.getRange(rowNT, 9)
       .setFormula(formulaMonto)
       .setNumberFormat('#,##0')
@@ -1344,11 +1342,12 @@ function crearHojaTABLERO() {
       .setHorizontalAlignment('center')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Barra visual con texto (█░)
+    // Barra visual con color de categoría
     sheet.getRange(rowNT, 11)
       .setFormula(`=REPT("█";ROUND(J${rowNT}*10))&REPT("░";10-ROUND(J${rowNT}*10))`)
       .setFontFamily('Courier New')
       .setFontSize(10)
+      .setFontColor(cat.barColor)
       .setBackground(bgColor)
       .setHorizontalAlignment('left')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
@@ -1357,7 +1356,7 @@ function crearHojaTABLERO() {
     rowNT++;
   });
 
-  // Total categorías
+  // Total categorías - barra condicional
   sheet.getRange(rowNT, 8).setValue('TOTAL')
     .setFontWeight('bold')
     .setBackground(UI.NT_SUBTOTAL)
@@ -1374,10 +1373,12 @@ function crearHojaTABLERO() {
     .setBackground(UI.NT_SUBTOTAL)
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 11).setValue('██████████')
+  sheet.getRange(rowNT, 11)
+    .setFormula(`=IF(J${rowNT}>0;"██████████";"░░░░░░░░░░")`)
     .setFontFamily('Courier New')
     .setFontSize(10)
     .setFontWeight('bold')
+    .setFontColor(UI.NEGRO)
     .setBackground(UI.NT_SUBTOTAL)
     .setHorizontalAlignment('left')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
@@ -1563,30 +1564,28 @@ function crearHojaTABLERO() {
   // Referencia al total de egresos pagados FAMILIA (columna D de Egresos Pagados)
   const filaTotalGastosFam = filaEgresosPagadosFam; // D${filaEgresosPagadosFam} tiene GASTOS PAGADOS
 
-  // Categorías FAMILIA - Estilo sobrio (sin colores individuales)
+  // Categorías FAMILIA con colores financieros para las barras
   const categoriasFAM = [
-    'GASTOS FIJOS',
-    'CUOTAS Y PRÉSTAMOS',
-    'OBLIGACIONES LEGALES',
-    'SUSCRIPCIONES',
-    'VARIABLES',
-    'AHORRO'
+    { nombre: 'GASTOS FIJOS', barColor: '#2563EB' },        // Azul - obligaciones fijas
+    { nombre: 'CUOTAS Y PRÉSTAMOS', barColor: '#DC2626' },  // Rojo - deuda
+    { nombre: 'OBLIGACIONES LEGALES', barColor: '#7C3AED' }, // Púrpura - legal
+    { nombre: 'SUSCRIPCIONES', barColor: '#0891B2' },       // Cyan - servicios
+    { nombre: 'VARIABLES', barColor: '#D97706' },           // Naranja - variable
+    { nombre: 'AHORRO', barColor: '#16A34A' }               // Verde - positivo
   ];
 
   const filaInicioCatFam = rowFam;
-  categoriasFAM.forEach((nombre, idx) => {
+  categoriasFAM.forEach((cat, idx) => {
     const bgColor = (idx % 2 === 0) ? UI.FAM_FILA_PAR : UI.BLANCO;
 
     // Nombre categoría
-    sheet.getRange(rowFam, 2).setValue(nombre)
+    sheet.getRange(rowFam, 2).setValue(cat.nombre)
       .setFontSize(9)
       .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
     // Monto: GASTOS_FIJOS (FAMILIA) + CARGA_FAMILIA (variables/ahorro del mes)
-    // GASTOS_FIJOS: B=ENTIDAD, C=CATEGORÍA, G-R=ENE-DIC
-    // CARGA_FAMILIA: B=TIPO, C=CATEGORÍA, F=MONTO, A=FECHA
-    const formulaMontoFam = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="FAMILIA")*(GASTOS_FIJOS!$C$4:$C$100="${nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500="Egreso Familiar")*(CARGA_FAMILIA!$C$4:$C$500="${nombre}")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=${AÑO})*(CARGA_FAMILIA!$F$4:$F$500));0)`;
+    const formulaMontoFam = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="FAMILIA")*(GASTOS_FIJOS!$C$4:$C$100="${cat.nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500="Egreso Familiar")*(CARGA_FAMILIA!$C$4:$C$500="${cat.nombre}")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=${AÑO})*(CARGA_FAMILIA!$F$4:$F$500));0)`;
     sheet.getRange(rowFam, 3)
       .setFormula(formulaMontoFam)
       .setNumberFormat('#,##0')
@@ -1602,11 +1601,12 @@ function crearHojaTABLERO() {
       .setHorizontalAlignment('center')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Barra visual con texto (█░)
+    // Barra visual con color de categoría
     sheet.getRange(rowFam, 5)
       .setFormula(`=REPT("█";ROUND(D${rowFam}*10))&REPT("░";10-ROUND(D${rowFam}*10))`)
       .setFontFamily('Courier New')
       .setFontSize(10)
+      .setFontColor(cat.barColor)
       .setBackground(bgColor)
       .setHorizontalAlignment('left')
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
@@ -1615,7 +1615,7 @@ function crearHojaTABLERO() {
     rowFam++;
   });
 
-  // Total categorías FAMILIA
+  // Total categorías FAMILIA - barra condicional
   sheet.getRange(rowFam, 2).setValue('TOTAL')
     .setFontWeight('bold')
     .setBackground(UI.FAM_SUBTOTAL)
@@ -1632,10 +1632,12 @@ function crearHojaTABLERO() {
     .setBackground(UI.FAM_SUBTOTAL)
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 5).setValue('██████████')
+  sheet.getRange(rowFam, 5)
+    .setFormula(`=IF(D${rowFam}>0;"██████████";"░░░░░░░░░░")`)
     .setFontFamily('Courier New')
     .setFontSize(10)
     .setFontWeight('bold')
+    .setFontColor(UI.NEGRO)
     .setBackground(UI.FAM_SUBTOTAL)
     .setHorizontalAlignment('left')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
