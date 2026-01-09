@@ -88,7 +88,7 @@ gs/
 
 ## Tipos de Ingreso (para desplegables)
 
-### FAMILIA (13 tipos)
+### FAMILIA (14 tipos)
 1. Salario Marco (Itaipu)
 2. **Salario Marco NeuroTEA** (NT paga a Marco)
 3. Vacaciones Marco
@@ -102,12 +102,14 @@ gs/
 11. Honorarios Clara NeuroTEA
 12. Préstamo NeuroTEA
 13. Préstamo Otros Bancos
+14. **Devolución NeuroTEA** (NT devuelve préstamo a Familia)
 
-### NEUROTEA (4 tipos)
+### NEUROTEA (5 tipos)
 1. Aporte NeuroTEA Terapeutas
 2. Cursos NeuroTEA
 3. Otros
 4. Devolución Familia → NT
+5. **Préstamo Familia** (Familia presta a NT)
 
 ---
 
@@ -133,7 +135,7 @@ gs/
 
 ## Subcategorías Variables
 
-### FAMILIA - VARIABLES (10 items)
+### FAMILIA - VARIABLES (11 items)
 1. Supermercado
 2. Combustible
 3. Mantenimiento / Reparaciones Auto Clara
@@ -143,15 +145,17 @@ gs/
 7. Recreación (Pizza, hamburguesa, helados, etc)
 8. Salud y Medicamentos
 9. Gastos no identificados
-10. **Devolución Familia → NT**
+10. **Devolución Familia → NT** (FAM devuelve préstamo a NT)
+11. **Préstamo Familia → NT** (FAM presta a NT)
 
-### NEUROTEA - VARIABLES (6 items)
+### NEUROTEA - VARIABLES (7 items)
 1. Insumos y Papelería
 2. Reparaciones Clínica
 3. Mantenimiento Aire
 4. Gastos Cursos
 5. Gastos Varios Cumple
-6. **Préstamo NT → Familia**
+6. **Préstamo NT → Familia** (NT presta a FAM)
+7. **Devolución NT → Familia** (NT devuelve préstamo a FAM)
 
 ### NEUROTEA - EVENTOS (16 items: 6 definidos + 10 reservas)
 1. Día del Autismo (Abril)
@@ -403,37 +407,58 @@ El sistema usa formato español/europeo para números:
 
 ---
 
-## Balance Cruzado NT ↔ FAMILIA
+## Balance Cruzado NT ↔ FAMILIA (Bidireccional v6.3)
+
+### FLUJO 1: NT → FAMILIA (NT presta a Familia)
 
 **Cuando NT presta a Familia:**
 - CARGA_NT: Egreso NT → VARIABLES → "Préstamo NT → Familia"
 - CARGA_FAMILIA: Ingreso → "Préstamo NeuroTEA"
 
-**Cuando Familia devuelve:**
+**Cuando Familia devuelve a NT:**
 - CARGA_FAMILIA: Egreso → VARIABLES → "Devolución Familia → NT"
 - CARGA_NT: Ingreso → "Devolución Familia → NT"
 
-**Saldo Neto** = Préstamos NT→FAM - Devoluciones FAM→NT
-- Si > 0: NT subsidia a Familia 🔴
+**Deuda FAM → NT** = Préstamos NT→FAM - Devoluciones FAM→NT
+
+### FLUJO 2: FAM → NT (Familia presta a NT)
+
+**Cuando Familia presta a NT:**
+- CARGA_FAMILIA: Egreso → VARIABLES → "Préstamo Familia → NT"
+- CARGA_NT: Ingreso → "Préstamo Familia"
+
+**Cuando NT devuelve a Familia:**
+- CARGA_NT: Egreso → VARIABLES → "Devolución NT → Familia"
+- CARGA_FAMILIA: Ingreso → "Devolución NeuroTEA"
+
+**Deuda NT → FAM** = Préstamos FAM→NT - Devoluciones NT→FAM
+
+### Balance Neto
+
+**Balance Neto** = Deuda FAM→NT - Deuda NT→FAM
+- Si > 0: FAMILIA debe a NT 🔴 (NT ha prestado más)
 - Si = 0: Equilibrado 🟢
-- Si < 0: Familia subsidia a NT 🟡
+- Si < 0: NT debe a FAMILIA 🟡 (FAM ha prestado más)
 
 ---
 
-## Colores del Sistema
+## Colores del Sistema (Estilo Sobrio v6.1)
 
-| Uso | Código Hex |
-|-----|------------|
-| FAMILIA Header | #059669 |
-| FAMILIA Fondo | #d1fae5 |
-| FAMILIA Subtotal | #a7f3d0 |
-| NEUROTEA Header | #1d4ed8 |
-| NEUROTEA Fondo | #dbeafe |
-| NEUROTEA Subtotal | #93c5fd |
-| Balance Cruzado | #7c3aed / #ede9fe |
-| OK/Ahorro | #22c55e |
-| Alerta/Déficit | #dc2626 |
-| Advertencia | #f59e0b |
+> **NOTA**: Headers usan gris neutro. Colores SOLO para indicadores de estado.
+
+| Uso | Código Hex | Nota |
+|-----|------------|------|
+| Headers (FAM/NT) | #1f2937 | Gris oscuro sobrio |
+| Fondo principal | #f9fafb | Gris muy claro |
+| Fondo alternado | #ffffff | Blanco |
+| Subtotales | #e5e7eb | Gris claro |
+| Bordes | #d1d5db | Gris borde |
+| OK/Ahorro | #22c55e | Verde (estado) |
+| Alerta/Déficit | #dc2626 | Rojo (estado) |
+| Advertencia | #f59e0b | Amarillo (estado) |
+| Ingreso | #3b82f6 | Azul (indicador) |
+| Egreso | #ef4444 | Rojo (indicador) |
+| Ganancia | #22c55e | Verde (indicador) |
 
 ---
 
@@ -539,5 +564,5 @@ El sistema usa formato español/europeo para números:
 
 ---
 
-*Última actualización: 2026-01-06*
-*Versión: 4.2 - Saldos iniciales independientes por mes en CONFIG, WebApp actualizado*
+*Última actualización: 2026-01-08*
+*Versión: 6.3 - Préstamos bidireccionales NT↔FAM, estilo sobrio, LIQUIDEZ intuitivo*

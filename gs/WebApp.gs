@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * WEBAPP.GS - DASHBOARD HTML/CSS PROFESIONAL
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.1 - Estilo sobrio profesional (gris/blanco, colores solo estados)
+ * Versión 6.3 - Préstamos bidireccionales NT↔FAM, GANANCIA consistente
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -109,16 +109,24 @@ function generarFilasCuentasNT(cuentas) {
 }
 
 function generarAlertaBalanceCruzado(datos) {
-  if (datos.balanceCruzado.saldoNetoAcum > 0) {
-    return '<div class="alert-icon">⚠️</div>' +
-           '<div class="alert-title">NT SUBSIDIA A FAMILIA</div>' +
-           '<div class="alert-value">Gs. ' + formatearGuaranies(datos.balanceCruzado.saldoNetoAcum) + '</div>' +
-           '<div class="alert-desc">El salario de administrador no está cubriendo los gastos familiares.</div>';
+  var saldo = datos.balanceCruzado.balanceNeto || 0;
+  if (saldo > 0) {
+    // FAMILIA debe a NT (NT ha prestado más de lo que FAM devolvió)
+    return '<div class="alert-icon">🔴</div>' +
+           '<div class="alert-title">FAMILIA DEBE A NT</div>' +
+           '<div class="alert-value">Gs. ' + formatearGuaranies(saldo) + '</div>' +
+           '<div class="alert-desc">NeuroTEA ha prestado más a Familia de lo que Familia ha devuelto.</div>';
+  } else if (saldo < 0) {
+    // NT debe a FAMILIA (FAM ha prestado más de lo que NT devolvió)
+    return '<div class="alert-icon">🟡</div>' +
+           '<div class="alert-title">NT DEBE A FAMILIA</div>' +
+           '<div class="alert-value">Gs. ' + formatearGuaranies(Math.abs(saldo)) + '</div>' +
+           '<div class="alert-desc">Familia ha prestado más a NeuroTEA de lo que NT ha devuelto.</div>';
   } else {
     return '<div class="alert-icon">✅</div>' +
            '<div class="alert-title">BALANCE EQUILIBRADO</div>' +
-           '<div class="alert-value">Gs. ' + formatearGuaranies(Math.abs(datos.balanceCruzado.saldoNetoAcum)) + '</div>' +
-           '<div class="alert-desc">Familia no debe a NeuroTEA.</div>';
+           '<div class="alert-value">Gs. 0</div>' +
+           '<div class="alert-desc">No hay deudas pendientes entre entidades.</div>';
   }
 }
 
@@ -453,19 +461,25 @@ function generarHTMLDashboard() {
 '        </div>' +
 '      </div>' +
 '    </div>' +
-'    <!-- BALANCE CRUZADO -->' +
+'    <!-- BALANCE CRUZADO BIDIRECCIONAL -->' +
 '    <div class="balance-section">' +
 '      <h3>🔄 BALANCE CRUZADO: NEUROTEA ↔ FAMILIA</h3>' +
 '      <div class="balance-grid">' +
 '        <table class="balance-table"><thead><tr><th>Concepto</th><th class="text-right">Este Mes</th><th class="text-right">Acumulado Año</th></tr></thead>' +
 '        <tbody>' +
-'          <tr><td>Préstamo NT → Familia</td><td class="text-right" style="color:#fca5a5">' + (datos.balanceCruzado.prestamoMes > 0 ? formatearGuaranies(datos.balanceCruzado.prestamoMes) : '-') + '</td><td class="text-right font-bold" style="color:#fca5a5">' + formatearGuaranies(datos.balanceCruzado.prestamoAcum) + '</td></tr>' +
-'          <tr><td>Devolución Familia → NT</td><td class="text-right" style="color:#86efac">' + (datos.balanceCruzado.devolucionMes > 0 ? formatearGuaranies(datos.balanceCruzado.devolucionMes) : '-') + '</td><td class="text-right font-bold" style="color:#86efac">' + formatearGuaranies(datos.balanceCruzado.devolucionAcum) + '</td></tr>' +
+'          <tr style="background:rgba(255,255,255,0.05)"><td colspan="3" class="font-bold" style="color:#fca5a5">↗️ FLUJO NT → FAMILIA</td></tr>' +
+'          <tr><td>Préstamo NT → Familia</td><td class="text-right" style="color:#fca5a5">' + (datos.balanceCruzado.prestamoNTMes > 0 ? formatearGuaranies(datos.balanceCruzado.prestamoNTMes) : '-') + '</td><td class="text-right font-bold" style="color:#fca5a5">' + formatearGuaranies(datos.balanceCruzado.prestamoNTAcum) + '</td></tr>' +
+'          <tr><td>Devolución Familia → NT</td><td class="text-right" style="color:#86efac">' + (datos.balanceCruzado.devFamMes > 0 ? formatearGuaranies(datos.balanceCruzado.devFamMes) : '-') + '</td><td class="text-right font-bold" style="color:#86efac">' + formatearGuaranies(datos.balanceCruzado.devFamAcum) + '</td></tr>' +
+'          <tr style="background:rgba(0,0,0,0.1)"><td class="font-bold">📊 Deuda FAM → NT</td><td class="text-right font-bold">' + formatearGuaranies(datos.balanceCruzado.deudaFamMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(datos.balanceCruzado.deudaFamAcum) + '</td></tr>' +
+'          <tr style="background:rgba(255,255,255,0.05)"><td colspan="3" class="font-bold" style="color:#fde68a">↗️ FLUJO FAM → NT</td></tr>' +
+'          <tr><td>Préstamo Familia → NT</td><td class="text-right" style="color:#fde68a">' + (datos.balanceCruzado.prestamoFamMes > 0 ? formatearGuaranies(datos.balanceCruzado.prestamoFamMes) : '-') + '</td><td class="text-right font-bold" style="color:#fde68a">' + formatearGuaranies(datos.balanceCruzado.prestamoFamAcum) + '</td></tr>' +
+'          <tr><td>Devolución NT → Familia</td><td class="text-right" style="color:#86efac">' + (datos.balanceCruzado.devNTMes > 0 ? formatearGuaranies(datos.balanceCruzado.devNTMes) : '-') + '</td><td class="text-right font-bold" style="color:#86efac">' + formatearGuaranies(datos.balanceCruzado.devNTAcum) + '</td></tr>' +
+'          <tr style="background:rgba(0,0,0,0.1)"><td class="font-bold">📊 Deuda NT → FAM</td><td class="text-right font-bold">' + formatearGuaranies(datos.balanceCruzado.deudaNTMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(datos.balanceCruzado.deudaNTAcum) + '</td></tr>' +
 '        </tbody>' +
-'        <tfoot><tr style="background:rgba(0,0,0,0.2)">' +
-'          <td class="font-bold">SALDO NETO</td>' +
-'          <td class="text-right font-bold" style="color:' + (datos.balanceCruzado.saldoNetoMes > 0 ? '#fca5a5' : '#86efac') + '">' + formatearGuaranies(datos.balanceCruzado.saldoNetoMes) + '</td>' +
-'          <td class="text-right font-bold" style="color:' + (datos.balanceCruzado.saldoNetoAcum > 0 ? '#fca5a5' : '#86efac') + '">' + formatearGuaranies(datos.balanceCruzado.saldoNetoAcum) + '</td>' +
+'        <tfoot><tr style="background:rgba(0,0,0,0.3)">' +
+'          <td class="font-bold">💰 BALANCE NETO</td>' +
+'          <td class="text-right font-bold" style="color:' + (datos.balanceCruzado.balanceNetoMes > 0 ? '#fca5a5' : (datos.balanceCruzado.balanceNetoMes < 0 ? '#fde68a' : '#86efac')) + '">' + formatearGuaranies(datos.balanceCruzado.balanceNetoMes) + '</td>' +
+'          <td class="text-right font-bold" style="color:' + (datos.balanceCruzado.balanceNeto > 0 ? '#fca5a5' : (datos.balanceCruzado.balanceNeto < 0 ? '#fde68a' : '#86efac')) + '">' + formatearGuaranies(datos.balanceCruzado.balanceNeto) + '</td>' +
 '        </tr></tfoot></table>' +
 '        <div class="alert-box">' + generarAlertaBalanceCruzado(datos) + '</div>' +
 '      </div>' +
@@ -612,20 +626,41 @@ function obtenerDatosDashboard() {
     saldoFinalFam = leerNumero(tablero.getRange(FILA_SALDO_FINAL_FAM, 4));  // D33
   }
 
-  // BALANCE CRUZADO (columna C=Este Mes, D=Acumulado)
+  // BALANCE CRUZADO BIDIRECCIONAL (columna C=Este Mes, D=Acumulado)
+  // Estructura v6.3: 8 filas (FLOW NT→FAM: Préstamo, Devolución, Deuda + FLOW FAM→NT: Préstamo, Devolución, Deuda + Balance)
   var prestamoNTMes = 0, prestamoNTAcum = 0;
-  var devolucionFamMes = 0, devolucionFamAcum = 0;
-  var saldoNetoMes = 0, saldoNetoAcum = 0;
+  var devFamMes = 0, devFamAcum = 0;
+  var deudaFamMes = 0, deudaFamAcum = 0;
+  var prestamoFamMes = 0, prestamoFamAcum = 0;
+  var devNTMes = 0, devNTAcum = 0;
+  var deudaNTMes = 0, deudaNTAcum = 0;
+  var balanceNetoMes = 0, balanceNeto = 0;
   if (tablero) {
-    var filaPrestamoBC = FILA_BALANCE_CRUZADO + 2;
-    var filaDevolucionBC = filaPrestamoBC + 1;
-    var filaSaldoBC = filaDevolucionBC + 1;
-    prestamoNTMes = leerNumero(tablero.getRange(filaPrestamoBC, 3));    // C38
-    prestamoNTAcum = leerNumero(tablero.getRange(filaPrestamoBC, 4));   // D38
-    devolucionFamMes = leerNumero(tablero.getRange(filaDevolucionBC, 3)); // C39
-    devolucionFamAcum = leerNumero(tablero.getRange(filaDevolucionBC, 4)); // D39
-    saldoNetoMes = leerNumero(tablero.getRange(filaSaldoBC, 3));       // C40
-    saldoNetoAcum = leerNumero(tablero.getRange(filaSaldoBC, 4));      // D40
+    // FLOW 1: NT → FAM (filas relativas al inicio de Balance Cruzado)
+    var filaPrestamoNT = FILA_BALANCE_CRUZADO + 2;    // Préstamo NT → Familia
+    var filaDevFam = filaPrestamoNT + 1;              // Devolución Familia → NT
+    var filaDeudaFam = filaDevFam + 1;                // Deuda FAM → NT (subtotal)
+    // FLOW 2: FAM → NT
+    var filaPrestamoFam = filaDeudaFam + 1;           // Préstamo Familia → NT
+    var filaDevNT = filaPrestamoFam + 1;              // Devolución NT → Familia
+    var filaDeudaNT = filaDevNT + 1;                  // Deuda NT → FAM (subtotal)
+    // Balance Neto
+    var filaBalanceNeto = filaDeudaNT + 1;            // BALANCE NETO
+
+    prestamoNTMes = leerNumero(tablero.getRange(filaPrestamoNT, 3));
+    prestamoNTAcum = leerNumero(tablero.getRange(filaPrestamoNT, 4));
+    devFamMes = leerNumero(tablero.getRange(filaDevFam, 3));
+    devFamAcum = leerNumero(tablero.getRange(filaDevFam, 4));
+    deudaFamMes = leerNumero(tablero.getRange(filaDeudaFam, 3));
+    deudaFamAcum = leerNumero(tablero.getRange(filaDeudaFam, 4));
+    prestamoFamMes = leerNumero(tablero.getRange(filaPrestamoFam, 3));
+    prestamoFamAcum = leerNumero(tablero.getRange(filaPrestamoFam, 4));
+    devNTMes = leerNumero(tablero.getRange(filaDevNT, 3));
+    devNTAcum = leerNumero(tablero.getRange(filaDevNT, 4));
+    deudaNTMes = leerNumero(tablero.getRange(filaDeudaNT, 3));
+    deudaNTAcum = leerNumero(tablero.getRange(filaDeudaNT, 4));
+    balanceNetoMes = leerNumero(tablero.getRange(filaBalanceNeto, 3));
+    balanceNeto = leerNumero(tablero.getRange(filaBalanceNeto, 4));
   }
 
   // PRESUPUESTO VS REAL POR CATEGORÍAS (desde MOVIMIENTO)
@@ -696,12 +731,23 @@ function obtenerDatosDashboard() {
       saldoFinal: saldoFinalFam
     },
     balanceCruzado: {
-      prestamoMes: prestamoNTMes,
-      prestamoAcum: prestamoNTAcum,
-      devolucionMes: devolucionFamMes,
-      devolucionAcum: devolucionFamAcum,
-      saldoNetoMes: saldoNetoMes,
-      saldoNetoAcum: saldoNetoAcum
+      // FLOW NT → FAM
+      prestamoNTMes: prestamoNTMes,
+      prestamoNTAcum: prestamoNTAcum,
+      devFamMes: devFamMes,
+      devFamAcum: devFamAcum,
+      deudaFamMes: deudaFamMes,
+      deudaFamAcum: deudaFamAcum,
+      // FLOW FAM → NT
+      prestamoFamMes: prestamoFamMes,
+      prestamoFamAcum: prestamoFamAcum,
+      devNTMes: devNTMes,
+      devNTAcum: devNTAcum,
+      deudaNTMes: deudaNTMes,
+      deudaNTAcum: deudaNTAcum,
+      // Balance neto
+      balanceNetoMes: balanceNetoMes,
+      balanceNeto: balanceNeto
     }
   };
 }
