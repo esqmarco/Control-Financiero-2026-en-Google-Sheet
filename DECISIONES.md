@@ -417,4 +417,83 @@ La versión anterior se marca como:
 
 ---
 
-*Última actualización: 2026-01-04 - Agregadas decisiones q, r, s, t (CUENTA, Saldo Banco, AHORRO, PRESUPUESTO cálculos)*
+---
+
+### [2026-01-05u] - GASTOS_FIJOS sin columna BASE
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Se eliminó la columna BASE de GASTOS_FIJOS
+- Ahora cada mes (G-R = ENE-DIC) tiene su valor directo
+- MOVIMIENTO copia el DÍA a columna D para que LIQUIDEZ y TABLERO lean directamente sin INDEX/MATCH
+- Nueva estructura: A=CONCEPTO, B=ENTIDAD, C=CATEGORÍA, D=FRECUENCIA, E=DÍA, F=CUENTA, G-R=ENE-DIC
+**Archivos afectados**: gs/Config.gs, gs/Sheets.gs, CLAUDE.md
+**Razón**: Simplifica la entrada de datos y el cálculo de fórmulas. Usuario ingresa monto directamente por mes.
+
+---
+
+### [2026-01-05v] - Estilo sobrio profesional (v6.1)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Headers de FAMILIA y NEUROTEA ahora usan gris neutro (#1F2937) en lugar de colores distintivos
+- Fondos alternados en gris claro (#F9FAFB) y blanco
+- Colores solo para indicadores de estado: verde=OK, amarillo=advertencia, rojo=alerta
+- Estilo consistente entre Google Sheets y WebApp HTML
+**Archivos afectados**: gs/Config.gs (COLORES), gs/Tablero.gs, gs/WebApp.gs
+**Razón**: Apariencia más profesional y menos distractora. Los colores comunican estado, no identidad de entidad.
+
+---
+
+### [2026-01-06w] - LIQUIDEZ rediseñada con layout intuitivo (v6.2)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- LIQUIDEZ responde la pregunta clave: "¿Tengo plata para pagar mis gastos fijos?"
+- Panel principal con 3 tarjetas grandes:
+  1. 💵 SALDO DISPONIBLE (azul)
+  2. ⏳ TOTAL PENDIENTE (naranja)
+  3. 📊 ¿ALCANZA? (verde/rojo condicional)
+- Panel lateral por semana mostrando:
+  - 🔴 Atrasados (cantidad + monto)
+  - ⏳ Pendientes (cantidad + monto)
+  - ✅ Pagados (cantidad + monto)
+  - 📋 Total semana
+  - ¿Saldo cubre? (indicador)
+**Archivos afectados**: gs/Sheets.gs (crearHojaLiquidezEntidad)
+**Razón**: El usuario necesita ver de un vistazo si su saldo cubre los gastos pendientes.
+
+---
+
+### [2026-01-06x] - Préstamos bidireccionales NT↔FAM (v6.3)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Ahora se trackean préstamos en AMBAS direcciones:
+  - **FLUJO NT → FAM**: Préstamo NT → Familia, Devolución Familia → NT, Deuda FAM → NT
+  - **FLUJO FAM → NT**: Préstamo Familia → NT, Devolución NT → Familia, Deuda NT → FAM
+- Nuevos conceptos agregados:
+  - FAMILIA Ingreso: "Devolución NeuroTEA" (NT devuelve a FAM)
+  - FAMILIA Egreso Variable: "Préstamo Familia → NT"
+  - NT Ingreso: "Préstamo Familia" (FAM presta a NT)
+  - NT Egreso Variable: "Devolución NT → Familia"
+- TABLERO Balance Cruzado expandido a 8 filas (antes 4)
+- WebApp muestra flujo bidireccional con colores diferenciados
+- Balance Neto = Deuda FAM - Deuda NT
+  - > 0: FAM debe a NT (rojo)
+  - < 0: NT debe a FAM (amarillo)
+  - = 0: Equilibrado (verde)
+**Archivos afectados**: gs/Config.gs, gs/Sheets.gs, gs/Tablero.gs, gs/WebApp.gs, CLAUDE.md
+**Razón**: Usuario identificó que solo existía flujo NT→FAM. Familia también puede prestar a NT para cubrir déficit.
+
+---
+
+### [2026-01-06y] - GANANCIA consistente entre TABLERO y MOVIMIENTO
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- TABLERO ahora usa la misma fórmula que MOVIMIENTO para calcular GANANCIA NT
+- Fórmula correcta: `GANANCIA = INGRESOS - EGRESOS_PAGADOS - EGRESOS_PENDIENTES`
+- Antes TABLERO usaba: `GANANCIA = INGRESOS - EGRESOS_PAGADOS` (incorrecto)
+- La distribución (Utilidad, Fondo Emergencia, Fondo Inversión) se basa en ganancia real
+**Archivos afectados**: gs/Tablero.gs
+**Razón**: Usuario reportó que RESUMEN NEUROTEA mostraba 0s porque la fórmula no consideraba egresos pendientes.
+
+---
+
+*Última actualización: 2026-01-06 - Agregadas decisiones u, v, w, x, y (BASE eliminado, estilo sobrio, LIQUIDEZ intuitivo, bidireccional, GANANCIA)*

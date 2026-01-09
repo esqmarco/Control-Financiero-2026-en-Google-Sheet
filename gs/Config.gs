@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CONFIG.GS - DATOS MAESTROS Y CONFIGURACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.1 - Estilo sobrio profesional (gris/blanco, colores solo estados)
+ * Versión 6.3 - Préstamos bidireccionales NT↔FAM, GANANCIA consistente
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
