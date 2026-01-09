@@ -142,7 +142,7 @@ function generarTortaGastos(categorias, tipo) {
   // Filtrar solo categorías de egresos (no ingresos, no balance)
   var gastos = [];
   var total = 0;
-  var colores = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'];
+  var colores = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#6b7280', '#ec4899', '#06b6d4'];
 
   for (var i = 0; i < categorias.length; i++) {
     var cat = categorias[i];
@@ -299,7 +299,7 @@ function generarHTMLDashboard() {
 '    .fondos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }' +
 '    .fondo-box { padding: 15px; border-radius: 10px; text-align: center; transition: transform 0.2s; }' +
 '    .fondo-box:hover { transform: scale(1.03); }' +
-'    .fondo-box.utilidad { background: #f3e8ff; }' +
+'    .fondo-box.utilidad { background: #dbeafe; }' +
 '    .fondo-box.emergencia { background: #ffedd5; }' +
 '    .fondo-box.inversion { background: #cffafe; }' +
 '    .fondo-label { font-size: 0.8em; color: #64748b; margin-bottom: 5px; }' +
@@ -307,7 +307,7 @@ function generarHTMLDashboard() {
 '    .fondo-real { font-size: 0.85em; margin-top: 5px; }' +
 '    .fondo-real.ok { color: #059669; }' +
 '    .fondo-real.warning { color: #d97706; }' +
-'    .balance-section { background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #8b5cf6 100%); color: white; padding: 25px; border-radius: 15px; grid-column: 1 / -1; margin-top: 10px; box-shadow: 0 8px 30px rgba(124, 58, 237, 0.3); }' +
+'    .balance-section { background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #1f2937 100%); color: white; padding: 25px; border-radius: 15px; grid-column: 1 / -1; margin-top: 10px; box-shadow: 0 8px 30px rgba(31, 41, 55, 0.3); }' +
 '    .balance-section h3 { text-align: center; margin-bottom: 20px; font-size: 1.3em; display: flex; align-items: center; justify-content: center; gap: 10px; }' +
 '    .balance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }' +
 '    .balance-table { background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }' +
@@ -426,7 +426,7 @@ function generarHTMLDashboard() {
 '        <div style="border-top:1px solid #e5e7eb;padding-top:15px;margin-top:15px">' +
 '          <div class="font-bold" style="margin-bottom:12px">Distribución de Ganancia (Meta: ' + formatearGuaranies(datos.distribucion.metaTotal) + ')</div>' +
 '          <div class="fondos-grid">' +
-'            <div class="fondo-box utilidad"><div class="fondo-label" style="color:#7c3aed">Utilidad Dueño</div><div class="fondo-meta">' + formatearGuaranies(metaFondo) + '</div><div class="fondo-real ' + (datos.distribucion.utilidad >= metaFondo ? 'ok' : 'warning') + '">' + (datos.distribucion.utilidad >= metaFondo ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.utilidad) + '</div></div>' +
+'            <div class="fondo-box utilidad"><div class="fondo-label" style="color:#1d4ed8">Utilidad Dueño</div><div class="fondo-meta">' + formatearGuaranies(metaFondo) + '</div><div class="fondo-real ' + (datos.distribucion.utilidad >= metaFondo ? 'ok' : 'warning') + '">' + (datos.distribucion.utilidad >= metaFondo ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.utilidad) + '</div></div>' +
 '            <div class="fondo-box emergencia"><div class="fondo-label" style="color:#ea580c">Fondo Emerg.</div><div class="fondo-meta">' + formatearGuaranies(metaFondo) + '</div><div class="fondo-real ' + (datos.distribucion.emergencia >= metaFondo ? 'ok' : 'warning') + '">' + (datos.distribucion.emergencia >= metaFondo ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.emergencia) + '</div></div>' +
 '            <div class="fondo-box inversion"><div class="fondo-label" style="color:#0891b2">Fondo Inversión</div><div class="fondo-meta">' + formatearGuaranies(metaFondoInv) + '</div><div class="fondo-real ' + (datos.distribucion.inversion >= metaFondoInv ? 'ok' : 'warning') + '">' + (datos.distribucion.inversion >= metaFondoInv ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.inversion) + '</div></div>' +
 '          </div>' +
