@@ -336,53 +336,48 @@ function generarHTMLDashboard() {
 '    <!-- COLUMNA FAMILIA -->' +
 '    <div class="column familia">' +
 '      <div class="column-header">🏠 FAMILIA</div>' +
-'      <!-- SALDOS EN CUENTAS -->' +
+'      <!-- 1. SALDOS EN CUENTAS -->' +
 '      <div class="card">' +
 '        <div class="card-title">💰 SALDOS EN CUENTAS</div>' +
-'        <table><thead><tr><th>Cuenta</th><th class="text-right">Esperado</th><th class="text-right">Real ✏️</th><th class="text-right">Diferencia</th></tr></thead>' +
+'        <table><thead><tr><th>Cuenta</th><th class="text-right">Esperado</th><th class="text-right">Saldo Banco ✏️</th><th class="text-right">Diferencia</th></tr></thead>' +
 '        <tbody>' + generarFilasCuentasFamilia(datos.cuentasFamilia) + '</tbody></table>' +
 '        <p style="font-size: 0.8em; color: #6b7280; margin-top: 10px;">✏️ = Ingreso manual</p>' +
 '      </div>' +
-'      <!-- PRESUPUESTO VS REAL -->' +
+'      <!-- 2. INDICADORES DE DISTRIBUCIÓN -->' +
 '      <div class="card">' +
-'        <div class="card-title">📋 PRESUPUESTO vs REAL</div>' +
-'        <table><thead><tr><th>Categoría</th><th class="text-right">Presupuesto</th><th class="text-right">Real</th><th class="text-center">Estado</th></tr></thead>' +
-'        <tbody>' + generarFilasPresupuestoFamilia(datos.presupuestoFamilia) + '</tbody>' +
-'        <tfoot><tr style="background: #dcfce7;">' +
-'          <td class="font-bold">BALANCE FAMILIA</td>' +
-'          <td class="text-right font-bold">' + formatearGuaranies(datos.familia.balancePres) + '</td>' +
-'          <td class="text-right font-bold ' + (datos.familia.balanceReal < 0 ? 'text-red' : 'text-green') + '">' + formatearGuaranies(datos.familia.balanceReal) + '</td>' +
-'          <td class="text-center"><span class="badge ' + (datos.familia.balanceReal >= 0 ? 'badge-solid-green' : 'badge-solid-red') + '">' + (datos.familia.balanceReal >= 0 ? 'SUPERÁVIT' : 'DÉFICIT') + '</span></td>' +
-'        </tr></tfoot></table>' +
-'      </div>' +
-'      <!-- FLUJO DEL MES -->' +
-'      <div class="card">' +
-'        <div class="card-title">💵 FLUJO DEL MES</div>' +
-'        <div class="flujo-container">' +
-'          <div class="flujo-item flujo-ingresos"><span>Ingresos</span><span class="font-bold text-green">+ ' + formatearGuaranies(datos.familia.ingresosReal) + '</span></div>' +
-'          <div class="flujo-item flujo-pagados"><span>Total Egresos</span><span class="font-bold text-red">- ' + formatearGuaranies(datos.familia.egresosReal) + '</span></div>' +
-'          <div class="flujo-item flujo-pendientes"><span>Gastos Pendientes</span><span class="font-bold text-yellow">- ' + formatearGuaranies(datos.liquidezFamilia.totalGastos) + '</span></div>' +
-'          <div class="flujo-balance familia"><span>BALANCE</span><span>' + formatearGuaranies(datos.familia.balanceReal) + '</span></div>' +
+'        <div class="card-title">🎯 INDICADORES DE DISTRIBUCIÓN</div>' +
+'        <div class="kpi-grid">' +
+'          <div class="kpi-box" style="background:#dbeafe"><div class="kpi-label">💵 INGRESOS DEL MES</div><div class="kpi-value text-blue">' + formatearGuaranies(datos.familia.ingresosReal) + '</div></div>' +
+'          <div class="kpi-box" style="background:#fee2e2"><div class="kpi-label">📤 EGRESOS PAGADOS</div><div class="kpi-value text-red">' + formatearGuaranies(datos.familia.egresosReal) + '</div></div>' +
+'          <div class="kpi-box" style="background:#dcfce7"><div class="kpi-label">💰 AHORRO</div><div class="kpi-value text-green">' + formatearGuaranies(datos.indicadoresFam.ahorro) + '</div></div>' +
+'          <div class="kpi-box" style="background:#fef3c7"><div class="kpi-label">🛡️ FONDO EMERGENCIA</div><div class="kpi-value text-yellow">' + formatearGuaranies(datos.indicadoresFam.fondoEmergencia) + '</div></div>' +
+'        </div>' +
+'        <div style="text-align:center;margin-top:15px;padding:12px;border-radius:8px;background:#f3f4f6">' +
+         (function() {
+           var diff = datos.familia.ingresosReal - (datos.familia.egresosReal + datos.indicadoresFam.ahorro + datos.indicadoresFam.fondoEmergencia);
+           if (Math.abs(diff) < 1000) {
+             return '<span class="badge badge-solid-green">✅ EQUILIBRADO: Ingresos distribuidos correctamente</span>';
+           } else if (diff > 0) {
+             return '<span class="badge badge-yellow">💰 DISPONIBLE: Gs. ' + formatearGuaranies(diff) + ' sin asignar</span>';
+           } else {
+             return '<span class="badge badge-solid-red">⚠️ DÉFICIT: Gs. ' + formatearGuaranies(Math.abs(diff)) + ' de más pagado</span>';
+           }
+         })() +
 '        </div>' +
 '      </div>' +
-'      <!-- LIQUIDEZ -->' +
+'      <!-- 3. FLUJO DE CAJA DEL MES -->' +
 '      <div class="card">' +
-'        <div class="card-title">📅 LIQUIDEZ - PRÓXIMAS 3 SEMANAS</div>' +
-'        <table><thead><tr><th>Semana</th><th class="text-right">Gastos</th><th class="text-right">Saldo</th><th class="text-center">Estado</th></tr></thead>' +
-'        <tbody>' +
-'          <tr style="background: #dcfce7;"><td class="font-bold">Caja disponible</td><td class="text-right">-</td><td class="text-right font-bold">' + formatearGuaranies(datos.liquidezFamilia.cajaDisponible) + '</td><td class="text-center">-</td></tr>' +
-           generarFilasLiquidez(datos.liquidezFamilia.semanas) +
-'        </tbody>' +
-'        <tfoot><tr style="background: #f1f5f9;">' +
-'          <td class="font-bold">SALDO FINAL</td>' +
-'          <td class="text-right font-bold">-' + formatearGuaranies(datos.liquidezFamilia.totalGastos) + '</td>' +
-'          <td class="text-right font-bold ' + (datos.liquidezFamilia.saldoFinal < 0 ? 'text-red' : 'text-green') + '">' + formatearGuaranies(datos.liquidezFamilia.saldoFinal) + '</td>' +
-'          <td class="text-center"><span class="badge ' + (datos.liquidezFamilia.saldoFinal >= 0 ? 'badge-solid-green' : 'badge-solid-red') + '">' + (datos.liquidezFamilia.saldoFinal >= 0 ? 'OK' : 'DÉFICIT') + '</span></td>' +
-'        </tr></tfoot></table>' +
+'        <div class="card-title">💵 FLUJO DE CAJA DEL MES</div>' +
+'        <div class="flujo-container">' +
+'          <div class="flujo-item flujo-ingresos"><span>Ingresos</span><span class="font-bold text-green">+ ' + formatearGuaranies(datos.familia.ingresosReal) + '</span></div>' +
+'          <div class="flujo-item flujo-pagados"><span>Egresos Pagados</span><span class="font-bold text-red">- ' + formatearGuaranies(datos.familia.egresosReal) + '</span></div>' +
+'          <div class="flujo-item flujo-pendientes"><span>Egresos Pendientes</span><span class="font-bold text-yellow">- ' + formatearGuaranies(datos.familia.egresosPendientes) + '</span></div>' +
+'          <div class="flujo-balance familia"><span>PROYECCIÓN</span><span>' + formatearGuaranies(datos.familia.ingresosReal - datos.familia.egresosReal - datos.familia.egresosPendientes) + '</span></div>' +
+'        </div>' +
 '      </div>' +
-'      <!-- DISTRIBUCIÓN DE GASTOS -->' +
+'      <!-- 4. % GASTOS POR CATEGORÍA -->' +
 '      <div class="card">' +
-'        <div class="card-title">📊 DISTRIBUCIÓN DE GASTOS</div>' +
+'        <div class="card-title">📊 % GASTOS POR CATEGORÍA</div>' +
 '        <div class="chart-container">' +
            generarTortaGastos(datos.presupuestoFamilia, 'familia') +
 '        </div>' +
@@ -391,14 +386,33 @@ function generarHTMLDashboard() {
 '    <!-- COLUMNA NEUROTEA -->' +
 '    <div class="column neurotea">' +
 '      <div class="column-header">🏥 NEUROTEA</div>' +
-'      <!-- INDICADORES DE METAS -->' +
+'      <!-- 1. SALDOS EN CUENTAS (PRIMERO) -->' +
+'      <div class="card">' +
+'        <div class="card-title">💰 SALDOS EN CUENTAS</div>' +
+'        <table><thead><tr><th>Cuenta</th><th class="text-right">Saldo ✏️</th><th class="text-right">Acumulado</th><th class="text-center">Estado</th></tr></thead>' +
+'        <tbody>' + generarFilasCuentasNT(datos.cuentasNT) + '</tbody>' +
+'        <tfoot><tr style="background: #e5e7eb;">' +
+'          <td class="font-bold">💵 TOTAL DISPONIBLE</td>' +
+'          <td class="text-right font-bold">' + formatearGuaranies(datos.totalCuentasNT) + '</td>' +
+'          <td class="text-right font-bold">' + formatearGuaranies(totalAcumuladoNT) + '</td>' +
+'          <td class="text-center">-</td>' +
+'        </tr></tfoot></table>' +
+'        <p style="font-size: 0.8em; color: #6b7280; margin-top: 10px;">✏️ = Ingreso manual</p>' +
+'      </div>' +
+'      <!-- 2. INDICADORES DE METAS -->' +
 '      <div class="card">' +
 '        <div class="card-title">🎯 INDICADORES DE METAS</div>' +
 '        <div class="kpi-grid">' +
-'          <div class="kpi-box" style="background:#dbeafe"><div class="kpi-label">INGRESOS DEL MES</div><div class="kpi-value text-blue">' + formatearGuaranies(datos.neurotea.ingresos) + '</div></div>' +
-'          <div class="kpi-box" style="background:#f3f4f6"><div class="kpi-label">GASTOS DEL MES</div><div class="kpi-value">' + formatearGuaranies(datos.neurotea.gastos) + '</div></div>' +
-'          <div class="kpi-box" style="background:#dcfce7"><div class="kpi-label">GANANCIA REAL</div><div class="kpi-value text-green">' + formatearGuaranies(datos.neurotea.ganancia) + '</div></div>' +
-'          <div class="kpi-box" style="background:#fef3c7"><div class="kpi-label">META 7%</div><div class="kpi-value text-yellow">' + formatearGuaranies(datos.neurotea.meta) + '</div></div>' +
+'          <div class="kpi-box" style="background:#dbeafe"><div class="kpi-label">💵 INGRESOS DEL MES</div><div class="kpi-value text-blue">' + formatearGuaranies(datos.neurotea.ingresos) + '</div></div>' +
+'          <div class="kpi-box" style="background:#fee2e2"><div class="kpi-label">📤 GASTOS PAGADOS</div><div class="kpi-value text-red">' + formatearGuaranies(datos.neurotea.gastos) + '</div></div>' +
+'          <div class="kpi-box" style="background:#fef3c7"><div class="kpi-label">⏳ EGRESOS PENDIENTES</div><div class="kpi-value text-yellow">' + formatearGuaranies(datos.neurotea.egresosPendientes) + '</div></div>' +
+'          <div class="kpi-box" style="background:#f3f4f6"><div class="kpi-label">📊 PROYECCIÓN FIN MES</div><div class="kpi-value">' + formatearGuaranies(datos.neurotea.ingresos - datos.neurotea.gastos - datos.neurotea.egresosPendientes) + '</div></div>' +
+'        </div>' +
+'        <div style="margin-top:12px">' +
+'          <div class="kpi-grid">' +
+'            <div class="kpi-box" style="background:#dcfce7"><div class="kpi-label">💰 GANANCIA REAL</div><div class="kpi-value text-green">' + formatearGuaranies(datos.neurotea.ganancia) + '</div></div>' +
+'            <div class="kpi-box" style="background:#fef3c7"><div class="kpi-label">🎯 META 7%</div><div class="kpi-value text-yellow">' + formatearGuaranies(datos.neurotea.meta) + '</div></div>' +
+'          </div>' +
 '        </div>' +
 '        <div class="progress-container">' +
 '          <div style="display:flex;justify-content:space-between;font-size:0.9em;margin-bottom:8px"><span>% Gastos sobre Ingresos</span><span class="font-bold">' + pctGastosNT + '% / 93% máx</span></div>' +
@@ -418,44 +432,19 @@ function generarHTMLDashboard() {
 '          </div>' +
 '        </div>' +
 '      </div>' +
-'      <!-- PRESUPUESTO VS REAL NT -->' +
+'      <!-- 3. FLUJO DE CAJA DEL MES NT -->' +
 '      <div class="card">' +
-'        <div class="card-title">📋 PRESUPUESTO vs REAL</div>' +
-'        <table><thead><tr><th>Categoría</th><th class="text-right">Presupuesto</th><th class="text-right">Real</th><th class="text-center">Estado</th></tr></thead>' +
-'        <tbody>' + generarFilasPresupuestoNT(datos.presupuestoNT) + '</tbody>' +
-'        <tfoot><tr style="background: #dbeafe;">' +
-'          <td class="font-bold">BALANCE NEUROTEA</td>' +
-'          <td class="text-right font-bold">' + formatearGuaranies(datos.neurotea.meta) + '</td>' +
-'          <td class="text-right font-bold ' + (datos.neurotea.ganancia >= 0 ? 'text-green' : 'text-red') + '">' + formatearGuaranies(datos.neurotea.ganancia) + '</td>' +
-'          <td class="text-center"><span class="badge ' + (datos.neurotea.ganancia >= datos.neurotea.meta ? 'badge-solid-green' : 'badge-solid-red') + '">' + (datos.neurotea.ganancia >= datos.neurotea.meta ? 'META OK' : 'DÉFICIT') + '</span></td>' +
-'        </tr></tfoot></table>' +
-'      </div>' +
-'      <!-- FLUJO DEL MES NT -->' +
-'      <div class="card">' +
-'        <div class="card-title">💵 FLUJO DEL MES</div>' +
+'        <div class="card-title">💵 FLUJO DE CAJA DEL MES</div>' +
 '        <div class="flujo-container">' +
 '          <div class="flujo-item flujo-ingresos"><span>Ingresos</span><span class="font-bold text-green">+ ' + formatearGuaranies(datos.neurotea.ingresos) + '</span></div>' +
-'          <div class="flujo-item flujo-pagados"><span>Total Gastos</span><span class="font-bold text-red">- ' + formatearGuaranies(datos.neurotea.gastos) + '</span></div>' +
-'          <div class="flujo-item flujo-pendientes"><span>Meta 7%</span><span class="font-bold text-yellow">' + formatearGuaranies(datos.neurotea.meta) + '</span></div>' +
-'          <div class="flujo-balance neurotea"><span>GANANCIA</span><span>' + formatearGuaranies(datos.neurotea.ganancia) + '</span></div>' +
+'          <div class="flujo-item flujo-pagados"><span>Gastos Pagados</span><span class="font-bold text-red">- ' + formatearGuaranies(datos.neurotea.gastos) + '</span></div>' +
+'          <div class="flujo-item flujo-pendientes"><span>Egresos Pendientes</span><span class="font-bold text-yellow">- ' + formatearGuaranies(datos.neurotea.egresosPendientes) + '</span></div>' +
+'          <div class="flujo-balance neurotea"><span>PROYECCIÓN</span><span>' + formatearGuaranies(datos.neurotea.ingresos - datos.neurotea.gastos - datos.neurotea.egresosPendientes) + '</span></div>' +
 '        </div>' +
 '      </div>' +
-'      <!-- SALDOS EN CUENTAS NT -->' +
+'      <!-- 4. % GASTOS POR CATEGORÍA NT -->' +
 '      <div class="card">' +
-'        <div class="card-title">💰 SALDOS EN CUENTAS</div>' +
-'        <table><thead><tr><th>Cuenta</th><th class="text-right">Saldo ✏️</th><th class="text-right">Acumulado</th><th class="text-center">Estado</th></tr></thead>' +
-'        <tbody>' + generarFilasCuentasNT(datos.cuentasNT) + '</tbody>' +
-'        <tfoot><tr style="background: #93c5fd;">' +
-'          <td class="font-bold">💵 TOTAL DISPONIBLE</td>' +
-'          <td class="text-right font-bold">' + formatearGuaranies(datos.totalCuentasNT) + '</td>' +
-'          <td class="text-right font-bold">' + formatearGuaranies(totalAcumuladoNT) + '</td>' +
-'          <td class="text-center">-</td>' +
-'        </tr></tfoot></table>' +
-'        <p style="font-size: 0.8em; color: #6b7280; margin-top: 10px;">✏️ = Ingreso manual</p>' +
-'      </div>' +
-'      <!-- DISTRIBUCIÓN DE GASTOS NT -->' +
-'      <div class="card">' +
-'        <div class="card-title">📊 DISTRIBUCIÓN DE GASTOS</div>' +
+'        <div class="card-title">📊 % GASTOS POR CATEGORÍA</div>' +
 '        <div class="chart-container">' +
            generarTortaGastos(datos.presupuestoNT, 'neurotea') +
 '        </div>' +
@@ -582,6 +571,7 @@ function obtenerDatosDashboard() {
   // RESUMEN DEL MES FAMILIA (columna C=Presupuesto, D=Real)
   var ingresosFamPres = 0, ingresosFamReal = 0;
   var egresosFamPres = 0, egresosFamReal = 0;
+  var egresosPendientesFam = 0;
   var balanceFamPres = 0, balanceFamReal = 0;
   if (tablero) {
     ingresosFamPres = leerNumero(tablero.getRange(FILA_INGRESOS_FAM, 3));  // C23
@@ -590,6 +580,49 @@ function obtenerDatosDashboard() {
     egresosFamReal = leerNumero(tablero.getRange(FILA_EGRESOS_FAM, 4));    // D24
     balanceFamPres = leerNumero(tablero.getRange(FILA_BALANCE_FAM, 3));    // C25
     balanceFamReal = leerNumero(tablero.getRange(FILA_BALANCE_FAM, 4));    // D25
+  }
+
+  // INDICADORES FAMILIA: Ahorro y Fondo Emergencia (desde MOVIMIENTO)
+  var ahorroFam = 0, fondoEmergenciaFam = 0;
+  if (movimiento) {
+    // Leer columnas B (Tipo), F (Real), J (Est.Pago) de MOVIMIENTO FAMILIA
+    var datosFamMov = movimiento.getRange('A9:J70').getValues();
+    for (var idx = 0; idx < datosFamMov.length; idx++) {
+      var fila = datosFamMov[idx];
+      var concepto = fila[0] ? fila[0].toString() : '';
+      var tipo = fila[1] ? fila[1].toString() : '';
+      var real = Number(fila[5]) || 0;  // Columna F
+      var estPago = fila[9] ? fila[9].toString() : '';  // Columna J
+
+      // Ahorro (buscar en concepto o categoría)
+      if (concepto.indexOf('Ahorro') >= 0 || concepto.indexOf('AHORRO') >= 0) {
+        ahorroFam += real;
+      }
+      // Fondo Emergencia
+      if (concepto.indexOf('Fondo') >= 0 && concepto.indexOf('Emergencia') >= 0) {
+        fondoEmergenciaFam += real;
+      }
+      // Egresos Pendientes FAMILIA
+      if (tipo === 'Egreso' && estPago === 'Pendiente') {
+        egresosPendientesFam += real;
+      }
+    }
+  }
+
+  // EGRESOS PENDIENTES NEUROTEA (desde MOVIMIENTO)
+  var egresosPendientesNT = 0;
+  if (movimiento) {
+    var datosNTMovPend = movimiento.getRange('A73:J150').getValues();
+    for (var idxNT = 0; idxNT < datosNTMovPend.length; idxNT++) {
+      var filaNT = datosNTMovPend[idxNT];
+      var tipoNT = filaNT[1] ? filaNT[1].toString() : '';
+      var realNT = Number(filaNT[5]) || 0;  // Columna F
+      var estPagoNT = filaNT[9] ? filaNT[9].toString() : '';  // Columna J
+
+      if (tipoNT === 'Egreso' && estPagoNT === 'Pendiente') {
+        egresosPendientesNT += realNT;
+      }
+    }
   }
 
   // SALDOS EN CUENTAS NT (columna I=Saldo, J=Acumulado)
@@ -707,12 +740,18 @@ function obtenerDatosDashboard() {
       ingresosReal: ingresosFamReal,
       egresosPres: egresosFamPres,
       egresosReal: egresosFamReal,
+      egresosPendientes: egresosPendientesFam,
       balancePres: balanceFamPres,
       balanceReal: balanceFamReal
+    },
+    indicadoresFam: {
+      ahorro: ahorroFam,
+      fondoEmergencia: fondoEmergenciaFam
     },
     neurotea: {
       ingresos: ingresosNT,
       gastos: gastosNT,
+      egresosPendientes: egresosPendientesNT,
       ganancia: gananciaNT,
       meta: metaNT
     },
