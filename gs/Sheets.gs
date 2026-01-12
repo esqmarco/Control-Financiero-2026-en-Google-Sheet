@@ -891,9 +891,9 @@ function crearHojaMOVIMIENTO() {
   sheet.getRange('D3').setValue('Hoy:').setFontWeight('bold');
   sheet.getRange('E3').setFormula('=TODAY()').setNumberFormat('dd/mm/yyyy');
 
-  // ─── HEADERS DE COLUMNAS (con DÍA) ───
-  // A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦
-  const headers = ['CONCEPTO', 'TIPO', 'FREC.', 'DÍA', 'PRESUPUESTO', 'REAL', 'DIFERENCIA', '%', 'ESTADO', 'EST. PAGO', '🚦'];
+  // ─── HEADERS DE COLUMNAS (con DÍA, CATEGORÍA y ENTIDAD) ───
+  // A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD (ocultas)
+  const headers = ['CONCEPTO', 'TIPO', 'FREC.', 'DÍA', 'PRESUPUESTO', 'REAL', 'DIFERENCIA', '%', 'ESTADO', 'EST. PAGO', '🚦', 'CATEGORÍA', 'ENTIDAD'];
   headers.forEach((h, i) => {
     sheet.getRange(5, i + 1)
       .setValue(h)
@@ -901,6 +901,8 @@ function crearHojaMOVIMIENTO() {
       .setBackground(C.GRIS_FONDO)
       .setHorizontalAlignment('center');
   });
+  // Ocultar columnas L-M (CATEGORÍA, ENTIDAD) - solo para cálculos internos
+  sheet.hideColumns(12, 2);
 
   let row = 7;
   const filaInicioFam = 9; // Primera fila de datos FAMILIA
@@ -1156,9 +1158,12 @@ function escribirSeccionMovimientoIngresos(sheet, row, titulo, items, entidad, c
 }
 
 // ─── SECCIÓN EGRESOS FIJOS (vienen de GASTOS_FIJOS) ───
-// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦
+// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA
 // GASTOS_FIJOS simplificado: A=Concepto, B=Entidad, C=Categoría, D=Frecuencia, E=Día, F=Cuenta, G-R=Meses (sin BASE)
 function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
+  // Extraer nombre de categoría del título (quitar "▶ ")
+  const categoria = titulo.replace('▶ ', '');
+
   sheet.getRange(row, 1, 1, 11).merge()
     .setValue(titulo)
     .setFontWeight('bold')
@@ -1201,6 +1206,12 @@ function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, co
         .build()
     );
 
+    // CATEGORÍA (col L) - para cálculos de % GASTOS POR CATEGORÍA
+    sheet.getRange(row, 12).setValue(categoria);
+
+    // ENTIDAD (col M) - para filtrar en TABLERO
+    sheet.getRange(row, 13).setValue(entidad);
+
     row++;
   });
 
@@ -1218,8 +1229,11 @@ function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, co
 }
 
 // ─── SECCIÓN VARIABLES PUROS (vienen de CARGA) ───
-// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦
+// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD
 function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
+  // La categoría siempre es "VARIABLES" para esta sección
+  const categoria = 'VARIABLES';
+
   sheet.getRange(row, 1, 1, 11).merge()
     .setValue(titulo)
     .setFontWeight('bold')
@@ -1257,6 +1271,12 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
       .setFontStyle('italic')
       .setFontColor('#6B7280');
 
+    // CATEGORÍA (col L) - para cálculos de % GASTOS POR CATEGORÍA
+    sheet.getRange(row, 12).setValue(categoria);
+
+    // ENTIDAD (col M) - para filtrar en TABLERO
+    sheet.getRange(row, 13).setValue(entidad);
+
     row++;
   });
 
@@ -1274,8 +1294,11 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
 }
 
 // ─── SECCIÓN AHORRO (viene de CARGA, EST.PAGO = "Ahorrado") ───
-// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦
+// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA
 function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
+  // La categoría siempre es "AHORRO" para esta sección
+  const categoria = 'AHORRO';
+
   sheet.getRange(row, 1, 1, 11).merge()
     .setValue(titulo)
     .setFontWeight('bold')
@@ -1313,6 +1336,12 @@ function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, col
       .setFontStyle('italic')
       .setFontColor('#059669'); // Verde para ahorro
 
+    // CATEGORÍA (col L) - para cálculos de % GASTOS POR CATEGORÍA
+    sheet.getRange(row, 12).setValue(categoria);
+
+    // ENTIDAD (col M) - para filtrar en TABLERO
+    sheet.getRange(row, 13).setValue(entidad);
+
     row++;
   });
 
@@ -1330,8 +1359,11 @@ function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, col
 }
 
 // ─── SECCIÓN EVENTOS NT ───
-// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦
+// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD
 function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal) {
+  // La categoría siempre es "EVENTOS" para esta sección
+  const categoria = 'EVENTOS';
+
   sheet.getRange(row, 1, 1, 11).merge()
     .setValue('▶ EVENTOS')
     .setFontWeight('bold').setBackground(colorFondo);
@@ -1367,6 +1399,12 @@ function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal)
       sheet.getRange(row, 10).setValue('Pagado')
         .setFontStyle('italic')
         .setFontColor('#6B7280');
+
+      // CATEGORÍA (col L) - para cálculos de % GASTOS POR CATEGORÍA
+      sheet.getRange(row, 12).setValue(categoria);
+
+      // ENTIDAD (col M) - EVENTOS es solo para NEUROTEA
+      sheet.getRange(row, 13).setValue('NEUROTEA');
 
       row++;
     }

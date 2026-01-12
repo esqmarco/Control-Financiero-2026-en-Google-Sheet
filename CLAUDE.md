@@ -236,10 +236,13 @@ CONFIG (listas maestras)
 | G | DIFERENCIA | REAL - PRESUPUESTO |
 | H | % | Porcentaje de ejecución |
 | I | ESTADO | ✓ (OK) o ⚠ (Alerta) |
-| J | EST. PAGO | Pendiente / Pagado / Cancelado |
+| J | EST. PAGO | Pendiente / Pagado / Cancelado / Ahorrado |
 | K | 🚦 | Semáforo visual |
-| L-M | (ocultas) | Columnas vacías |
-| N | (oculta) | Número de mes calculado (MES_NUM)
+| L | CATEGORÍA (oculta) | Categoría del egreso (GASTOS FIJOS, VARIABLES, etc.) |
+| M | ENTIDAD (oculta) | FAMILIA o NEUROTEA |
+| N | MES_NUM (oculta) | Número de mes calculado
+
+> **NOTA**: Las columnas L y M son ocultas y se usan para cálculos de % GASTOS POR CATEGORÍA en TABLERO.
 
 ---
 
@@ -538,6 +541,8 @@ El sistema usa formato español/europeo para números:
 7. **AHORRO va a CARGA** - Se registra cuando realmente se hace la transferencia
 8. **EST. PAGO es el GATILLO** - Controla si un gasto cuenta como PAGADO o PENDIENTE
 9. **LIQUIDEZ lee de MOVIMIENTO** - Sin INDEX/MATCH, fórmulas simplificadas con DÍA en columna D
+10. **MOVIMIENTO tiene CATEGORÍA y ENTIDAD** - Columnas L y M (ocultas) para cálculos de % GASTOS POR CATEGORÍA
+11. **% GASTOS POR CATEGORÍA lee de MOVIMIENTO** - Filtra por EST.PAGO="Pagado" para mostrar solo gastos ejecutados
 
 ---
 
@@ -564,5 +569,5 @@ El sistema usa formato español/europeo para números:
 
 ---
 
-*Última actualización: 2026-01-08*
-*Versión: 6.3 - Préstamos bidireccionales NT↔FAM, estilo sobrio, LIQUIDEZ intuitivo*
+*Última actualización: 2026-01-12*
+*Versión: 6.4 - Fix % GASTOS POR CATEGORÍA con columnas ocultas CATEGORÍA/ENTIDAD en MOVIMIENTO*
