@@ -1178,8 +1178,9 @@ function crearHojaTABLERO() {
       .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Monto: GASTOS_FIJOS (mes actual) + CARGA_NT (variables del mes)
-    const formulaMonto = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="NEUROTEA")*(GASTOS_FIJOS!$C$4:$C$100="${cat.nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_NT!$B$4:$B$500="Egreso NT")*(CARGA_NT!$C$4:$C$500="${cat.nombre}")*(MONTH(CARGA_NT!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!$A$4:$A$500)=${AÑO})*(CARGA_NT!$F$4:$F$500));0)`;
+    // Monto: Lee de MOVIMIENTO filtrando por CATEGORÍA, ENTIDAD y EST.PAGO="Pagado"
+    // Columnas MOVIMIENTO: L=CATEGORÍA, M=ENTIDAD, J=EST.PAGO, F=REAL
+    const formulaMonto = `=IFERROR(SUMPRODUCT((MOVIMIENTO!$L$5:$L$500="${cat.nombre}")*(MOVIMIENTO!$M$5:$M$500="NEUROTEA")*(MOVIMIENTO!$J$5:$J$500="Pagado")*(MOVIMIENTO!$F$5:$F$500));0)`;
     sheet.getRange(rowNT, 9)
       .setFormula(formulaMonto)
       .setNumberFormat('#,##0')
@@ -1289,8 +1290,9 @@ function crearHojaTABLERO() {
       .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Monto: GASTOS_FIJOS (FAMILIA) + CARGA_FAMILIA (variables/ahorro del mes)
-    const formulaMontoFam = `=IFERROR(SUMPRODUCT((GASTOS_FIJOS!$B$4:$B$100="FAMILIA")*(GASTOS_FIJOS!$C$4:$C$100="${cat.nombre}")*(INDEX(GASTOS_FIJOS!$G$4:$R$100;0;MOVIMIENTO!$N$3)))+SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500="Egreso Familiar")*(CARGA_FAMILIA!$C$4:$C$500="${cat.nombre}")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=${AÑO})*(CARGA_FAMILIA!$F$4:$F$500));0)`;
+    // Monto: Lee de MOVIMIENTO filtrando por CATEGORÍA, ENTIDAD y EST.PAGO="Pagado" o "Ahorrado"
+    // Columnas MOVIMIENTO: L=CATEGORÍA, M=ENTIDAD, J=EST.PAGO, F=REAL
+    const formulaMontoFam = `=IFERROR(SUMPRODUCT((MOVIMIENTO!$L$5:$L$500="${cat.nombre}")*(MOVIMIENTO!$M$5:$M$500="FAMILIA")*((MOVIMIENTO!$J$5:$J$500="Pagado")+(MOVIMIENTO!$J$5:$J$500="Ahorrado"))*(MOVIMIENTO!$F$5:$F$500));0)`;
     sheet.getRange(rowFam, 3)
       .setFormula(formulaMontoFam)
       .setNumberFormat('#,##0')
