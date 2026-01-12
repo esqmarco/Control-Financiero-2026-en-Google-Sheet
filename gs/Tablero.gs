@@ -1180,7 +1180,8 @@ function crearHojaTABLERO() {
 
     // Monto: Lee de MOVIMIENTO filtrando por CATEGORÍA, ENTIDAD y EST.PAGO="Pagado"
     // Columnas MOVIMIENTO: L=CATEGORÍA, M=ENTIDAD, J=EST.PAGO, F=REAL
-    const formulaMonto = `=IFERROR(SUMPRODUCT((MOVIMIENTO!$L$5:$L$500="${cat.nombre}")*(MOVIMIENTO!$M$5:$M$500="NEUROTEA")*(MOVIMIENTO!$J$5:$J$500="Pagado")*(MOVIMIENTO!$F$5:$F$500));0)`;
+    // Usa SUMIFS en lugar de SUMPRODUCT para mejor compatibilidad con locale español
+    const formulaMonto = `=IFERROR(SUMIFS(MOVIMIENTO!$F$5:$F$500;MOVIMIENTO!$L$5:$L$500;"${cat.nombre}";MOVIMIENTO!$M$5:$M$500;"NEUROTEA";MOVIMIENTO!$J$5:$J$500;"Pagado");0)`;
     sheet.getRange(rowNT, 9)
       .setFormula(formulaMonto)
       .setNumberFormat('#,##0')
@@ -1292,7 +1293,8 @@ function crearHojaTABLERO() {
 
     // Monto: Lee de MOVIMIENTO filtrando por CATEGORÍA, ENTIDAD y EST.PAGO="Pagado" o "Ahorrado"
     // Columnas MOVIMIENTO: L=CATEGORÍA, M=ENTIDAD, J=EST.PAGO, F=REAL
-    const formulaMontoFam = `=IFERROR(SUMPRODUCT((MOVIMIENTO!$L$5:$L$500="${cat.nombre}")*(MOVIMIENTO!$M$5:$M$500="FAMILIA")*((MOVIMIENTO!$J$5:$J$500="Pagado")+(MOVIMIENTO!$J$5:$J$500="Ahorrado"))*(MOVIMIENTO!$F$5:$F$500));0)`;
+    // Usa SUMIFS en lugar de SUMPRODUCT para mejor compatibilidad con locale español
+    const formulaMontoFam = `=IFERROR(SUMIFS(MOVIMIENTO!$F$5:$F$500;MOVIMIENTO!$L$5:$L$500;"${cat.nombre}";MOVIMIENTO!$M$5:$M$500;"FAMILIA";MOVIMIENTO!$J$5:$J$500;"Pagado")+SUMIFS(MOVIMIENTO!$F$5:$F$500;MOVIMIENTO!$L$5:$L$500;"${cat.nombre}";MOVIMIENTO!$M$5:$M$500;"FAMILIA";MOVIMIENTO!$J$5:$J$500;"Ahorrado");0)`;
     sheet.getRange(rowFam, 3)
       .setFormula(formulaMontoFam)
       .setNumberFormat('#,##0')
