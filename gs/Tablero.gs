@@ -286,7 +286,7 @@ function crearHojaTABLERO() {
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowFam, 4, 1, 2).merge()
-    .setValue('📤 EGRESOS PAGADOS')
+    .setValue('📤 GASTOS OPERATIVOS')
     .setFontSize(9)
     .setFontColor(UI.PAGADO_TEXTO)
     .setBackground(UI.PAGADO_FONDO)
@@ -296,7 +296,7 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 22);
   rowFam++;
 
-  // ROW 2: Valores Ingresos y Egresos
+  // ROW 2: Valores Ingresos y Gastos Operativos
   // Ingresos FAMILIA (suma de CARGA_FAMILIA con TIPO != "Egreso Familiar" en el mes activo)
   // ACTUALIZADO: $N$3 es el nuevo MES_NUM en MOVIMIENTO v5.1
   sheet.getRange(rowFam, 2, 1, 2).merge()
@@ -311,7 +311,7 @@ function crearHojaTABLERO() {
     .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
   const filaValorIngresosFamInd = rowFam;
 
-  // Egresos Pagados FAMILIA (filtrado por EST.PAGO = "Pagado" en MOVIMIENTO)
+  // Gastos Operativos FAMILIA (filtrado por EST.PAGO = "Pagado" en MOVIMIENTO, sin AHORRO)
   // ACTUALIZADO: F=REAL, J=EST.PAGO en MOVIMIENTO v5.1
   sheet.getRange(rowFam, 4, 1, 2).merge()
     .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F70;MOVIMIENTO!B9:B70;"Egreso";MOVIMIENTO!J9:J70;"Pagado");0)')
@@ -385,11 +385,8 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 8);
   rowFam++;
 
-  // ROW 5: Balance de distribución
-  // NOTA: La fórmula compara Ingresos de CARGA vs distribución
-  // EGRESOS_PAGADOS incluye gastos fijos + variables de MOVIMIENTO
-  // AHORRO y FONDO solo vienen de CARGA_FAMILIA
-  // La diferencia muestra dinero sin asignar o faltante
+  // ROW 5: Balance de distribución - DISPONIBLE para gastar
+  // DISPONIBLE = INGRESOS - GASTOS - AHORRO - FONDO (dinero para más gastos/ahorro)
   sheet.getRange(rowFam, 2, 1, 4).merge()
     .setFormula(`=IFERROR(LET(diff;B${filaValorIngresosFamInd}-(D${filaValorEgresosFamInd}+B${filaValorAhorroFam}+D${filaValorFondoEmFam});IF(ABS(diff)<1000;"✅ EQUILIBRADO: Ingresos distribuidos correctamente";IF(diff>0;"💰 DISPONIBLE: Gs. "&TEXT(diff;"#,##0")&" sin asignar";"⚠️ DÉFICIT: Gs. "&TEXT(ABS(diff);"#,##0")&" de más pagado")));"")`)
     .setFontSize(10)
@@ -399,6 +396,19 @@ function crearHojaTABLERO() {
     .setWrap(true)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeight(rowFam, 28);
+  rowFam++;
+
+  // ROW 6: PATRIMONIO FAMILIA = INGRESOS - GASTOS (incluye ahorros como activos)
+  // Muestra el total de dinero que sigue siendo de FAMILIA (incluyendo lo ahorrado)
+  sheet.getRange(rowFam, 2, 1, 4).merge()
+    .setFormula(`=IFERROR("🏦 PATRIMONIO FAMILIA: Gs. "&TEXT(B${filaValorIngresosFamInd}-D${filaValorEgresosFamInd};"#,##0")&" (incl. ahorros)";"")`)
+    .setFontSize(9)
+    .setFontColor('#059669')
+    .setBackground('#ECFDF5')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle')
+    .setBorder(true, true, true, true, false, false, '#059669', SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowFam, 24);
   rowFam += 2;
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -533,10 +543,10 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 22);
   rowNT++;
 
-  // Valor Ingresos NEUROTEA (rango específico: filas 73-150)
-  // ACTUALIZADO: F=REAL en MOVIMIENTO v5.1
+  // Valor Ingresos NEUROTEA (rango específico: filas 119-200)
+  // ACTUALIZADO: F=REAL en MOVIMIENTO v5.1 - CORREGIDO: rango real de NT
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIF(MOVIMIENTO!B73:B150;"Ingreso";MOVIMIENTO!F73:F150);0)')
+    .setFormula('=IFERROR(SUMIF(MOVIMIENTO!B119:B200;"Ingreso";MOVIMIENTO!F119:F200);0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -546,10 +556,10 @@ function crearHojaTABLERO() {
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
 
-  // Valor Gastos NEUROTEA (rango específico: filas 73-150)
-  // ACTUALIZADO: Solo egresos PAGADOS (columna J = EST.PAGO)
+  // Valor Gastos NEUROTEA (rango específico: filas 119-200)
+  // ACTUALIZADO: Solo egresos PAGADOS (columna J = EST.PAGO) - CORREGIDO: rango real de NT
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F73:F150;MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!J73:J150;"Pagado");0)')
+    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F119:F200;MOVIMIENTO!B119:B200;"Egreso";MOVIMIENTO!J119:J200;"Pagado");0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -589,9 +599,9 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 22);
   rowNT++;
 
-  // Valor Egresos Pendientes
+  // Valor Egresos Pendientes - CORREGIDO: rango real de NT (119-200)
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F73:F150;MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!J73:J150;"Pendiente");0)')
+    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F119:F200;MOVIMIENTO!B119:B200;"Egreso";MOVIMIENTO!J119:J200;"Pendiente");0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -1006,12 +1016,12 @@ function crearHojaTABLERO() {
   sheet.getRange(rowNT, 8).setValue('➕ Total Ingresos')
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B73:B150;"Ingreso";MOVIMIENTO!E73:E150);0)')
+  sheet.getRange(rowNT, 9).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B119:B200;"Ingreso";MOVIMIENTO!E119:E200);0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B73:B150;"Ingreso";MOVIMIENTO!F73:F150);0)')
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B119:B200;"Ingreso";MOVIMIENTO!F119:F200);0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
@@ -1030,13 +1040,13 @@ function crearHojaTABLERO() {
   sheet.getRange(rowNT, 8).setValue('➖ Egresos Pagados')
     .setBackground(UI.ROJO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!E73:E150);0)')
+  sheet.getRange(rowNT, 9).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B119:B200;"Egreso";MOVIMIENTO!E119:E200);0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  // REAL = Solo los que tienen EST. PAGO = "Pagado" (columna J)
-  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F73:F150;MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!J73:J150;"Pagado");0)')
+  // REAL = Solo los que tienen EST. PAGO = "Pagado" (columna J) - CORREGIDO: rango NT
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F119:F200;MOVIMIENTO!B119:B200;"Egreso";MOVIMIENTO!J119:J200;"Pagado");0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
@@ -1088,8 +1098,8 @@ function crearHojaTABLERO() {
     .setBackground(UI.AMARILLO_FONDO)
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  // PENDIENTES = Solo los que tienen EST. PAGO = "Pendiente" (columna J)
-  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F73:F150;MOVIMIENTO!B73:B150;"Egreso";MOVIMIENTO!J73:J150;"Pendiente");0)')
+  // PENDIENTES = Solo los que tienen EST. PAGO = "Pendiente" (columna J) - CORREGIDO: rango NT
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F119:F200;MOVIMIENTO!B119:B200;"Egreso";MOVIMIENTO!J119:J200;"Pendiente");0)')
     .setNumberFormat('#,##0')
     .setFontColor(UI.AMARILLO)
     .setFontWeight('bold')
