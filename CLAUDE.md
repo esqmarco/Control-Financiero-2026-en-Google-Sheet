@@ -557,6 +557,47 @@ El sistema usa formato español/europeo para números:
 
 ---
 
+## AHORRO vs GASTOS (Tratamiento Conceptual)
+
+**Decisión [2026-01-13]**: AHORRO es transferencia, NO gasto.
+
+| Concepto | Descripción | Cómo afecta |
+|----------|-------------|-------------|
+| **GASTOS OPERATIVOS** | Gastos reales (EST.PAGO = "Pagado") | Reduce DISPONIBLE |
+| **AHORRO** | Transferencia a cuenta de ahorro (EST.PAGO = "Ahorrado") | Reduce DISPONIBLE pero NO es gasto |
+| **DISPONIBLE** | INGRESOS - GASTOS - AHORRO | Dinero para más gastos/ahorro |
+| **PATRIMONIO FAMILIA** | INGRESOS - GASTOS (sin restar ahorro) | Total de activos de FAMILIA |
+
+### Visualización en TABLERO
+
+```
+📥 INGRESOS DEL MES     📤 GASTOS OPERATIVOS
+    20.000.000               6.200.000
+
+💰 AHORRO               🛡️ FONDO EMERGENCIA
+    5.000.000                   0
+
+💰 DISPONIBLE: Gs. 8.800.000 sin asignar
+🏦 PATRIMONIO FAMILIA: Gs. 13.800.000 (incl. ahorros)
+```
+
+> **NOTA**: PATRIMONIO = INGRESOS - GASTOS (incluye ahorros como activos de FAMILIA)
+
+---
+
+## Rangos de Filas en MOVIMIENTO
+
+**IMPORTANTE**: Las fórmulas en TABLERO deben usar los rangos correctos.
+
+| Entidad | Rango de Filas | Uso |
+|---------|----------------|-----|
+| **FAMILIA** | 9-113 | Todas las fórmulas de FAMILIA |
+| **NEUROTEA** | 119-200 | Todas las fórmulas de NEUROTEA |
+
+> **BUG CORREGIDO [2026-01-13]**: Las fórmulas de NEUROTEA usaban 73-150, lo cual incluía SUSCRIPCIONES de FAMILIA. Corregido a 119-200.
+
+---
+
 ## Checklist Antes de Modificar Código
 
 - [ ] ¿Leí este CLAUDE.md completo?
@@ -566,8 +607,9 @@ El sistema usa formato español/europeo para números:
 - [ ] ¿Las listas están completas (tipos, categorías, cuentas)?
 - [ ] ¿Ejecuté /verificar después del cambio?
 - [ ] ¿Las decisiones en DECISIONES.md están respetadas?
+- [ ] ¿Los rangos de filas son correctos? (FAMILIA: 9-113, NEUROTEA: 119-200)
 
 ---
 
-*Última actualización: 2026-01-12*
-*Versión: 6.4 - Fix % GASTOS POR CATEGORÍA con columnas ocultas CATEGORÍA/ENTIDAD en MOVIMIENTO*
+*Última actualización: 2026-01-13*
+*Versión: 6.5 - Fix rangos NEUROTEA (119-200) + Separación AHORRO/GASTOS + PATRIMONIO FAMILIA*
