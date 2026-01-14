@@ -496,4 +496,45 @@ La versión anterior se marca como:
 
 ---
 
-*Última actualización: 2026-01-06 - Agregadas decisiones u, v, w, x, y (BASE eliminado, estilo sobrio, LIQUIDEZ intuitivo, bidireccional, GANANCIA)*
+### [2026-01-13z] - Rangos de filas NEUROTEA corregidos (119-200)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Las fórmulas de TABLERO para NEUROTEA usaban rango hardcodeado 73-150 (INCORRECTO)
+- Filas 73-113 corresponden a FAMILIA (SUSCRIPCIONES, VARIABLES, AHORRO)
+- NEUROTEA comienza en fila 119
+- Corregidas 8 fórmulas en Tablero.gs: líneas 539, 552, 594, 1009, 1014, 1033, 1039, 1092
+- Nuevo rango correcto: 119-200
+**Archivos afectados**: gs/Tablero.gs, CLAUDE.md
+**Razón**: Usuario reportó que NEUROTEA mostraba -902.000 cuando no había transacciones. Era porque sumaba SUSCRIPCIONES de FAMILIA como gastos de NEUROTEA.
+
+---
+
+### [2026-01-13aa] - AHORRO separado de GASTOS con PATRIMONIO FAMILIA
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- AHORRO es transferencia, NO gasto (el dinero sigue siendo de FAMILIA)
+- En MOVIMIENTO summary: "TOTAL EGRESOS PAGADOS" → "TOTAL GASTOS OPERATIVOS" (sin AHORRO)
+- En TABLERO: "EGRESOS PAGADOS" → "GASTOS OPERATIVOS"
+- Nuevo indicador: "PATRIMONIO FAMILIA" = INGRESOS - GASTOS (incluye ahorros como activos)
+- DISPONIBLE = INGRESOS - GASTOS - AHORRO (para saber cuánto queda para gastar/ahorrar)
+- Fórmulas corregidas:
+  - Sheets.gs línea 952: Excluye "Ahorrado" de GASTOS OPERATIVOS
+  - Tablero.gs: Nuevo indicador PATRIMONIO FAMILIA
+**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs, CLAUDE.md
+**Razón**: Usuario identificó que AHORRO no debería tratarse como gasto. Es una transferencia entre cuentas propias.
+
+---
+
+### [2026-01-13ab] - Columnas ocultas CATEGORÍA y ENTIDAD en MOVIMIENTO
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- MOVIMIENTO tiene columnas L (CATEGORÍA) y M (ENTIDAD) ocultas
+- Almacenan metadatos para cálculos de % GASTOS POR CATEGORÍA
+- Se usan con SUMIFS para filtrar gastos por categoría y entidad
+- Eliminan necesidad de INDEX/MATCH complejos en TABLERO
+**Archivos afectados**: gs/Sheets.gs (escribirSeccionMovimiento*), gs/Tablero.gs
+**Razón**: % GASTOS POR CATEGORÍA no funcionaba porque las fórmulas originales usaban INDEX con row 0 que no funciona en locale español.
+
+---
+
+*Última actualización: 2026-01-13 - Agregadas decisiones z, aa, ab (rangos NEUROTEA, AHORRO/PATRIMONIO, columnas ocultas)*

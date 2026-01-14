@@ -1,6 +1,6 @@
 # PLAN MAESTRO: Sistema de Control Financiero 2026
 ## NeuroTEA & Familia - Google Sheets + Web App
-### Versión 2.6 - CUENTA en GASTOS_FIJOS, AHORRO desde CARGA, Saldo Banco, PRESUPUESTO calculado
+### Versión 3.0 - Rangos NEUROTEA corregidos, AHORRO separado de GASTOS, PATRIMONIO FAMILIA
 
 ---
 
@@ -1426,7 +1426,7 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 38 | **SALDOS NT**: Columnas Esperado (automático) y Saldo Banco ✏️ (manual) | ✅ |
 | 39 | **Selector mes**: Aviso en TABLERO que el mes se selecciona en MOVIMIENTO | ✅ |
 
-### Versión 2.6 (Actual)
+### Versión 2.6
 | # | Adición/Aclaración | Estado |
 |---|-------------------|--------|
 | 40 | **CUENTA en GASTOS_FIJOS**: Nueva columna F para indicar de qué cuenta se debita | ✅ |
@@ -1438,15 +1438,57 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 46 | **Meta NT desde CONFIG**: El 7% de ganancia lee de METAS_NT.GANANCIA_MINIMA_PCT | ✅ |
 | 47 | **Balance Consolidado**: PRESUPUESTO muestra balance FAM + NT total | ✅ |
 
+### Versión 2.7
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 48 | **GASTOS_FIJOS sin BASE**: Cada mes tiene su valor directo (G-R = ENE-DIC) | ✅ |
+| 49 | **Estilo sobrio profesional**: Headers gris neutro, colores solo para estados | ✅ |
+| 50 | **LIQUIDEZ rediseñada**: 3 tarjetas grandes (Saldo, Pendiente, ¿Alcanza?) | ✅ |
+| 51 | **Préstamos bidireccionales**: FAM↔NT en ambas direcciones | ✅ |
+| 52 | **GANANCIA consistente**: TABLERO usa misma fórmula que MOVIMIENTO | ✅ |
+
+### Versión 3.0 (Actual)
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 53 | **Rangos NEUROTEA corregidos**: 119-200 (antes 73-150 incluía FAMILIA) | ✅ |
+| 54 | **AHORRO separado de GASTOS**: "GASTOS OPERATIVOS" sin incluir ahorro | ✅ |
+| 55 | **PATRIMONIO FAMILIA**: Nuevo indicador = INGRESOS - GASTOS (incl. ahorros) | ✅ |
+| 56 | **Columnas ocultas L/M**: CATEGORÍA y ENTIDAD en MOVIMIENTO para filtros | ✅ |
+| 57 | **% GASTOS POR CATEGORÍA**: Funciona con SUMIFS en lugar de SUMPRODUCT | ✅ |
+
 ---
 
-## 15. PENDIENTES PARA PRÓXIMA VERSIÓN
+## 15. RANGOS DE FILAS EN MOVIMIENTO
 
-| # | Tema | Descripción |
-|---|------|-------------|
-| 1 | WEB APP | Especificación técnica de Google Apps Script |
-| 2 | Fórmulas | Documentar fórmulas exactas de Google Sheets |
-| 3 | TABLERO | Estructura detallada de KPIs en hoja |
+**CRÍTICO**: Las fórmulas de TABLERO deben usar los rangos correctos.
+
+| Entidad | Rango de Filas | Secciones incluidas |
+|---------|----------------|---------------------|
+| **FAMILIA** | 9-113 | Ingresos, Gastos Fijos, Cuotas, Obligaciones, Suscripciones, Variables, Ahorro |
+| **NEUROTEA** | 119-200 | Ingresos, Clínica, Sueldos, Telefonía, Obligaciones, Eventos, Variables |
+
+> **ADVERTENCIA**: El rango 73-150 es INCORRECTO para NEUROTEA - incluye SUSCRIPCIONES de FAMILIA.
+
+---
+
+## 16. AHORRO vs GASTOS (Tratamiento Conceptual)
+
+| Concepto | Descripción | Cómo afecta |
+|----------|-------------|-------------|
+| **GASTOS OPERATIVOS** | Gastos reales (EST.PAGO = "Pagado") | Reduce DISPONIBLE |
+| **AHORRO** | Transferencia a cuenta ahorro (EST.PAGO = "Ahorrado") | Reduce DISPONIBLE pero NO es gasto |
+| **DISPONIBLE** | INGRESOS - GASTOS - AHORRO | Dinero para más gastos/ahorro |
+| **PATRIMONIO FAMILIA** | INGRESOS - GASTOS (sin restar ahorro) | Total de activos de FAMILIA |
+
+---
+
+## 17. NOTAS TÉCNICAS IMPLEMENTADAS
+
+1. **Locale español (es-PY)**: Separador decimal `,` y argumentos `;`
+2. **SUMPRODUCT vs SUMIFS**: SUMPRODUCT para filtros con MONTH()/YEAR()
+3. **IFERROR en todas las fórmulas**: Evita errores #VALUE! con datos vacíos
+4. **Fondos NT virtuales**: Son asignaciones contables, no cuentas bancarias
+5. **EST.PAGO como gatillo**: Solo items "Pagado" suman a GASTOS, "Ahorrado" suma a AHORRO
 
 ---
 

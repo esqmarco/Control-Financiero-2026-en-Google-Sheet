@@ -5,117 +5,134 @@ Realiza una verificación COMPLETA del sistema comparando el código contra CLAU
 ## 1. Verificar Arquitectura de Archivos
 
 Confirma que existen estos 6 archivos en `gs/`:
-- Código.gs (menú, triggers)
-- Config.gs (datos maestros)
-- Sheets.gs (creación de hojas)
-- Tablero.gs (dashboard fórmulas)
-- WebApp.gs (HTML dashboard)
-- Utils.gs (utilidades)
+- Code.gs (menú, triggers, inicialización)
+- Config.gs (datos maestros, cuentas, categorías, colores)
+- Sheets.gs (creación de las 8 hojas)
+- Tablero.gs (dashboard en Google Sheets)
+- WebApp.gs (dashboard HTML popup)
+- Utils.gs (funciones utilitarias)
 
-## 2. Verificar Config.gs contra PLAN_MAESTRO
+## 2. Verificar Config.gs
 
-### Tipos de Ingreso FAMILIA (13 items - sección 3.3)
-1. Salario Marco
-2. Salario Marco NeuroTEA
-3. Vacaciones Marco
-4. Adelanto de Aguinaldo Marco
-5. Saldo Aguinaldo Marco
-6. Viático Marco
-7. Animador Bíblico Marco
-8. Tarjeta Gourmed
-9. Contrato Colectivo Marco
-10. PL Itaipu Marco
-11. Honorarios Clara NeuroTEA
-12. Préstamo NeuroTEA
-13. Préstamo Otros Bancos
+### Tipos de Ingreso FAMILIA (14 items)
+1-14: Salario Marco, Salario Marco NeuroTEA, Vacaciones, Aguinalos, Viático, Animador Bíblico, Gourmed, Contrato Colectivo, PL Itaipu, Honorarios Clara, Préstamo NeuroTEA, **Devolución NeuroTEA**, Préstamo Otros Bancos
 
-### Tipos de Ingreso NT (4 items - sección 3.4)
-1. Aporte NeuroTEA Terapeutas
-2. Cursos NeuroTEA
-3. Otros
-4. Devolución Familia → NT
+### Tipos de Ingreso NT (5 items)
+1-5: Aporte Terapeutas, Cursos, Otros, Devolución Familia → NT, **Préstamo Familia**
 
-### Cuentas FAMILIA (10 items - sección 3.5)
-1. ITAU Marco
-2. Coop. Univ. Marco
-3. ITAU Clara
-4. UENO Clara
-5. Tarjeta Solar Clara
-6. Tarjeta ITAU Clara
-7. Tarjeta ITAU Marco
-8. Tarjeta Comecipar Clara
-9. Gourmed
-10. Efectivo
+### Cuentas FAMILIA (10 items)
+ITAU Marco, Coop. Univ. Marco, ITAU Clara, UENO Clara, Tarjeta Solar Clara, Tarjeta ITAU Clara, **Tarjeta ITAU Marco**, Tarjeta Comecipar Clara, Gourmed, Efectivo
 
-### Cuentas NT (3 items - sección 3.6)
+### Cuentas NT (2 items)
 1. Atlas NeuroTEA
 2. Caja Chica NT
-3. Efectivo NT
 
-### Categorías Egreso FAMILIA (6 - sección 3.7)
+### Categorías Egreso FAMILIA (6)
 GASTOS FIJOS, CUOTAS Y PRÉSTAMOS, OBLIGACIONES LEGALES, SUSCRIPCIONES, VARIABLES, AHORRO
 
-### Categorías Egreso NT (6 - sección 3.9)
+### Categorías Egreso NT (6)
 CLÍNICA, SUELDOS Y HONORARIOS, TELEFONÍA E INTERNET, OBLIGACIONES LEGALES, EVENTOS, VARIABLES
 
-### Subcategorías Variables FAMILIA (10 - sección 3.8)
-Incluye "Devolución Familia → NT"
+### Subcategorías Variables FAMILIA (11 items)
+Incluye "Devolución Familia → NT" y "Préstamo Familia → NT"
 
-### Subcategorías Variables NT (6 - sección 3.10)
-Incluye "Préstamo NT → Familia"
+### Subcategorías Variables NT (7 items)
+Incluye "Préstamo NT → Familia" y "Devolución NT → Familia"
 
-### Eventos NT (16 - sección 3.11)
+### Eventos NT (16)
 6 definidos + 10 reservas
 
-## 3. Verificar Sheets.gs - Fórmulas Dinámicas
+### AHORRO FAMILIA (3 items)
+Ahorro Clara, Ahorro Marco, Fondo de Emergencia
 
-### MOVIMIENTO debe tener:
-- [ ] Selector de mes en B3 con validación
-- [ ] Celda K3 con fórmula MATCH para número de mes
-- [ ] Columna PRESUPUESTO con INDEX/MATCH a hoja PRESUPUESTO
-- [ ] Columna REAL con lógica según frecuencia:
-  - Variable puro → SUMIFS desde CARGA
-  - Fijo/* o Variable/* → INDEX/MATCH desde GASTOS_FIJOS
-- [ ] Columna DIFERENCIA = REAL - PRESUPUESTO
-- [ ] Columna ESTADO con lógica Ingreso/Egreso
+## 3. Verificar Estructura de Columnas
 
-### TABLERO debe tener:
-- [ ] Sincronización de mes con MOVIMIENTO!B3
-- [ ] KPIs calculados con fórmulas desde MOVIMIENTO
-- [ ] Balance Cruzado con SUMIFS desde CARGA_NT
-- [ ] NO debe tener valores fijos/hardcodeados
+### GASTOS_FIJOS (sin BASE)
+| Col | Contenido |
+|-----|-----------|
+| A | CONCEPTO |
+| B | ENTIDAD |
+| C | CATEGORÍA |
+| D | FRECUENCIA |
+| E | DÍA |
+| F | CUENTA |
+| G-R | ENE-DIC (12 meses) |
 
-## 4. Verificar Lógica de Negocio
+### MOVIMIENTO (14 columnas)
+| Col | Contenido |
+|-----|-----------|
+| A | CONCEPTO |
+| B | TIPO |
+| C | FREC. |
+| D | DÍA |
+| E | PRESUPUESTO |
+| F | REAL |
+| G | DIFERENCIA |
+| H | % |
+| I | ESTADO |
+| J | EST. PAGO |
+| K | 🚦 |
+| L | CATEGORÍA (oculta) |
+| M | ENTIDAD (oculta) |
+| N | MES_NUM (oculta) |
+
+## 4. Verificar Rangos de Filas en MOVIMIENTO
+
+**CRÍTICO - Verificar que las fórmulas en Tablero.gs usen los rangos correctos:**
+
+| Entidad | Rango Correcto | Verificar |
+|---------|----------------|-----------|
+| FAMILIA | 9-113 | Fórmulas para indicadores FAMILIA |
+| NEUROTEA | 119-200 | Fórmulas para indicadores NEUROTEA |
+
+⚠️ **ERROR COMÚN**: Las fórmulas de NEUROTEA NO deben usar rango 73-150 (eso incluye FAMILIA)
+
+## 5. Verificar Lógica de Negocio
 
 ### Metas NeuroTEA
 - Ganancia mínima: 7%
 - Máximo gastos: 93%
 - Distribución: 33.33% Utilidad, 33.33% Emergencia, 33.34% Inversión
+- Fondos son VIRTUALES (asignación contable, no cuentas bancarias)
 
-### Balance Cruzado
-- Préstamo NT → Familia: Egreso en NT, Ingreso en FAM
-- Devolución Familia → NT: Egreso en FAM, Ingreso en NT
-- Saldo Neto = Préstamos - Devoluciones
+### Balance Cruzado Bidireccional
+- **NT → FAM**: Préstamo NT → Familia, Devolución Familia → NT
+- **FAM → NT**: Préstamo Familia → NT, Devolución NT → Familia
+- Balance Neto = Deuda FAM - Deuda NT
 
 ### Sistema Anti-Burro
 - Ingreso → deshabilita CATEGORÍA y SUBCATEGORÍA
-- CATEGORÍA ≠ VARIABLES/EVENTOS → deshabilita SUBCATEGORÍA
+- CATEGORÍA ≠ VARIABLES/EVENTOS/AHORRO → deshabilita SUBCATEGORÍA
 - CATEGORÍA = EVENTOS → lista de 16 eventos
 - CATEGORÍA = VARIABLES → lista de subcategorías
+- CATEGORÍA = AHORRO → lista de 3 items (Clara, Marco, Fondo)
 
-## 5. Verificar Colores
+### EST. PAGO como Gatillo
+- **De CARGA**: Fijo ("Recibido", "Pagado", "Ahorrado")
+- **De GASTOS_FIJOS**: Dropdown (Pendiente/Pagado/Cancelado)
+
+## 6. Verificar Visualización AHORRO
+
+- **GASTOS OPERATIVOS**: Solo EST.PAGO = "Pagado" (sin incluir "Ahorrado")
+- **AHORRO**: Mostrado separadamente
+- **DISPONIBLE**: INGRESOS - GASTOS - AHORRO
+- **PATRIMONIO FAMILIA**: INGRESOS - GASTOS (incluye ahorros)
+
+## 7. Verificar Colores (Estilo Sobrio v6.1)
 
 | Uso | Hex |
 |-----|-----|
-| FAMILIA Header | #059669 |
-| FAMILIA Fondo | #d1fae5 |
-| NEUROTEA Header | #1d4ed8 |
-| NEUROTEA Fondo | #dbeafe |
-| OK | #22c55e |
-| Alerta | #dc2626 |
-| Advertencia | #f59e0b |
+| Headers | #1f2937 (gris oscuro) |
+| Fondo principal | #f9fafb |
+| Fondo alternado | #ffffff |
+| Subtotales | #e5e7eb |
+| Bordes | #d1d5db |
+| OK/Verde | #22c55e |
+| Alerta/Rojo | #dc2626 |
+| Advertencia/Amarillo | #f59e0b |
+| Ingreso/Azul | #3b82f6 |
 
-## 6. Reportar
+## 8. Reportar
 
 Lista todas las inconsistencias encontradas con:
 - Archivo afectado
