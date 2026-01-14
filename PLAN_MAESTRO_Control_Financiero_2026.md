@@ -1,6 +1,6 @@
 # PLAN MAESTRO: Sistema de Control Financiero 2026
 ## NeuroTEA & Familia - Google Sheets + Web App
-### Versión 3.0 - Rangos NEUROTEA corregidos, AHORRO separado de GASTOS, PATRIMONIO FAMILIA
+### Versión 3.1 - Bug fixes testing (GASTOS OPERATIVOS, GANANCIA REAL NT, formato números)
 
 ---
 

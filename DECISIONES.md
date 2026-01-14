@@ -537,4 +537,52 @@ La versión anterior se marca como:
 
 ---
 
-*Última actualización: 2026-01-13 - Agregadas decisiones z, aa, ab (rangos NEUROTEA, AHORRO/PATRIMONIO, columnas ocultas)*
+### [2026-01-14ac] - Rango GASTOS OPERATIVOS FAMILIA expandido (F9:F113)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- El rango de GASTOS OPERATIVOS en TABLERO estaba limitado a F9:F70
+- Esto excluía SUSCRIPCIONES (filas 73+) y VARIABLES (filas 93+)
+- Corregido a F9:F113 para incluir todas las categorías de egresos FAMILIA
+- Además, se incluye EST.PAGO="Ahorrado" junto con "Pagado" en la suma
+**Archivos afectados**: gs/Tablero.gs (línea 319)
+**Razón**: Bug detectado durante testing - % GASTOS POR CATEGORÍA mostraba 0% porque el divisor (GASTOS OPERATIVOS) era 0.
+
+---
+
+### [2026-01-14ad] - GANANCIA REAL NT = Ingresos - Pagados (sin pendientes)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- La fórmula de GANANCIA REAL en NEUROTEA estaba calculando: Ingresos - Pagados - Pendientes
+- Esto es incorrecto porque GANANCIA REAL es lo que efectivamente ganaste hasta ahora
+- Corregido a: Ingresos - Pagados (sin restar pendientes)
+- La PROYECCIÓN FIN DE MES sí resta los pendientes, pero eso es diferente a GANANCIA REAL
+**Archivos afectados**: gs/Tablero.gs (línea 661)
+**Razón**: Bug detectado durante testing - GANANCIA REAL mostraba valor negativo porque restaba egresos aún no pagados.
+
+---
+
+### [2026-01-14ae] - Formato de número en Balance Cruzado con puntos
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- El Balance Cruzado mostraba "Gs. 1000000" sin separadores de miles
+- En Paraguay se usa el punto (.) como separador de miles, no la coma
+- Corregido usando: SUBSTITUTE(TEXT(ROUND(valor;0);"#,##0");",";".")
+- Esto convierte el formato estándar con comas a puntos
+- Resultado: "Gs. 1.000.000" en lugar de "Gs. 1000000"
+**Archivos afectados**: gs/Tablero.gs (líneas 394, 408, 706, 720, 1514)
+**Razón**: Mejora de legibilidad solicitada por usuario - los números grandes son difíciles de leer sin separadores.
+
+---
+
+### [2026-01-14af] - Formato de número Paraguay también en Sheets.gs
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- Las fórmulas de "Sobrante/Faltante" y "Monto atrasado" en CALENDARIO_MES también mostraban números sin separadores
+- Aplicado el mismo patrón SUBSTITUTE(TEXT(valor;"#,##0");",";".")
+- Afecta las líneas de resumen financiero del calendario mensual
+**Archivos afectados**: gs/Sheets.gs (líneas 1668, 1679)
+**Razón**: Consistencia con el resto del sistema - todos los montos en Guaraníes deben usar puntos como separador de miles.
+
+---
+
+*Última actualización: 2026-01-14 - Agregadas decisiones ac, ad, ae, af (bug fixes testing)*

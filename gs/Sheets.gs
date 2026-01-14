@@ -2,7 +2,8 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * SHEETS.GS - CREACIÓN DE LAS 9 HOJAS PRINCIPALES
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.1 - Estilo sobrio profesional (gris/blanco, colores solo estados)
+ * Versión 6.2 - Estilo sobrio profesional (gris/blanco, colores solo estados)
+ * BUG FIX [2026-01-14]: Formato números Paraguay con SUBSTITUTE
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -1664,7 +1665,8 @@ function crearHojaLiquidezEntidad(sheet, entidad, icono, filaInicioMov, filaFinM
 
   // Fila de detalle: Proyección y Atrasados
   sheet.getRange(row, 1, 1, 3).merge()
-    .setFormula(`="Sobrante/Faltante: "&TEXT(A${filaSaldo}-D${filaPendiente};"#,##0")&" Gs."`)
+    // BUG FIX [2026-01-14]: Formato Paraguay con puntos como separador de miles
+    .setFormula(`="Sobrante/Faltante: "&SUBSTITUTE(TEXT(A${filaSaldo}-D${filaPendiente};"#,##0");",";".")&" Gs."`)
     .setFontStyle('italic').setBackground(UI.FONDO_CLARO).setFontColor(UI.TEXTO_CLARO)
     .setHorizontalAlignment('center');
 
@@ -1674,7 +1676,8 @@ function crearHojaLiquidezEntidad(sheet, entidad, icono, filaInicioMov, filaFinM
     .setHorizontalAlignment('center');
 
   sheet.getRange(row, 7, 1, 3).merge()
-    .setFormula(`="Monto atrasado: "&TEXT(SUMPRODUCT((MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0)*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<DAY(TODAY()))*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov}="Pendiente")*(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov}));"#,##0")&" Gs."`)
+    // BUG FIX [2026-01-14]: Formato Paraguay con puntos como separador de miles
+    .setFormula(`="Monto atrasado: "&SUBSTITUTE(TEXT(SUMPRODUCT((MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}>0)*(MOVIMIENTO!$D$${filaInicioMov}:$D$${filaFinMov}<DAY(TODAY()))*(MOVIMIENTO!$B$${filaInicioMov}:$B$${filaFinMov}="Egreso")*(MOVIMIENTO!$J$${filaInicioMov}:$J$${filaFinMov}="Pendiente")*(MOVIMIENTO!$F$${filaInicioMov}:$F$${filaFinMov}));"#,##0");",";".")&" Gs."`)
     .setBackground(UI.ATRASADO_FONDO).setFontColor(UI.ATRASADO)
     .setHorizontalAlignment('center');
 

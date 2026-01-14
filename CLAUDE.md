@@ -611,5 +611,29 @@ El sistema usa formato español/europeo para números:
 
 ---
 
-*Última actualización: 2026-01-13*
-*Versión: 6.5 - Fix rangos NEUROTEA (119-200) + Separación AHORRO/GASTOS + PATRIMONIO FAMILIA*
+---
+
+## Bug Fixes Testing [2026-01-14]
+
+### GASTOS OPERATIVOS FAMILIA (rango corregido)
+- **Problema**: Rango F9:F70 excluía SUSCRIPCIONES y VARIABLES
+- **Solución**: Rango expandido a F9:F113
+- **Además**: Se incluye EST.PAGO="Ahorrado" junto con "Pagado"
+
+### GANANCIA REAL NEUROTEA (fórmula corregida)
+- **Problema**: Restaba egresos pendientes (incorrecto)
+- **Solución**: GANANCIA REAL = Ingresos - Pagados (sin pendientes)
+- **Nota**: PROYECCIÓN FIN DE MES sí resta pendientes
+
+### Formato números locale Paraguay (puntos como separador de miles)
+- **Problema**: Mostraba "Gs. 1000000" sin separadores
+- **Solución**: `SUBSTITUTE(TEXT(ROUND(valor;0);"#,##0");",";".")`
+- **Resultado**: "Gs. 1.000.000" con puntos como separadores de miles
+- **Archivos**:
+  - Tablero.gs (líneas 394, 408, 706, 720, 1514)
+  - Sheets.gs (líneas 1668, 1679 - Sobrante/Faltante y Monto atrasado)
+
+---
+
+*Última actualización: 2026-01-14*
+*Versión: 6.6 - Bug fixes testing (rangos GASTOS OPERATIVOS, GANANCIA REAL NT, formato números Paraguay)*

@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * TABLERO.GS - DASHBOARD PROFESIONAL DE CONTROL FINANCIERO
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.1 - Estilo sobrio profesional (gris/blanco, colores solo estados)
+ * Versión 6.6 - Bug fixes: rangos GASTOS OPERATIVOS, GANANCIA REAL NT, formato números Balance Cruzado
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -313,8 +313,10 @@ function crearHojaTABLERO() {
 
   // Gastos Operativos FAMILIA (filtrado por EST.PAGO = "Pagado" en MOVIMIENTO, sin AHORRO)
   // ACTUALIZADO: F=REAL, J=EST.PAGO en MOVIMIENTO v5.1
+  // BUG FIX [2026-01-14]: Rango expandido a F9:F113 para incluir SUSCRIPCIONES y VARIABLES
+  // BUG FIX [2026-01-14]: Incluir también EST.PAGO="Ahorrado" en gastos operativos
   sheet.getRange(rowFam, 4, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F70;MOVIMIENTO!B9:B70;"Egreso";MOVIMIENTO!J9:J70;"Pagado");0)')
+    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F113;MOVIMIENTO!B9:B113;"Egreso";MOVIMIENTO!J9:J113;"Pagado")+SUMIFS(MOVIMIENTO!F9:F113;MOVIMIENTO!B9:B113;"Egreso";MOVIMIENTO!J9:J113;"Ahorrado");0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -387,8 +389,9 @@ function crearHojaTABLERO() {
 
   // ROW 5: Balance de distribución - DISPONIBLE para gastar
   // DISPONIBLE = INGRESOS - GASTOS - AHORRO - FONDO (dinero para más gastos/ahorro)
+  // BUG FIX [2026-01-14]: Formato de número con puntos como separadores de miles
   sheet.getRange(rowFam, 2, 1, 4).merge()
-    .setFormula(`=IFERROR(LET(diff;B${filaValorIngresosFamInd}-(D${filaValorEgresosFamInd}+B${filaValorAhorroFam}+D${filaValorFondoEmFam});IF(ABS(diff)<1000;"✅ EQUILIBRADO: Ingresos distribuidos correctamente";IF(diff>0;"💰 DISPONIBLE: Gs. "&TEXT(diff;"#,##0")&" sin asignar";"⚠️ DÉFICIT: Gs. "&TEXT(ABS(diff);"#,##0")&" de más pagado")));"")`)
+    .setFormula(`=IFERROR(LET(diff;B${filaValorIngresosFamInd}-(D${filaValorEgresosFamInd}+B${filaValorAhorroFam}+D${filaValorFondoEmFam});IF(ABS(diff)<1000;"✅ EQUILIBRADO: Ingresos distribuidos correctamente";IF(diff>0;"💰 DISPONIBLE: Gs. "&SUBSTITUTE(TEXT(diff;"#,##0");",";".")&" sin asignar";"⚠️ DÉFICIT: Gs. "&SUBSTITUTE(TEXT(ABS(diff);"#,##0");",";".")&" de más pagado")));"")`)
     .setFontSize(10)
     .setFontWeight('bold')
     .setHorizontalAlignment('center')
@@ -400,8 +403,9 @@ function crearHojaTABLERO() {
 
   // ROW 6: PATRIMONIO FAMILIA = INGRESOS - GASTOS (incluye ahorros como activos)
   // Muestra el total de dinero que sigue siendo de FAMILIA (incluyendo lo ahorrado)
+  // BUG FIX [2026-01-14]: Formato de número con puntos como separadores de miles
   sheet.getRange(rowFam, 2, 1, 4).merge()
-    .setFormula(`=IFERROR("🏦 PATRIMONIO FAMILIA: Gs. "&TEXT(B${filaValorIngresosFamInd}-D${filaValorEgresosFamInd};"#,##0")&" (incl. ahorros)";"")`)
+    .setFormula(`=IFERROR("🏦 PATRIMONIO FAMILIA: Gs. "&SUBSTITUTE(TEXT(B${filaValorIngresosFamInd}-D${filaValorEgresosFamInd};"#,##0");",";".")&" (incl. ahorros)";"")`)
     .setFontSize(9)
     .setFontColor('#059669')
     .setBackground('#ECFDF5')
@@ -653,9 +657,10 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 22);
   rowNT++;
 
-  // Valor Ganancia = Ingresos - Egresos Pagados - Egresos Pendientes (consistente con MOVIMIENTO)
+  // Valor Ganancia = Ingresos - Egresos Pagados (GANANCIA REAL, no proyectada)
+  // BUG FIX [2026-01-14]: GANANCIA REAL solo considera lo efectivamente pagado, no pendientes
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setFormula(`=IFERROR(H${filaIngresosNT}-J${filaIngresosNT}-H${filaEgresosPendNT};0)`)
+    .setFormula(`=IFERROR(H${filaIngresosNT}-J${filaIngresosNT};0)`)
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -696,8 +701,9 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Estado de meta (badge grande)
+  // BUG FIX [2026-01-14]: Formato de número con puntos como separadores de miles
   sheet.getRange(rowNT, 8, 1, 4).merge()
-    .setFormula(`=IFERROR(IF(H${filaGananciaNT}>=J${filaGananciaNT};"✅ META CUMPLIDA - Superávit: Gs. "&TEXT(H${filaGananciaNT}-J${filaGananciaNT};"#,##0");"⚠️ META NO CUMPLIDA - Falta: Gs. "&TEXT(J${filaGananciaNT}-H${filaGananciaNT};"#,##0"));"⏳ Sin datos")`)
+    .setFormula(`=IFERROR(IF(H${filaGananciaNT}>=J${filaGananciaNT};"✅ META CUMPLIDA - Superávit: Gs. "&SUBSTITUTE(TEXT(H${filaGananciaNT}-J${filaGananciaNT};"#,##0");",";".");"⚠️ META NO CUMPLIDA - Falta: Gs. "&SUBSTITUTE(TEXT(J${filaGananciaNT}-H${filaGananciaNT};"#,##0");",";".")); "⏳ Sin datos")`)
     .setFontSize(11)
     .setFontWeight('bold')
     .setHorizontalAlignment('center')
@@ -712,8 +718,9 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Distribución de Ganancia - Título
+  // BUG FIX [2026-01-14]: Formato de número con puntos como separadores de miles
   sheet.getRange(rowNT, 8, 1, 4).merge()
-    .setFormula(`="💰 Distribución Ganancia (Meta: Gs. "&TEXT(IFERROR(J${filaGananciaNT};0);"#.##0")&")"`)
+    .setFormula(`="💰 Distribución Ganancia (Meta: Gs. "&SUBSTITUTE(TEXT(IFERROR(J${filaGananciaNT};0);"#,##0");",";".")&")"`)
     .setFontSize(10)
     .setFontWeight('bold')
     .setBackground(UI.NT_TITULO)
@@ -827,17 +834,18 @@ function crearHojaTABLERO() {
   const filaSaldoInicialFam = rowFam;
   rowFam++;
 
-  // Total Ingresos FAMILIA (rango específico de FAMILIA: filas 9-70)
+  // Total Ingresos FAMILIA (rango específico de FAMILIA: filas 9-113)
   // ACTUALIZADO: E=PRESUP, F=REAL en MOVIMIENTO v5.1
+  // BUG FIX [2026-01-14]: Rango expandido a 9:113 para incluir todas las secciones FAMILIA
   sheet.getRange(rowFam, 2).setValue('➕ Total Ingresos')
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70;"Ingreso";MOVIMIENTO!E9:E70);0)')
+  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B113;"Ingreso";MOVIMIENTO!E9:E113);0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70;"Ingreso";MOVIMIENTO!F9:F70);0)')
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B113;"Ingreso";MOVIMIENTO!F9:F113);0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
@@ -853,16 +861,17 @@ function crearHojaTABLERO() {
 
   // Egresos PAGADOS FAMILIA (filtrado por EST. PAGO = "Pagado")
   // ACTUALIZADO: E=PRESUP, F=REAL, J=EST.PAGO en MOVIMIENTO v5.1
+  // BUG FIX [2026-01-14]: Rango expandido a 9:113 para incluir todas las secciones FAMILIA
   sheet.getRange(rowFam, 2).setValue('➖ Egresos Pagados')
     .setBackground(UI.ROJO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B70;"Egreso";MOVIMIENTO!E9:E70);0)')
+  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B113;"Egreso";MOVIMIENTO!E9:E113);0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   // REAL = Solo los que tienen EST. PAGO = "Pagado" (columna J)
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F70;MOVIMIENTO!B9:B70;"Egreso";MOVIMIENTO!J9:J70;"Pagado");0)')
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F113;MOVIMIENTO!B9:B113;"Egreso";MOVIMIENTO!J9:J113;"Pagado");0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
@@ -907,6 +916,7 @@ function crearHojaTABLERO() {
 
   // Egresos PENDIENTES FAMILIA (filtrado por EST. PAGO = "Pendiente")
   // ACTUALIZADO: F=REAL, J=EST.PAGO en MOVIMIENTO v5.1
+  // BUG FIX [2026-01-14]: Rango expandido a 9:113 para incluir todas las secciones FAMILIA
   sheet.getRange(rowFam, 2).setValue('⏳ Egresos Pendientes')
     .setBackground(UI.AMARILLO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
@@ -915,7 +925,7 @@ function crearHojaTABLERO() {
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   // PENDIENTES = Solo los que tienen EST. PAGO = "Pendiente" (columna J)
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F70;MOVIMIENTO!B9:B70;"Egreso";MOVIMIENTO!J9:J70;"Pendiente");0)')
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F113;MOVIMIENTO!B9:B113;"Egreso";MOVIMIENTO!J9:J113;"Pendiente");0)')
     .setNumberFormat('#,##0')
     .setFontColor(UI.AMARILLO)
     .setFontWeight('bold')
@@ -1505,8 +1515,10 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowBalance + 8, 30);
 
   // Alerta Visual Grande (actualizada para flujo bidireccional)
+  // BUG FIX [2026-01-14]: Formato de número con puntos como separadores de miles (locale Paraguay)
+  // Usa SUBSTITUTE(TEXT(ROUND(...;0);"#,##0");",";".")  para convertir comas a puntos
   sheet.getRange(rowBalance + 1, 6, 8, 6).merge()
-    .setFormula(`=IFERROR(IF(D${rowBalance+8}>0;"⚠️ FAMILIA DEBE A NT"&CHAR(10)&CHAR(10)&"Gs. "&TEXT(D${rowBalance+8};"#,##0")&CHAR(10)&CHAR(10)&"NT subsidia gastos familiares";IF(D${rowBalance+8}<0;"🔄 NT DEBE A FAMILIA"&CHAR(10)&CHAR(10)&"Gs. "&TEXT(ABS(D${rowBalance+8});"#,##0")&CHAR(10)&CHAR(10)&"Familia subsidia a NeuroTEA";"✅ BALANCE EQUILIBRADO"&CHAR(10)&CHAR(10)&"No hay deudas pendientes"));"")`)
+    .setFormula(`=IFERROR(IF(D${rowBalance+8}>0;"⚠️ FAMILIA DEBE A NT"&CHAR(10)&CHAR(10)&"Gs. "&SUBSTITUTE(TEXT(ROUND(D${rowBalance+8};0);"#,##0");",";".")&CHAR(10)&CHAR(10)&"NT subsidia gastos familiares";IF(D${rowBalance+8}<0;"🔄 NT DEBE A FAMILIA"&CHAR(10)&CHAR(10)&"Gs. "&SUBSTITUTE(TEXT(ROUND(ABS(D${rowBalance+8});0);"#,##0");",";".")&CHAR(10)&CHAR(10)&"Familia subsidia a NeuroTEA";"✅ BALANCE EQUILIBRADO"&CHAR(10)&CHAR(10)&"No hay deudas pendientes"));"")`)
     .setFontSize(12)
     .setFontWeight('bold')
     .setHorizontalAlignment('center')
