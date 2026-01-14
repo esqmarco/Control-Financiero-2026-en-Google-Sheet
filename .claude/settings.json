@@ -1,12 +1,13 @@
 {
   "project": {
     "name": "Control Financiero 2026 - NeuroTEA & Familia",
-    "version": "4.2.0",
+    "version": "6.5.0",
     "description": "Sistema de control financiero para clínica NeuroTEA y finanzas familiares en Google Sheets"
   },
   "context": {
     "primaryDoc": "CLAUDE.md",
     "referenceDoc": "PLAN_MAESTRO_Control_Financiero_2026.md",
+    "decisionsDoc": "DECISIONES.md",
     "codeDir": "gs/",
     "language": "es",
     "platform": "Google Apps Script"
@@ -15,27 +16,23 @@
     "currency": "Guaraníes (Gs.)",
     "dateFormat": "dd/mm/yyyy",
     "year": 2026,
-    "entities": ["FAMILIA", "NEUROTEA"],
-    "colorScheme": {
-      "familia": {
-        "header": "#059669",
-        "background": "#d1fae5",
-        "subtotal": "#a7f3d0"
-      },
-      "neurotea": {
-        "header": "#1d4ed8",
-        "background": "#dbeafe",
-        "subtotal": "#93c5fd"
-      },
-      "balanceCruzado": {
-        "header": "#7c3aed",
-        "background": "#ede9fe"
-      },
-      "states": {
-        "ok": "#22c55e",
-        "alert": "#dc2626",
-        "warning": "#f59e0b"
-      }
+    "locale": "es-PY",
+    "formulaSeparator": ";",
+    "decimalSeparator": ",",
+    "entities": ["FAMILIA", "NEUROTEA"]
+  },
+  "colorScheme": {
+    "headers": "#1f2937",
+    "fondoPrincipal": "#f9fafb",
+    "fondoAlternado": "#ffffff",
+    "subtotales": "#e5e7eb",
+    "bordes": "#d1d5db",
+    "estados": {
+      "ok": "#22c55e",
+      "alerta": "#dc2626",
+      "advertencia": "#f59e0b",
+      "ingreso": "#3b82f6",
+      "egreso": "#ef4444"
     }
   },
   "dataRules": {
@@ -47,22 +44,6 @@
       "Variable/Anual": "GASTOS_FIJOS (INDEX/MATCH)",
       "AHORRO": "CARGA_FAMILIA (SUMPRODUCT)"
     },
-    "variablesPuros": [
-      "Supermercado",
-      "Combustible",
-      "Ropa/Vestidos",
-      "Recreación",
-      "Salud y Medicamentos",
-      "Gastos no identificados",
-      "Insumos y Papelería",
-      "Gastos Cursos",
-      "Gastos Varios Cumple"
-    ],
-    "ahorro": [
-      "Ahorro Clara",
-      "Ahorro Marco",
-      "Fondo de Emergencia"
-    ],
     "gastosFijosColumnas": {
       "A": "CONCEPTO",
       "B": "ENTIDAD",
@@ -70,7 +51,7 @@
       "D": "FRECUENCIA",
       "E": "DÍA",
       "F": "CUENTA",
-      "G-R": "ENE-DIC (meses, sin BASE)"
+      "G-R": "ENE-DIC (sin BASE)"
     },
     "movimientoColumnas": {
       "A": "CONCEPTO",
@@ -84,7 +65,13 @@
       "I": "ESTADO",
       "J": "EST.PAGO",
       "K": "🚦",
+      "L": "CATEGORÍA (oculta)",
+      "M": "ENTIDAD (oculta)",
       "N": "MES_NUM (oculta)"
+    },
+    "rangosMovimiento": {
+      "FAMILIA": "9-113",
+      "NEUROTEA": "119-200"
     }
   },
   "metasNT": {
@@ -96,26 +83,19 @@
       "fondoInversion": 0.3334
     }
   },
+  "cuentas": {
+    "FAMILIA": 10,
+    "NEUROTEA": 2
+  },
   "validation": {
     "beforeEdit": [
       "Leer CLAUDE.md completo",
-      "Verificar que el cambio es consistente con PLAN_MAESTRO",
-      "Verificar referencias de fórmulas"
+      "Verificar DECISIONES.md",
+      "Verificar que el cambio es consistente con PLAN_MAESTRO"
     ],
     "afterEdit": [
       "Ejecutar /verificar",
-      "Verificar que no hay valores hardcodeados en MOVIMIENTO/TABLERO"
-    ],
-    "criticalChecks": [
-      "CONFIG contiene todas las listas del PLAN_MAESTRO",
-      "MOVIMIENTO usa fórmulas dinámicas (no valores fijos)",
-      "MOVIMIENTO tiene columna DÍA (D) para acceso directo desde LIQUIDEZ/TABLERO",
-      "TABLERO lee de MOVIMIENTO (no tiene datos propios)",
-      "LIQUIDEZ lee DÍA directamente de MOVIMIENTO!D (sin INDEX/MATCH)",
-      "Sistema Anti-Burro funciona en CARGA sheets"
+      "Verificar rangos de filas (FAMILIA: 9-113, NEUROTEA: 119-200)"
     ]
-  },
-  "hooks": {
-    "reminder": "Antes de modificar gs/*.gs, lee CLAUDE.md para evitar inconsistencias"
   }
 }
