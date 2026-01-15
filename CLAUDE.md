@@ -443,6 +443,27 @@ El sistema usa formato español/europeo para números:
 - Si = 0: Equilibrado 🟢
 - Si < 0: NT debe a FAMILIA 🟡 (FAM ha prestado más)
 
+### Validación Anti-Burro de Préstamos (v6.7)
+
+**Decisión [2026-01-15]**: No se puede prestar a quien ya te debe. Primero debe devolver.
+
+| Entidad | Si DEBE a la otra | Si NO DEBE a la otra |
+|---------|-------------------|----------------------|
+| **FAMILIA** | ❌ Bloqueado "Préstamo Familia → NT" | ✅ Puede prestar, ❌ No puede devolver |
+| **NEUROTEA** | ❌ Bloqueado "Préstamo NT → Familia" | ✅ Puede prestar, ❌ No puede devolver |
+
+**Implementación técnica (Code.gs v6.7):**
+- `calcularDeudaFamiliaANT()` → Calcula deuda de Familia hacia NT
+- `calcularDeudaNTAFamilia()` → Calcula deuda de NT hacia Familia
+- `validarPrestamoDevolucionFamilia()` → Bloquea en CARGA_FAMILIA
+- `validarPrestamoDevolucionNT()` → Bloquea en CARGA_NT
+
+**Mensajes de bloqueo:**
+- "FAMILIA debe Gs. X a NT. Primero usa 'Devolución Familia → NT'"
+- "FAMILIA no debe nada a NT. No hay nada que devolver."
+- "NT debe Gs. X a FAMILIA. Primero usa 'Devolución NT → Familia'"
+- "NT no debe nada a FAMILIA. No hay nada que devolver."
+
 ---
 
 ## Colores del Sistema (Estilo Sobrio v6.1)
@@ -635,5 +656,5 @@ El sistema usa formato español/europeo para números:
 
 ---
 
-*Última actualización: 2026-01-14*
-*Versión: 6.6 - Bug fixes testing (rangos GASTOS OPERATIVOS, GANANCIA REAL NT, formato números Paraguay)*
+*Última actualización: 2026-01-15*
+*Versión: 6.7 - Validación Anti-Burro para préstamos/devoluciones entre NT y FAMILIA*

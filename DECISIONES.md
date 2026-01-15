@@ -585,4 +585,22 @@ La versión anterior se marca como:
 
 ---
 
-*Última actualización: 2026-01-14 - Agregadas decisiones ac, ad, ae, af (bug fixes testing)*
+### [2026-01-15a] - Validación Anti-Burro para préstamos/devoluciones
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+- **Regla de negocio**: No puedes prestar a quien ya te debe. Primero debe devolver.
+- Si FAMILIA debe a NT → bloqueado "Préstamo Familia → NT", solo puede "Devolución Familia → NT"
+- Si FAMILIA no debe a NT → puede prestar, pero no puede devolver (no hay deuda)
+- Misma lógica aplica para NT hacia FAMILIA
+- Implementado en trigger onEdit con alertas que explican el bloqueo y limpian la celda
+**Nuevas funciones en Code.gs v6.7**:
+- `calcularDeudaFamiliaANT()` - Calcula: Préstamos NT→FAM - Devoluciones FAM→NT
+- `calcularDeudaNTAFamilia()` - Calcula: Préstamos FAM→NT - Devoluciones NT→FAM
+- `validarPrestamoDevolucionFamilia()` - Valida en CARGA_FAMILIA columna D
+- `validarPrestamoDevolucionNT()` - Valida en CARGA_NT columna D
+**Archivos afectados**: gs/Code.gs, CLAUDE.md, PLAN_MAESTRO_Control_Financiero_2026.md
+**Razón**: El usuario identificó que sin esta validación, se podrían registrar préstamos cruzados simultáneos que confunden el balance real de deudas.
+
+---
+
+*Última actualización: 2026-01-15 - Agregada decisión a (validación anti-burro préstamos)*
