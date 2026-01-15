@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.1 - Estilo sobrio profesional (gris/blanco, colores solo estados)
+ * Versión 6.7 - Validación Anti-Burro para préstamos/devoluciones
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -362,6 +362,11 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
     }
   }
+
+  // Columna D = SUBCATEGORÍA (columna 4) - Validación Anti-Burro Préstamos
+  if (col === 4) {
+    validarPrestamoDevolucionFamilia(sheet, row, valor);
+  }
 }
 
 function procesarEdicionCargaNT(sheet, row, col, valor) {
@@ -383,6 +388,158 @@ function procesarEdicionCargaNT(sheet, row, col, valor) {
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
     } else {
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+    }
+  }
+
+  // Columna D = SUBCATEGORÍA (columna 4) - Validación Anti-Burro Préstamos
+  if (col === 4) {
+    validarPrestamoDevolucionNT(sheet, row, valor);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VALIDACIÓN ANTI-BURRO - PRÉSTAMOS Y DEVOLUCIONES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Calcula cuánto debe FAMILIA a NT
+ * Deuda = Préstamos que NT dio a Familia - Devoluciones que Familia hizo a NT
+ */
+function calcularDeudaFamiliaANT() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Préstamos que NT dio a Familia (registrados en CARGA_NT como egreso)
+  const cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
+  let prestamosNTaFamilia = 0;
+  if (cargaNT) {
+    const datosNT = cargaNT.getDataRange().getValues();
+    for (let i = 3; i < datosNT.length; i++) {
+      if (datosNT[i][3] === 'Préstamo NT → Familia') { // Columna D (índice 3)
+        prestamosNTaFamilia += Number(datosNT[i][5]) || 0; // Columna F = MONTO (índice 5)
+      }
+    }
+  }
+
+  // Devoluciones que Familia hizo a NT (registrados en CARGA_FAMILIA como egreso)
+  const cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
+  let devolucionesFamiliaANT = 0;
+  if (cargaFam) {
+    const datosFam = cargaFam.getDataRange().getValues();
+    for (let i = 3; i < datosFam.length; i++) {
+      if (datosFam[i][3] === 'Devolución Familia → NT') { // Columna D (índice 3)
+        devolucionesFamiliaANT += Number(datosFam[i][5]) || 0; // Columna F = MONTO (índice 5)
+      }
+    }
+  }
+
+  return prestamosNTaFamilia - devolucionesFamiliaANT;
+}
+
+/**
+ * Calcula cuánto debe NT a FAMILIA
+ * Deuda = Préstamos que Familia dio a NT - Devoluciones que NT hizo a Familia
+ */
+function calcularDeudaNTAFamilia() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Préstamos que Familia dio a NT (registrados en CARGA_FAMILIA como egreso)
+  const cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
+  let prestamosFamiliaANT = 0;
+  if (cargaFam) {
+    const datosFam = cargaFam.getDataRange().getValues();
+    for (let i = 3; i < datosFam.length; i++) {
+      if (datosFam[i][3] === 'Préstamo Familia → NT') { // Columna D (índice 3)
+        prestamosFamiliaANT += Number(datosFam[i][5]) || 0; // Columna F = MONTO (índice 5)
+      }
+    }
+  }
+
+  // Devoluciones que NT hizo a Familia (registrados en CARGA_NT como egreso)
+  const cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
+  let devolucionesNTaFamilia = 0;
+  if (cargaNT) {
+    const datosNT = cargaNT.getDataRange().getValues();
+    for (let i = 3; i < datosNT.length; i++) {
+      if (datosNT[i][3] === 'Devolución NT → Familia') { // Columna D (índice 3)
+        devolucionesNTaFamilia += Number(datosNT[i][5]) || 0; // Columna F = MONTO (índice 5)
+      }
+    }
+  }
+
+  return prestamosFamiliaANT - devolucionesNTaFamilia;
+}
+
+/**
+ * Formatea un número en formato Guaraníes paraguayos
+ */
+function formatearGuaranies(monto) {
+  return 'Gs. ' + monto.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+/**
+ * Valida préstamos/devoluciones en CARGA_FAMILIA
+ * - Si Familia DEBE a NT: solo puede devolver, no prestar
+ * - Si Familia NO DEBE a NT: solo puede prestar, no devolver
+ */
+function validarPrestamoDevolucionFamilia(sheet, row, valor) {
+  if (valor === 'Préstamo Familia → NT') {
+    const deudaFamiliaANT = calcularDeudaFamiliaANT();
+    if (deudaFamiliaANT > 0) {
+      // Familia ya debe a NT, no puede prestar más
+      SpreadsheetApp.getUi().alert(
+        '⚠️ BLOQUEO: No puedes prestar a NT',
+        'FAMILIA debe ' + formatearGuaranies(deudaFamiliaANT) + ' a NeuroTEA.\n\n' +
+        'Primero debes usar "Devolución Familia → NT" para saldar la deuda.\n\n' +
+        'Regla: No puedes prestar a quien ya te debe.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+      sheet.getRange(row, 4).setValue(''); // Limpiar la celda
+    }
+  } else if (valor === 'Devolución Familia → NT') {
+    const deudaFamiliaANT = calcularDeudaFamiliaANT();
+    if (deudaFamiliaANT <= 0) {
+      // Familia no debe nada a NT, no puede devolver
+      SpreadsheetApp.getUi().alert(
+        '⚠️ BLOQUEO: No tienes nada que devolver',
+        'FAMILIA no debe nada a NeuroTEA.\n\n' +
+        'No puedes registrar una devolución si no recibiste un préstamo.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+      sheet.getRange(row, 4).setValue(''); // Limpiar la celda
+    }
+  }
+}
+
+/**
+ * Valida préstamos/devoluciones en CARGA_NT
+ * - Si NT DEBE a Familia: solo puede devolver, no prestar
+ * - Si NT NO DEBE a Familia: solo puede prestar, no devolver
+ */
+function validarPrestamoDevolucionNT(sheet, row, valor) {
+  if (valor === 'Préstamo NT → Familia') {
+    const deudaNTaFamilia = calcularDeudaNTAFamilia();
+    if (deudaNTaFamilia > 0) {
+      // NT ya debe a Familia, no puede prestar más
+      SpreadsheetApp.getUi().alert(
+        '⚠️ BLOQUEO: NT no puede prestar a Familia',
+        'NeuroTEA debe ' + formatearGuaranies(deudaNTaFamilia) + ' a FAMILIA.\n\n' +
+        'Primero debes usar "Devolución NT → Familia" para saldar la deuda.\n\n' +
+        'Regla: No puedes prestar a quien ya te debe.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+      sheet.getRange(row, 4).setValue(''); // Limpiar la celda
+    }
+  } else if (valor === 'Devolución NT → Familia') {
+    const deudaNTaFamilia = calcularDeudaNTAFamilia();
+    if (deudaNTaFamilia <= 0) {
+      // NT no debe nada a Familia, no puede devolver
+      SpreadsheetApp.getUi().alert(
+        '⚠️ BLOQUEO: NT no tiene nada que devolver',
+        'NeuroTEA no debe nada a FAMILIA.\n\n' +
+        'No puedes registrar una devolución si no recibiste un préstamo.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+      sheet.getRange(row, 4).setValue(''); // Limpiar la celda
     }
   }
 }

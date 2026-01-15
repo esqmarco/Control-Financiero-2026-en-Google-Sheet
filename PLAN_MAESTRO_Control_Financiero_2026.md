@@ -1055,6 +1055,28 @@ SI SALDO < 0 → "FAMILIA SUBSIDIA A NT" (NT debe a Familia) 🟡
 SI SALDO = 0 → "FINANZAS EQUILIBRADAS" 🟢
 ```
 
+### 10.3 Validación Anti-Burro de Préstamos (v6.7)
+
+**Regla de negocio**: No puedes prestar a quien ya te debe. Primero debe devolver.
+
+| Entidad | Si DEBE a la otra | Si NO DEBE a la otra |
+|---------|-------------------|----------------------|
+| **FAMILIA** | ❌ Bloqueado "Préstamo Familia → NT" | ✅ Puede prestar |
+|  | ✅ Solo puede "Devolución Familia → NT" | ❌ No puede devolver |
+| **NEUROTEA** | ❌ Bloqueado "Préstamo NT → Familia" | ✅ Puede prestar |
+|  | ✅ Solo puede "Devolución NT → Familia" | ❌ No puede devolver |
+
+**Implementación técnica**:
+- Trigger `onEdit` detecta selección en columna D (SUBCATEGORÍA)
+- Calcula deuda actual entre entidades
+- Si la acción viola la regla → muestra alert explicativo y limpia la celda
+
+**Mensajes de bloqueo**:
+- "FAMILIA debe Gs. X a NT. Primero usa 'Devolución Familia → NT'"
+- "FAMILIA no debe nada a NT. No hay nada que devolver."
+- "NT debe Gs. X a FAMILIA. Primero usa 'Devolución NT → Familia'"
+- "NT no debe nada a FAMILIA. No hay nada que devolver."
+
 ---
 
 ## 11. HOJA LIQUIDEZ - CONTROL DE FLUJO DE CAJA (NUEVA)
@@ -1447,7 +1469,7 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 51 | **Préstamos bidireccionales**: FAM↔NT en ambas direcciones | ✅ |
 | 52 | **GANANCIA consistente**: TABLERO usa misma fórmula que MOVIMIENTO | ✅ |
 
-### Versión 3.0 (Actual)
+### Versión 3.0
 | # | Adición/Aclaración | Estado |
 |---|-------------------|--------|
 | 53 | **Rangos NEUROTEA corregidos**: 119-200 (antes 73-150 incluía FAMILIA) | ✅ |
@@ -1455,6 +1477,14 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 55 | **PATRIMONIO FAMILIA**: Nuevo indicador = INGRESOS - GASTOS (incl. ahorros) | ✅ |
 | 56 | **Columnas ocultas L/M**: CATEGORÍA y ENTIDAD en MOVIMIENTO para filtros | ✅ |
 | 57 | **% GASTOS POR CATEGORÍA**: Funciona con SUMIFS en lugar de SUMPRODUCT | ✅ |
+
+### Versión 3.1 (Actual)
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 58 | **Validación Anti-Burro Préstamos**: No puedes prestar a quien ya te debe | ✅ |
+| 59 | **Bloqueo en CARGA_FAMILIA**: Si FAM debe a NT, bloqueado "Préstamo Familia → NT" | ✅ |
+| 60 | **Bloqueo en CARGA_NT**: Si NT debe a FAM, bloqueado "Préstamo NT → Familia" | ✅ |
+| 61 | **Alertas explicativas**: Mensaje indica cuánto se debe y qué acción usar | ✅ |
 
 ---
 
@@ -1492,5 +1522,5 @@ DIFERENCIA:                Gs. -350.000 🔴
 
 ---
 
-*Documento actualizado el 04 de enero de 2026*
-*Versión: 2.6 - CUENTA en GASTOS_FIJOS, AHORRO desde CARGA, Saldo Banco, PRESUPUESTO calculado*
+*Documento actualizado el 15 de enero de 2026*
+*Versión: 3.1 - Validación Anti-Burro para préstamos/devoluciones NT↔FAMILIA*
