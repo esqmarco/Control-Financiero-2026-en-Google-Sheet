@@ -586,21 +586,42 @@ La versión anterior se marca como:
 ---
 
 ### [2026-01-15a] - Validación Anti-Burro para préstamos/devoluciones
-**Estado**: ✅ APROBADO - NO REVERTIR
-**Descripción**:
-- **Regla de negocio**: No puedes prestar a quien ya te debe. Primero debe devolver.
-- Si FAMILIA debe a NT → bloqueado "Préstamo Familia → NT", solo puede "Devolución Familia → NT"
-- Si FAMILIA no debe a NT → puede prestar, pero no puede devolver (no hay deuda)
-- Misma lógica aplica para NT hacia FAMILIA
-- Implementado en trigger onEdit con alertas que explican el bloqueo y limpian la celda
-**Nuevas funciones en Code.gs v6.7**:
-- `calcularDeudaFamiliaANT()` - Calcula: Préstamos NT→FAM - Devoluciones FAM→NT
-- `calcularDeudaNTAFamilia()` - Calcula: Préstamos FAM→NT - Devoluciones NT→FAM
-- `validarPrestamoDevolucionFamilia()` - Valida en CARGA_FAMILIA columna D
-- `validarPrestamoDevolucionNT()` - Valida en CARGA_NT columna D
-**Archivos afectados**: gs/Code.gs, CLAUDE.md, PLAN_MAESTRO_Control_Financiero_2026.md
-**Razón**: El usuario identificó que sin esta validación, se podrían registrar préstamos cruzados simultáneos que confunden el balance real de deudas.
+**Estado**: 🔄 EVOLUCIONADA → ver [2026-01-15b]
 
 ---
 
-*Última actualización: 2026-01-15 - Agregada decisión a (validación anti-burro préstamos)*
+### [2026-01-15b] - Validación Anti-Burro COMPLETA (TIPO/CATEGORÍA/SUBCATEGORÍA)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Evoluciona de**: [2026-01-15a] Validación préstamos/devoluciones
+**Descripción**:
+Sistema completo de validaciones para evitar incoherencias en la carga de datos:
+
+1. **TIPO Ingreso → Bloquea CATEGORÍA y SUBCATEGORÍA**
+   - Si TIPO es ingreso, las columnas C y D se bloquean con "-"
+
+2. **Contradicciones TIPO vs SUBCATEGORÍA**
+   - TIPO="Devolución NeuroTEA" + SUBCAT="Devolución Familia → NT" → BLOQUEO
+   - TIPO="Préstamo NeuroTEA" + SUBCAT="Préstamo Familia → NT" → BLOQUEO
+   - Cualquier TIPO ingreso + SUBCATEGORÍA de egreso → BLOQUEO
+
+3. **AHORRO con subcategoría correcta**
+   - CATEGORÍA="AHORRO" solo permite: Ahorro Clara, Ahorro Marco, Fondo de Emergencia
+
+4. **VARIABLES con subcategoría correcta**
+   - CATEGORÍA="VARIABLES" solo permite items de VARIABLES_FAMILIA o VARIABLES_NT
+
+5. **Balance cruzado préstamos/devoluciones**
+   - No puedes prestar a quien ya te debe (primero devolver)
+
+**Nuevas funciones en Code.gs v6.8**:
+- `validarContradiccionTipoSubcategoriaFamilia()` - Detecta contradicciones en CARGA_FAMILIA
+- `validarContradiccionTipoSubcategoriaNT()` - Detecta contradicciones en CARGA_NT
+- `calcularDeudaFamiliaANT()` / `calcularDeudaNTAFamilia()` - Calculan deudas cruzadas
+- `validarPrestamoDevolucionFamilia()` / `validarPrestamoDevolucionNT()` - Bloquean según balance
+
+**Archivos afectados**: gs/Code.gs, CLAUDE.md, DECISIONES.md, PLAN_MAESTRO
+**Razón**: El usuario identificó incoherencias como TIPO="Devolución NeuroTEA" con SUBCAT="Devolución Familia → NT" que son operaciones OPUESTAS y no deben coexistir.
+
+---
+
+*Última actualización: 2026-01-15 - Agregada decisión b (validación anti-burro completa)*
