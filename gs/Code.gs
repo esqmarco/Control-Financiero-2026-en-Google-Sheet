@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.8 - Validación Anti-Burro completa (incoherencias TIPO/CATEGORÍA/SUBCATEGORÍA)
+ * Versión 6.9 - AHORRO separado de GASTOS OPERATIVOS + Anti-Burro completo
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -341,12 +341,18 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
   // Columna B = TIPO (columna 2)
   if (col === 2) {
     const esIngreso = TIPOS_INGRESO_FAMILIA.includes(valor);
+    const esAhorro = (valor === TIPO_AHORRO); // "Ahorro"
+
     if (esIngreso) {
       // Deshabilitar CATEGORÍA y SUBCATEGORÍA para ingresos
       sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+    } else if (esAhorro) {
+      // AHORRO: Habilitar CATEGORÍA (con opciones de ahorro), bloquear SUBCATEGORÍA
+      sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
     } else {
-      // Habilitar para egresos
+      // Egresos: Habilitar CATEGORÍA y SUBCATEGORÍA
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
     }
@@ -354,14 +360,15 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
 
   // Columna C = CATEGORÍA (columna 3)
   if (col === 3) {
-    // Validar que el TIPO no sea un INGRESO
     const tipoActual = sheet.getRange(row, 2).getValue();
+
+    // Validar que el TIPO no sea un INGRESO
     if (TIPOS_INGRESO_FAMILIA.includes(tipoActual) && valor !== '-') {
       SpreadsheetApp.getUi().alert(
         '⚠️ INCOHERENCIA: TIPO es un INGRESO',
         'El TIPO "' + tipoActual + '" es un INGRESO.\n\n' +
         'Los ingresos NO tienen CATEGORÍA.\n' +
-        'La CATEGORÍA solo aplica para egresos ("Egreso Familiar").',
+        'La CATEGORÍA solo aplica para egresos ("Egreso Familiar") o ahorro ("Ahorro").',
         SpreadsheetApp.getUi().ButtonSet.OK
       );
       sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
@@ -369,11 +376,31 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
       return;
     }
 
-    if (valor === 'VARIABLES' || valor === 'AHORRO') {
-      // Habilitar subcategoría para VARIABLES y AHORRO
+    // Si TIPO = "Ahorro", validar que CATEGORÍA sea de ahorro
+    if (tipoActual === TIPO_AHORRO) {
+      if (!CATEGORIAS_AHORRO_FAMILIA.includes(valor)) {
+        SpreadsheetApp.getUi().alert(
+          '⚠️ CATEGORÍA incorrecta para AHORRO',
+          'Si el TIPO es "Ahorro", la CATEGORÍA debe ser:\n\n' +
+          '• Ahorro Clara\n' +
+          '• Ahorro Marco\n' +
+          '• Fondo de Emergencia\n\n' +
+          'Seleccionaste: "' + valor + '"',
+          SpreadsheetApp.getUi().ButtonSet.OK
+        );
+        sheet.getRange(row, 3).setValue('');
+        return;
+      }
+      // AHORRO: SUBCATEGORÍA siempre bloqueada
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      return;
+    }
+
+    // Para egresos: habilitar subcategoría solo si es VARIABLES
+    if (valor === 'VARIABLES') {
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
     } else {
-      // Deshabilitar subcategoría
+      // Deshabilitar subcategoría para otras categorías de egreso
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
     }
   }
@@ -383,27 +410,24 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
     const tipoActual = sheet.getRange(row, 2).getValue();
     const categoriaActual = sheet.getRange(row, 3).getValue();
 
+    // Si TIPO = "Ahorro", SUBCATEGORÍA debe estar bloqueada
+    if (tipoActual === TIPO_AHORRO && valor !== '-') {
+      SpreadsheetApp.getUi().alert(
+        '⚠️ SUBCATEGORÍA no aplica para AHORRO',
+        'Cuando el TIPO es "Ahorro", la SUBCATEGORÍA no se usa.\n\n' +
+        'El tipo de ahorro se selecciona en CATEGORÍA.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      return;
+    }
+
     // 1. Validar contradicciones TIPO vs SUBCATEGORÍA
     if (validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipoActual, valor)) {
       return; // Si hubo contradicción, ya se limpió la celda
     }
 
-    // 2. Validar AHORRO con subcategoría correcta
-    if (categoriaActual === 'AHORRO' && !AHORRO_FAMILIA.includes(valor)) {
-      SpreadsheetApp.getUi().alert(
-        '⚠️ SUBCATEGORÍA incorrecta para AHORRO',
-        'Si la CATEGORÍA es "AHORRO", la SUBCATEGORÍA debe ser:\n\n' +
-        '• Ahorro Clara\n' +
-        '• Ahorro Marco\n' +
-        '• Fondo de Emergencia\n\n' +
-        'Seleccionaste: "' + valor + '"',
-        SpreadsheetApp.getUi().ButtonSet.OK
-      );
-      sheet.getRange(row, 4).setValue('');
-      return;
-    }
-
-    // 3. Validar VARIABLES con subcategoría correcta
+    // 2. Validar VARIABLES con subcategoría correcta
     if (categoriaActual === 'VARIABLES' && !VARIABLES_FAMILIA.includes(valor)) {
       SpreadsheetApp.getUi().alert(
         '⚠️ SUBCATEGORÍA incorrecta para VARIABLES',
@@ -415,7 +439,7 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
       return;
     }
 
-    // 4. Validar préstamos/devoluciones (balance cruzado)
+    // 3. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionFamilia(sheet, row, valor);
   }
 }

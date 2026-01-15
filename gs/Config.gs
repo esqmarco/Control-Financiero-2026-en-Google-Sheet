@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CONFIG.GS - DATOS MAESTROS Y CONFIGURACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.3 - Préstamos bidireccionales NT↔FAM, GANANCIA consistente
+ * Versión 6.9 - AHORRO separado de GASTOS OPERATIVOS
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '6.3';
+const VERSION = '6.9';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -144,8 +144,20 @@ const CATEGORIAS_EGRESO_FAMILIA = [
   'CUOTAS Y PRÉSTAMOS',
   'OBLIGACIONES LEGALES',
   'SUSCRIPCIONES',
-  'VARIABLES',
-  'AHORRO'
+  'VARIABLES'
+  // AHORRO ya no es egreso - tiene su propio TIPO
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AHORRO - TIPO SEPARADO (no es ingreso ni egreso, es transferencia)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TIPO_AHORRO = 'Ahorro';
+
+const CATEGORIAS_AHORRO_FAMILIA = [
+  'Ahorro Clara',
+  'Ahorro Marco',
+  'Fondo de Emergencia'
 ];
 
 const CATEGORIAS_EGRESO_NT = [
@@ -175,12 +187,8 @@ const VARIABLES_FAMILIA = [
   'Préstamo Familia → NT'       // Familia presta a NT
 ];
 
-// Subcategorías de AHORRO para CARGA_FAMILIA
-const AHORRO_FAMILIA = [
-  'Ahorro Clara',
-  'Ahorro Marco',
-  'Fondo de Emergencia'
-];
+// NOTA: AHORRO_FAMILIA ya no existe como subcategoría
+// Ahora se usa CATEGORIAS_AHORRO_FAMILIA como categoría del TIPO "Ahorro"
 
 const VARIABLES_NT = [
   'Insumos y Papelería',

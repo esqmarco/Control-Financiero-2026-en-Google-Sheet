@@ -115,13 +115,14 @@ gs/
 
 ## Categorías de Egreso
 
-### FAMILIA (6 categorías)
+### FAMILIA (5 categorías - AHORRO es TIPO separado)
 1. GASTOS FIJOS
 2. CUOTAS Y PRÉSTAMOS
 3. OBLIGACIONES LEGALES
 4. SUSCRIPCIONES
 5. VARIABLES
-6. AHORRO
+
+> **DECISIÓN [2026-01-15]**: AHORRO ya no es categoría de egreso. Es un TIPO separado en CARGA_FAMILIA.
 
 ### NEUROTEA (6 categorías)
 1. CLÍNICA
@@ -166,12 +167,17 @@ gs/
 6. Cena Fin de Año (Diciembre)
 7-16. Reserva 1 a Reserva 10 (renombrables)
 
-### FAMILIA - AHORRO (3 items)
-1. Ahorro Clara
-2. Ahorro Marco
-3. Fondo de Emergencia
+### TIPO AHORRO (FAMILIA) - 3 categorías
+> **DECISIÓN [2026-01-15]**: AHORRO es un TIPO separado (no Egreso). Sus opciones van en CATEGORÍA, no SUBCATEGORÍA.
 
-> **DECISIÓN [2026-01-04]**: AHORRO se carga desde CARGA_FAMILIA (no GASTOS_FIJOS) porque es una transferencia que se hace cuando realmente se ahorra.
+| TIPO | CATEGORÍA | SUBCATEGORÍA |
+|------|-----------|--------------|
+| Ahorro | Ahorro Clara | - (bloqueada) |
+| Ahorro | Ahorro Marco | - (bloqueada) |
+| Ahorro | Fondo de Emergencia | - (bloqueada) |
+
+> AHORRO no es gasto operativo. Se separa en TABLERO para mostrar:
+> - INGRESOS = GASTOS OPERATIVOS + AHORRO + FONDO EMERGENCIA + DISPONIBLE
 
 ---
 
@@ -403,10 +409,11 @@ El sistema usa formato español/europeo para números:
 ## Sistema Anti-Burro (Validaciones en Cascada)
 
 1. **Si TIPO es Ingreso** → CATEGORÍA y SUBCATEGORÍA deshabilitadas
-2. **Si CATEGORÍA ≠ VARIABLES ni EVENTOS ni AHORRO** → SUBCATEGORÍA deshabilitada
-3. **Si CATEGORÍA = EVENTOS** → Muestra lista de 16 eventos
-4. **Si CATEGORÍA = VARIABLES** → Muestra subcategorías variables
-5. **Si CATEGORÍA = AHORRO** → Muestra subcategorías ahorro (Ahorro Clara, Ahorro Marco, Fondo de Emergencia)
+2. **Si TIPO es Ahorro** → CATEGORÍA habilita opciones ahorro, SUBCATEGORÍA bloqueada
+3. **Si TIPO es Egreso Familiar** → CATEGORÍA habilita categorías de egreso
+4. **Si CATEGORÍA ≠ VARIABLES ni EVENTOS** → SUBCATEGORÍA deshabilitada
+5. **Si CATEGORÍA = EVENTOS** → Muestra lista de 16 eventos
+6. **Si CATEGORÍA = VARIABLES** → Muestra subcategorías variables
 
 ---
 
@@ -669,4 +676,4 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 ---
 
 *Última actualización: 2026-01-15*
-*Versión: 6.8 - Validación Anti-Burro completa (TIPO/CATEGORÍA/SUBCATEGORÍA coherentes)*
+*Versión: 6.9 - AHORRO separado de GASTOS OPERATIVOS (TIPO="Ahorro" independiente)*

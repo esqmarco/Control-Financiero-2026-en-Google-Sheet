@@ -624,4 +624,36 @@ Sistema completo de validaciones para evitar incoherencias en la carga de datos:
 
 ---
 
-*Última actualización: 2026-01-15 - Agregada decisión b (validación anti-burro completa)*
+### [2026-01-15c] - AHORRO separado de GASTOS OPERATIVOS (v6.9)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+AHORRO conceptualmente NO es un gasto, es una transferencia a cuenta de ahorro. Por lo tanto:
+
+1. **AHORRO ahora es un TIPO separado** (no "Egreso Familiar"):
+   - TIPO: "Ahorro"
+   - CATEGORÍA: "Ahorro Clara" / "Ahorro Marco" / "Fondo de Emergencia"
+   - SUBCATEGORÍA: "-" (bloqueada automáticamente)
+
+2. **Ecuación contable correcta**:
+   ```
+   INGRESOS = GASTOS OPERATIVOS + AHORRO + FONDO EMERGENCIA + DISPONIBLE
+   ```
+
+3. **Visualización en TABLERO**:
+   - GASTOS OPERATIVOS: Solo suma TIPO="Egreso" con EST.PAGO="Pagado"
+   - AHORRO: Suma TIPO="Ahorro" con CATEGORÍA in ("Ahorro Clara", "Ahorro Marco")
+   - FONDO EMERGENCIA: Suma TIPO="Ahorro" con CATEGORÍA="Fondo de Emergencia"
+
+4. **Cambios técnicos**:
+   - Config.gs: Agregado TIPO_AHORRO y CATEGORIAS_AHORRO_FAMILIA
+   - Code.gs: Anti-Burro para TIPO="Ahorro" bloquea SUBCATEGORÍA
+   - Sheets.gs: CARGA_FAMILIA incluye "Ahorro" en dropdown TIPO
+   - Sheets.gs: MOVIMIENTO columna B muestra "Ahorro" para items de ahorro
+   - Tablero.gs: Fórmulas separadas para AHORRO y FONDO EMERGENCIA
+
+**Archivos afectados**: gs/Config.gs, gs/Code.gs, gs/Sheets.gs, gs/Tablero.gs, CLAUDE.md
+**Razón**: El usuario identificó que AHORRO estaba sumándose en GASTOS OPERATIVOS, lo cual es conceptualmente incorrecto. AHORRO es una asignación del dinero, no un gasto.
+
+---
+
+*Última actualización: 2026-01-15 - Agregada decisión c (AHORRO separado v6.9)*

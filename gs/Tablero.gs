@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * TABLERO.GS - DASHBOARD PROFESIONAL DE CONTROL FINANCIERO
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.6 - Bug fixes: rangos GASTOS OPERATIVOS, GANANCIA REAL NT, formato números Balance Cruzado
+ * Versión 6.9 - AHORRO separado de GASTOS OPERATIVOS (TIPO="Ahorro" independiente)
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -297,10 +297,10 @@ function crearHojaTABLERO() {
   rowFam++;
 
   // ROW 2: Valores Ingresos y Gastos Operativos
-  // Ingresos FAMILIA (suma de CARGA_FAMILIA con TIPO != "Egreso Familiar" en el mes activo)
-  // ACTUALIZADO: $N$3 es el nuevo MES_NUM en MOVIMIENTO v5.1
+  // Ingresos FAMILIA (suma de CARGA_FAMILIA donde TIPO no es "Egreso Familiar" ni "Ahorro")
+  // v6.9: AHORRO es un TIPO separado, no cuenta como ingreso
   sheet.getRange(rowFam, 2, 1, 2).merge()
-    .setFormula('=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500<>"Egreso Familiar")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
+    .setFormula('=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500<>"Egreso Familiar")*(CARGA_FAMILIA!$B$4:$B$500<>"Ahorro")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -311,12 +311,11 @@ function crearHojaTABLERO() {
     .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
   const filaValorIngresosFamInd = rowFam;
 
-  // Gastos Operativos FAMILIA (filtrado por EST.PAGO = "Pagado" en MOVIMIENTO, sin AHORRO)
-  // ACTUALIZADO: F=REAL, J=EST.PAGO en MOVIMIENTO v5.1
-  // BUG FIX [2026-01-14]: Rango expandido a F9:F113 para incluir SUSCRIPCIONES y VARIABLES
-  // BUG FIX [2026-01-14]: Incluir también EST.PAGO="Ahorrado" en gastos operativos
+  // Gastos Operativos FAMILIA (filtrado por TIPO="Egreso" y EST.PAGO="Pagado" en MOVIMIENTO)
+  // v6.9: AHORRO ahora tiene TIPO="Ahorro", no suma aquí
+  // Solo TIPO="Egreso" cuenta como gasto operativo
   sheet.getRange(rowFam, 4, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F113;MOVIMIENTO!B9:B113;"Egreso";MOVIMIENTO!J9:J113;"Pagado")+SUMIFS(MOVIMIENTO!F9:F113;MOVIMIENTO!B9:B113;"Egreso";MOVIMIENTO!J9:J113;"Ahorrado");0)')
+    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F113;MOVIMIENTO!B9:B113;"Egreso";MOVIMIENTO!J9:J113;"Pagado");0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -353,11 +352,11 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 22);
   rowFam++;
 
-  // ROW 4: Valores Ahorro y Fondo Emergencia (desde CARGA_FAMILIA por CATEGORÍA)
-  // AHORRO = suma de CARGA_FAMILIA donde CATEGORÍA = "AHORRO" en el mes activo
-  // ACTUALIZADO: $N$3 es el nuevo MES_NUM en MOVIMIENTO v5.1
+  // ROW 4: Valores Ahorro y Fondo Emergencia (desde CARGA_FAMILIA)
+  // v6.9: AHORRO es TIPO separado, CATEGORÍA = "Ahorro Clara" o "Ahorro Marco"
+  // AHORRO = suma de CARGA_FAMILIA donde TIPO="Ahorro" y CATEGORÍA in ("Ahorro Clara", "Ahorro Marco")
   sheet.getRange(rowFam, 2, 1, 2).merge()
-    .setFormula('=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$C$4:$C$500="AHORRO")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
+    .setFormula('=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500="Ahorro")*((CARGA_FAMILIA!$C$4:$C$500="Ahorro Clara")+(CARGA_FAMILIA!$C$4:$C$500="Ahorro Marco"))*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -368,9 +367,9 @@ function crearHojaTABLERO() {
     .setBorder(true, true, true, true, false, false, UI.VERDE, SpreadsheetApp.BorderStyle.SOLID);
   const filaValorAhorroFam = rowFam;
 
-  // FONDO EMERGENCIA = suma de CARGA_FAMILIA donde CATEGORÍA = "FONDO DE EMERGENCIA" en el mes activo
+  // FONDO EMERGENCIA = suma de CARGA_FAMILIA donde TIPO="Ahorro" y CATEGORÍA="Fondo de Emergencia"
   sheet.getRange(rowFam, 4, 1, 2).merge()
-    .setFormula('=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$C$4:$C$500="FONDO DE EMERGENCIA")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
+    .setFormula('=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500="Ahorro")*(CARGA_FAMILIA!$C$4:$C$500="Fondo de Emergencia")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
