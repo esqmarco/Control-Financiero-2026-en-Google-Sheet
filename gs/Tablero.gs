@@ -884,7 +884,30 @@ function crearHojaTABLERO() {
   const filaEgresosPagadosFam = rowFam;
   rowFam++;
 
-  // DISPONIBLE = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS
+  // AHORRO + FONDO EMERGENCIA (v6.9 - se resta del disponible)
+  sheet.getRange(rowFam, 2).setValue('➖ Ahorro + Fondo Emergencia')
+    .setBackground(UI.VERDE_FONDO)
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 3).setValue('-')
+    .setBackground(UI.VERDE_FONDO)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  // REAL = Suma de TIPO="Ahorro" en MOVIMIENTO
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B113;"Ahorro";MOVIMIENTO!F9:F113);0)')
+    .setNumberFormat('#,##0')
+    .setFontColor(UI.VERDE)
+    .setBackground(UI.VERDE_FONDO)
+    .setHorizontalAlignment('right')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowFam, 5).setValue('💰')
+    .setBackground(UI.VERDE_FONDO)
+    .setHorizontalAlignment('center')
+    .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeight(rowFam, 24);
+  const filaAhorroFam = rowFam;
+  rowFam++;
+
+  // DISPONIBLE = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS - AHORRO
   sheet.getRange(rowFam, 2).setValue('💰 DISPONIBLE')
     .setFontWeight('bold')
     .setBackground(UI.FAM_SUBTOTAL)
@@ -893,7 +916,7 @@ function crearHojaTABLERO() {
     .setBackground(UI.FAM_SUBTOTAL)
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 4).setFormula(`=IFERROR(D${filaSaldoInicialFam}+D${filaIngresosFam}-D${filaEgresosPagadosFam};0)`)
+  sheet.getRange(rowFam, 4).setFormula(`=IFERROR(D${filaSaldoInicialFam}+D${filaIngresosFam}-D${filaEgresosPagadosFam}-D${filaAhorroFam};0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setFontSize(12)
