@@ -81,8 +81,8 @@ function crearHojaCONFIG() {
   escribirListaConfig(sheet, fila2, col, 'VARIABLES FAMILIA', VARIABLES_FAMILIA, C.FAM_HEADER);
   col += 2;
 
-  // ─── AHORRO FAMILIA ───
-  escribirListaConfig(sheet, fila2, col, 'AHORRO FAMILIA', AHORRO_FAMILIA, C.FAM_HEADER);
+  // ─── CATEGORÍAS AHORRO FAMILIA (v6.9: son CATEGORÍAS, no subcategorías) ───
+  escribirListaConfig(sheet, fila2, col, 'CATEG. AHORRO FAM', CATEGORIAS_AHORRO_FAMILIA, C.FAM_HEADER);
   col += 2;
 
   // ─── VARIABLES NT ───
