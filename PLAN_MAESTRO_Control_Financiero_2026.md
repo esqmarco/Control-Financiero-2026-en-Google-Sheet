@@ -1055,7 +1055,30 @@ SI SALDO < 0 → "FAMILIA SUBSIDIA A NT" (NT debe a Familia) 🟡
 SI SALDO = 0 → "FINANZAS EQUILIBRADAS" 🟢
 ```
 
-### 10.3 Validación Anti-Burro de Préstamos (v6.7)
+### 10.3 Validación Anti-Burro COMPLETA (v6.8)
+
+Sistema completo de validaciones para evitar incoherencias en la carga de datos.
+
+#### 10.3.1 TIPO Ingreso → Bloquea CATEGORÍA y SUBCATEGORÍA
+Si el TIPO seleccionado es un ingreso, las columnas CATEGORÍA y SUBCATEGORÍA se bloquean automáticamente con "-".
+
+#### 10.3.2 Contradicciones TIPO vs SUBCATEGORÍA
+
+| Contradicción | Explicación | Acción |
+|---------------|-------------|--------|
+| TIPO="Devolución NeuroTEA" + SUBCAT="Devolución Familia → NT" | Operaciones OPUESTAS | BLOQUEO |
+| TIPO="Préstamo NeuroTEA" + SUBCAT="Préstamo Familia → NT" | Operaciones OPUESTAS | BLOQUEO |
+| Cualquier TIPO ingreso + SUBCATEGORÍA de egreso | Incoherente | BLOQUEO |
+
+#### 10.3.3 AHORRO y VARIABLES con subcategoría correcta
+
+| CATEGORÍA | SUBCATEGORÍAS permitidas |
+|-----------|-------------------------|
+| AHORRO | Ahorro Clara, Ahorro Marco, Fondo de Emergencia |
+| VARIABLES (FAM) | Supermercado, Combustible, Mantenimiento autos, etc. |
+| VARIABLES (NT) | Insumos, Reparaciones, Mantenimiento Aire, etc. |
+
+#### 10.3.4 Balance cruzado préstamos/devoluciones
 
 **Regla de negocio**: No puedes prestar a quien ya te debe. Primero debe devolver.
 
@@ -1066,16 +1089,10 @@ SI SALDO = 0 → "FINANZAS EQUILIBRADAS" 🟢
 | **NEUROTEA** | ❌ Bloqueado "Préstamo NT → Familia" | ✅ Puede prestar |
 |  | ✅ Solo puede "Devolución NT → Familia" | ❌ No puede devolver |
 
-**Implementación técnica**:
-- Trigger `onEdit` detecta selección en columna D (SUBCATEGORÍA)
-- Calcula deuda actual entre entidades
-- Si la acción viola la regla → muestra alert explicativo y limpia la celda
-
-**Mensajes de bloqueo**:
-- "FAMILIA debe Gs. X a NT. Primero usa 'Devolución Familia → NT'"
-- "FAMILIA no debe nada a NT. No hay nada que devolver."
-- "NT debe Gs. X a FAMILIA. Primero usa 'Devolución NT → Familia'"
-- "NT no debe nada a FAMILIA. No hay nada que devolver."
+**Implementación técnica (Code.gs v6.8)**:
+- `validarContradiccionTipoSubcategoriaFamilia()` / `validarContradiccionTipoSubcategoriaNT()`
+- `calcularDeudaFamiliaANT()` / `calcularDeudaNTAFamilia()`
+- `validarPrestamoDevolucionFamilia()` / `validarPrestamoDevolucionNT()`
 
 ---
 
@@ -1478,13 +1495,22 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 56 | **Columnas ocultas L/M**: CATEGORÍA y ENTIDAD en MOVIMIENTO para filtros | ✅ |
 | 57 | **% GASTOS POR CATEGORÍA**: Funciona con SUMIFS en lugar de SUMPRODUCT | ✅ |
 
-### Versión 3.1 (Actual)
+### Versión 3.1
 | # | Adición/Aclaración | Estado |
 |---|-------------------|--------|
 | 58 | **Validación Anti-Burro Préstamos**: No puedes prestar a quien ya te debe | ✅ |
 | 59 | **Bloqueo en CARGA_FAMILIA**: Si FAM debe a NT, bloqueado "Préstamo Familia → NT" | ✅ |
 | 60 | **Bloqueo en CARGA_NT**: Si NT debe a FAM, bloqueado "Préstamo NT → Familia" | ✅ |
 | 61 | **Alertas explicativas**: Mensaje indica cuánto se debe y qué acción usar | ✅ |
+
+### Versión 3.2 (Actual)
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 62 | **TIPO Ingreso bloquea CATEGORÍA**: Si TIPO es ingreso, CATEGORÍA y SUBCATEGORÍA = "-" | ✅ |
+| 63 | **Contradicciones TIPO vs SUBCATEGORÍA**: Detecta operaciones opuestas | ✅ |
+| 64 | **AHORRO con subcategoría correcta**: Solo permite Ahorro Clara/Marco/Fondo Emergencia | ✅ |
+| 65 | **VARIABLES con subcategoría correcta**: Valida pertenencia a lista correcta | ✅ |
+| 66 | **EVENTOS con subcategoría correcta**: Valida pertenencia a lista de eventos | ✅ |
 
 ---
 
@@ -1523,4 +1549,4 @@ DIFERENCIA:                Gs. -350.000 🔴
 ---
 
 *Documento actualizado el 15 de enero de 2026*
-*Versión: 3.1 - Validación Anti-Burro para préstamos/devoluciones NT↔FAMILIA*
+*Versión: 3.2 - Validación Anti-Burro completa (TIPO/CATEGORÍA/SUBCATEGORÍA coherentes)*

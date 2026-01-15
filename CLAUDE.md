@@ -443,26 +443,38 @@ El sistema usa formato español/europeo para números:
 - Si = 0: Equilibrado 🟢
 - Si < 0: NT debe a FAMILIA 🟡 (FAM ha prestado más)
 
-### Validación Anti-Burro de Préstamos (v6.7)
+### Validación Anti-Burro Completa (v6.8)
 
-**Decisión [2026-01-15]**: No se puede prestar a quien ya te debe. Primero debe devolver.
+**Decisión [2026-01-15]**: Sistema completo de validaciones para evitar incoherencias en la carga.
+
+#### 1. TIPO Ingreso → Bloquea CATEGORÍA y SUBCATEGORÍA
+Si el TIPO es un ingreso (Salario, Préstamo recibido, Devolución recibida), las columnas CATEGORÍA y SUBCATEGORÍA se bloquean automáticamente con "-".
+
+#### 2. Contradicciones TIPO vs SUBCATEGORÍA
+| Contradicción | Explicación |
+|---------------|-------------|
+| TIPO="Devolución NeuroTEA" + SUBCAT="Devolución Familia → NT" | Son operaciones OPUESTAS |
+| TIPO="Préstamo NeuroTEA" + SUBCAT="Préstamo Familia → NT" | Son operaciones OPUESTAS |
+
+#### 3. AHORRO con subcategoría correcta
+Si CATEGORÍA="AHORRO", la SUBCATEGORÍA debe ser: Ahorro Clara, Ahorro Marco, o Fondo de Emergencia.
+
+#### 4. VARIABLES con subcategoría correcta
+Si CATEGORÍA="VARIABLES", la SUBCATEGORÍA debe pertenecer a la lista VARIABLES_FAMILIA o VARIABLES_NT.
+
+#### 5. Balance cruzado préstamos/devoluciones
+No se puede prestar a quien ya te debe. Primero debe devolver.
 
 | Entidad | Si DEBE a la otra | Si NO DEBE a la otra |
 |---------|-------------------|----------------------|
 | **FAMILIA** | ❌ Bloqueado "Préstamo Familia → NT" | ✅ Puede prestar, ❌ No puede devolver |
 | **NEUROTEA** | ❌ Bloqueado "Préstamo NT → Familia" | ✅ Puede prestar, ❌ No puede devolver |
 
-**Implementación técnica (Code.gs v6.7):**
-- `calcularDeudaFamiliaANT()` → Calcula deuda de Familia hacia NT
-- `calcularDeudaNTAFamilia()` → Calcula deuda de NT hacia Familia
-- `validarPrestamoDevolucionFamilia()` → Bloquea en CARGA_FAMILIA
-- `validarPrestamoDevolucionNT()` → Bloquea en CARGA_NT
-
-**Mensajes de bloqueo:**
-- "FAMILIA debe Gs. X a NT. Primero usa 'Devolución Familia → NT'"
-- "FAMILIA no debe nada a NT. No hay nada que devolver."
-- "NT debe Gs. X a FAMILIA. Primero usa 'Devolución NT → Familia'"
-- "NT no debe nada a FAMILIA. No hay nada que devolver."
+**Implementación técnica (Code.gs v6.8):**
+- `validarContradiccionTipoSubcategoriaFamilia()` → Detecta contradicciones en CARGA_FAMILIA
+- `validarContradiccionTipoSubcategoriaNT()` → Detecta contradicciones en CARGA_NT
+- `calcularDeudaFamiliaANT()` / `calcularDeudaNTAFamilia()` → Calculan deudas cruzadas
+- `validarPrestamoDevolucionFamilia()` / `validarPrestamoDevolucionNT()` → Bloquean según balance
 
 ---
 
@@ -657,4 +669,4 @@ El sistema usa formato español/europeo para números:
 ---
 
 *Última actualización: 2026-01-15*
-*Versión: 6.7 - Validación Anti-Burro para préstamos/devoluciones entre NT y FAMILIA*
+*Versión: 6.8 - Validación Anti-Burro completa (TIPO/CATEGORÍA/SUBCATEGORÍA coherentes)*

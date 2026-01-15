@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.7 - Validación Anti-Burro para préstamos/devoluciones
+ * Versión 6.8 - Validación Anti-Burro completa (incoherencias TIPO/CATEGORÍA/SUBCATEGORÍA)
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -354,6 +354,21 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
 
   // Columna C = CATEGORÍA (columna 3)
   if (col === 3) {
+    // Validar que el TIPO no sea un INGRESO
+    const tipoActual = sheet.getRange(row, 2).getValue();
+    if (TIPOS_INGRESO_FAMILIA.includes(tipoActual) && valor !== '-') {
+      SpreadsheetApp.getUi().alert(
+        '⚠️ INCOHERENCIA: TIPO es un INGRESO',
+        'El TIPO "' + tipoActual + '" es un INGRESO.\n\n' +
+        'Los ingresos NO tienen CATEGORÍA.\n' +
+        'La CATEGORÍA solo aplica para egresos ("Egreso Familiar").',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      return;
+    }
+
     if (valor === 'VARIABLES' || valor === 'AHORRO') {
       // Habilitar subcategoría para VARIABLES y AHORRO
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
@@ -363,8 +378,44 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
     }
   }
 
-  // Columna D = SUBCATEGORÍA (columna 4) - Validación Anti-Burro Préstamos
+  // Columna D = SUBCATEGORÍA (columna 4) - Validaciones Anti-Burro
   if (col === 4) {
+    const tipoActual = sheet.getRange(row, 2).getValue();
+    const categoriaActual = sheet.getRange(row, 3).getValue();
+
+    // 1. Validar contradicciones TIPO vs SUBCATEGORÍA
+    if (validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipoActual, valor)) {
+      return; // Si hubo contradicción, ya se limpió la celda
+    }
+
+    // 2. Validar AHORRO con subcategoría correcta
+    if (categoriaActual === 'AHORRO' && !AHORRO_FAMILIA.includes(valor)) {
+      SpreadsheetApp.getUi().alert(
+        '⚠️ SUBCATEGORÍA incorrecta para AHORRO',
+        'Si la CATEGORÍA es "AHORRO", la SUBCATEGORÍA debe ser:\n\n' +
+        '• Ahorro Clara\n' +
+        '• Ahorro Marco\n' +
+        '• Fondo de Emergencia\n\n' +
+        'Seleccionaste: "' + valor + '"',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+      sheet.getRange(row, 4).setValue('');
+      return;
+    }
+
+    // 3. Validar VARIABLES con subcategoría correcta
+    if (categoriaActual === 'VARIABLES' && !VARIABLES_FAMILIA.includes(valor)) {
+      SpreadsheetApp.getUi().alert(
+        '⚠️ SUBCATEGORÍA incorrecta para VARIABLES',
+        'La subcategoría "' + valor + '" no pertenece a VARIABLES.\n\n' +
+        'Verifica que estés seleccionando de la lista correcta.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+      sheet.getRange(row, 4).setValue('');
+      return;
+    }
+
+    // 4. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionFamilia(sheet, row, valor);
   }
 }
@@ -384,6 +435,21 @@ function procesarEdicionCargaNT(sheet, row, col, valor) {
 
   // Columna C = CATEGORÍA (columna 3)
   if (col === 3) {
+    // Validar que el TIPO no sea un INGRESO
+    const tipoActual = sheet.getRange(row, 2).getValue();
+    if (TIPOS_INGRESO_NT.includes(tipoActual) && valor !== '-') {
+      SpreadsheetApp.getUi().alert(
+        '⚠️ INCOHERENCIA: TIPO es un INGRESO',
+        'El TIPO "' + tipoActual + '" es un INGRESO.\n\n' +
+        'Los ingresos NO tienen CATEGORÍA.\n' +
+        'La CATEGORÍA solo aplica para egresos ("Egreso NT").',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      return;
+    }
+
     if (valor === 'VARIABLES' || valor === 'EVENTOS') {
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
     } else {
@@ -391,14 +457,172 @@ function procesarEdicionCargaNT(sheet, row, col, valor) {
     }
   }
 
-  // Columna D = SUBCATEGORÍA (columna 4) - Validación Anti-Burro Préstamos
+  // Columna D = SUBCATEGORÍA (columna 4) - Validaciones Anti-Burro
   if (col === 4) {
+    const tipoActual = sheet.getRange(row, 2).getValue();
+    const categoriaActual = sheet.getRange(row, 3).getValue();
+
+    // 1. Validar contradicciones TIPO vs SUBCATEGORÍA
+    if (validarContradiccionTipoSubcategoriaNT(sheet, row, tipoActual, valor)) {
+      return; // Si hubo contradicción, ya se limpió la celda
+    }
+
+    // 2. Validar VARIABLES con subcategoría correcta
+    if (categoriaActual === 'VARIABLES' && !VARIABLES_NT.includes(valor)) {
+      SpreadsheetApp.getUi().alert(
+        '⚠️ SUBCATEGORÍA incorrecta para VARIABLES',
+        'La subcategoría "' + valor + '" no pertenece a VARIABLES de NT.\n\n' +
+        'Verifica que estés seleccionando de la lista correcta.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+      sheet.getRange(row, 4).setValue('');
+      return;
+    }
+
+    // 3. Validar EVENTOS con subcategoría correcta
+    if (categoriaActual === 'EVENTOS') {
+      const eventosValidos = EVENTOS_NT.map(e => e.nombre);
+      if (!eventosValidos.includes(valor)) {
+        SpreadsheetApp.getUi().alert(
+          '⚠️ SUBCATEGORÍA incorrecta para EVENTOS',
+          'La subcategoría "' + valor + '" no es un evento válido.\n\n' +
+          'Verifica que estés seleccionando de la lista de eventos.',
+          SpreadsheetApp.getUi().ButtonSet.OK
+        );
+        sheet.getRange(row, 4).setValue('');
+        return;
+      }
+    }
+
+    // 4. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionNT(sheet, row, valor);
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// VALIDACIÓN ANTI-BURRO - PRÉSTAMOS Y DEVOLUCIONES
+// VALIDACIÓN ANTI-BURRO - CONTRADICCIONES TIPO vs SUBCATEGORÍA
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Valida contradicciones entre TIPO y SUBCATEGORÍA en CARGA_FAMILIA
+ * Detecta combinaciones imposibles como:
+ * - TIPO="Devolución NeuroTEA" (INGRESO) + SUBCAT="Devolución Familia → NT" (EGRESO)
+ * - TIPO="Préstamo NeuroTEA" (INGRESO) + SUBCAT="Préstamo Familia → NT" (EGRESO)
+ * @returns {boolean} true si hubo contradicción (y se limpió la celda)
+ */
+function validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipo, subcategoria) {
+  // Contradicción 1: "Devolución NeuroTEA" es cuando NT devuelve a Familia (INGRESO)
+  // pero "Devolución Familia → NT" es cuando Familia devuelve a NT (EGRESO)
+  if (tipo === 'Devolución NeuroTEA' && subcategoria === 'Devolución Familia → NT') {
+    SpreadsheetApp.getUi().alert(
+      '⚠️ CONTRADICCIÓN DETECTADA',
+      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
+      '• "Devolución NeuroTEA" = NT te devuelve dinero (INGRESO)\n' +
+      '• "Devolución Familia → NT" = Vos devolvés a NT (EGRESO)\n\n' +
+      '¿Qué querés registrar?\n\n' +
+      '→ Si NT te devuelve: Usá TIPO="Devolución NeuroTEA" sin categoría\n' +
+      '→ Si vos devolvés a NT: Usá TIPO="Egreso Familiar" → VARIABLES → "Devolución Familia → NT"',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+    sheet.getRange(row, 4).setValue('');
+    return true;
+  }
+
+  // Contradicción 2: "Préstamo NeuroTEA" es cuando NT presta a Familia (INGRESO)
+  // pero "Préstamo Familia → NT" es cuando Familia presta a NT (EGRESO)
+  if (tipo === 'Préstamo NeuroTEA' && subcategoria === 'Préstamo Familia → NT') {
+    SpreadsheetApp.getUi().alert(
+      '⚠️ CONTRADICCIÓN DETECTADA',
+      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
+      '• "Préstamo NeuroTEA" = NT te presta dinero (INGRESO)\n' +
+      '• "Préstamo Familia → NT" = Vos prestás a NT (EGRESO)\n\n' +
+      '¿Qué querés registrar?\n\n' +
+      '→ Si NT te presta: Usá TIPO="Préstamo NeuroTEA" sin categoría\n' +
+      '→ Si vos prestás a NT: Usá TIPO="Egreso Familiar" → VARIABLES → "Préstamo Familia → NT"',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+    sheet.getRange(row, 4).setValue('');
+    return true;
+  }
+
+  // Contradicción 3: Cualquier TIPO de ingreso no debería tener subcategoría de egreso
+  if (TIPOS_INGRESO_FAMILIA.includes(tipo) &&
+      (subcategoria === 'Devolución Familia → NT' || subcategoria === 'Préstamo Familia → NT')) {
+    SpreadsheetApp.getUi().alert(
+      '⚠️ INCOHERENCIA: TIPO es INGRESO pero SUBCATEGORÍA es de EGRESO',
+      'El TIPO "' + tipo + '" es un INGRESO.\n\n' +
+      'La subcategoría "' + subcategoria + '" es de EGRESO.\n\n' +
+      'No puedes combinar un ingreso con una subcategoría de egreso.',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+    sheet.getRange(row, 4).setValue('');
+    return true;
+  }
+
+  return false; // No hubo contradicción
+}
+
+/**
+ * Valida contradicciones entre TIPO y SUBCATEGORÍA en CARGA_NT
+ * Detecta combinaciones imposibles como:
+ * - TIPO="Devolución Familia → NT" (INGRESO) + SUBCAT="Devolución NT → Familia" (EGRESO)
+ * - TIPO="Préstamo Familia" (INGRESO) + SUBCAT="Préstamo NT → Familia" (EGRESO)
+ * @returns {boolean} true si hubo contradicción (y se limpió la celda)
+ */
+function validarContradiccionTipoSubcategoriaNT(sheet, row, tipo, subcategoria) {
+  // Contradicción 1: "Devolución Familia → NT" es cuando Familia devuelve a NT (INGRESO para NT)
+  // pero "Devolución NT → Familia" es cuando NT devuelve a Familia (EGRESO para NT)
+  if (tipo === 'Devolución Familia → NT' && subcategoria === 'Devolución NT → Familia') {
+    SpreadsheetApp.getUi().alert(
+      '⚠️ CONTRADICCIÓN DETECTADA',
+      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
+      '• "Devolución Familia → NT" = Familia te devuelve dinero (INGRESO)\n' +
+      '• "Devolución NT → Familia" = Vos devolvés a Familia (EGRESO)\n\n' +
+      '¿Qué querés registrar?\n\n' +
+      '→ Si Familia te devuelve: Usá TIPO="Devolución Familia → NT" sin categoría\n' +
+      '→ Si vos devolvés a Familia: Usá TIPO="Egreso NT" → VARIABLES → "Devolución NT → Familia"',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+    sheet.getRange(row, 4).setValue('');
+    return true;
+  }
+
+  // Contradicción 2: "Préstamo Familia" es cuando Familia presta a NT (INGRESO para NT)
+  // pero "Préstamo NT → Familia" es cuando NT presta a Familia (EGRESO para NT)
+  if (tipo === 'Préstamo Familia' && subcategoria === 'Préstamo NT → Familia') {
+    SpreadsheetApp.getUi().alert(
+      '⚠️ CONTRADICCIÓN DETECTADA',
+      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
+      '• "Préstamo Familia" = Familia te presta dinero (INGRESO)\n' +
+      '• "Préstamo NT → Familia" = Vos prestás a Familia (EGRESO)\n\n' +
+      '¿Qué querés registrar?\n\n' +
+      '→ Si Familia te presta: Usá TIPO="Préstamo Familia" sin categoría\n' +
+      '→ Si vos prestás a Familia: Usá TIPO="Egreso NT" → VARIABLES → "Préstamo NT → Familia"',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+    sheet.getRange(row, 4).setValue('');
+    return true;
+  }
+
+  // Contradicción 3: Cualquier TIPO de ingreso no debería tener subcategoría de egreso
+  if (TIPOS_INGRESO_NT.includes(tipo) &&
+      (subcategoria === 'Devolución NT → Familia' || subcategoria === 'Préstamo NT → Familia')) {
+    SpreadsheetApp.getUi().alert(
+      '⚠️ INCOHERENCIA: TIPO es INGRESO pero SUBCATEGORÍA es de EGRESO',
+      'El TIPO "' + tipo + '" es un INGRESO.\n\n' +
+      'La subcategoría "' + subcategoria + '" es de EGRESO.\n\n' +
+      'No puedes combinar un ingreso con una subcategoría de egreso.',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+    sheet.getRange(row, 4).setValue('');
+    return true;
+  }
+
+  return false; // No hubo contradicción
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VALIDACIÓN ANTI-BURRO - PRÉSTAMOS Y DEVOLUCIONES (BALANCE CRUZADO)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
