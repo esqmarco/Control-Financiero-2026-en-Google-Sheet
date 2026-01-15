@@ -669,13 +669,13 @@ function crearHojaCARGA_FAMILIA() {
 
   // ─── HEADER PRINCIPAL ───
   sheet.getRange('A1:I1').merge()
-    .setValue('👨‍👩‍👧‍👦 CARGA FAMILIA - Variables Puros')
+    .setValue('👨‍👩‍👧‍👦 CARGA FAMILIA - Variables y Ahorro')
     .setFontSize(16).setFontWeight('bold')
     .setBackground(C.FAM_HEADER).setFontColor(C.BLANCO)
     .setHorizontalAlignment('center');
 
   sheet.getRange('A2:I2').merge()
-    .setValue('Solo para gastos VARIABLES puros (Supermercado, Combustible, etc). Los gastos fijos van en GASTOS_FIJOS.')
+    .setValue('VARIABLES puros (Supermercado, Combustible) y AHORRO (Clara, Marco, Fondo Emergencia). Los fijos van en GASTOS_FIJOS.')
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
 
   // ─── HEADERS DE COLUMNAS ───
@@ -717,7 +717,8 @@ function crearHojaCARGA_FAMILIA() {
 }
 
 function aplicarValidacionesCargaFamilia(sheet) {
-  const tipos = [...TIPOS_INGRESO_FAMILIA, 'Egreso Familiar'];
+  // TIPO: Ingresos + Egreso Familiar + Ahorro (separado)
+  const tipos = [...TIPOS_INGRESO_FAMILIA, 'Egreso Familiar', TIPO_AHORRO];
 
   // TIPO (columna B)
   sheet.getRange('B4:B500').setDataValidation(
@@ -727,18 +728,19 @@ function aplicarValidacionesCargaFamilia(sheet) {
       .build()
   );
 
-  // CATEGORÍA (columna C)
+  // CATEGORÍA (columna C) - incluye categorías de egreso Y categorías de ahorro
+  // El sistema Anti-Burro en Code.gs controla cuáles se muestran según el TIPO
   sheet.getRange('C4:C500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['-', ...CATEGORIAS_EGRESO_FAMILIA], true)
+      .requireValueInList(['-', ...CATEGORIAS_EGRESO_FAMILIA, ...CATEGORIAS_AHORRO_FAMILIA], true)
       .setAllowInvalid(false)
       .build()
   );
 
-  // SUBCATEGORÍA (columna D) - incluye VARIABLES y AHORRO
+  // SUBCATEGORÍA (columna D) - solo VARIABLES (AHORRO usa CATEGORÍA)
   sheet.getRange('D4:D500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['-', ...VARIABLES_FAMILIA, ...AHORRO_FAMILIA], true)
+      .requireValueInList(['-', ...VARIABLES_FAMILIA], true)
       .setAllowInvalid(false)
       .build()
   );
@@ -1299,6 +1301,10 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
 // Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA
 function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
   // La categoría siempre es "AHORRO" para esta sección
+  // Ahora AHORRO es un TIPO separado (no Egreso), se carga en CARGA_FAMILIA con:
+  //   - TIPO = "Ahorro"
+  //   - CATEGORÍA = "Ahorro Clara" / "Ahorro Marco" / "Fondo de Emergencia"
+  //   - SUBCATEGORÍA = "-" (bloqueada)
   const categoria = 'AHORRO';
 
   sheet.getRange(row, 1, 1, 11).merge()
@@ -1312,7 +1318,7 @@ function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, col
 
   items.forEach(item => {
     sheet.getRange(row, 1).setValue(item.concepto);
-    sheet.getRange(row, 2).setValue('Egreso');
+    sheet.getRange(row, 2).setValue('Ahorro'); // Ahora es TIPO "Ahorro", no "Egreso"
     sheet.getRange(row, 3).setValue(item.frecuencia || 'Variable/Mensual');
     sheet.getRange(row, 4).setValue(0).setHorizontalAlignment('center'); // DÍA (ahorro no tiene)
 
@@ -1320,8 +1326,9 @@ function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, col
     const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH("${item.concepto}";PRESUPUESTO!$A:$A;0);$N$3);0)`;
     sheet.getRange(row, 5).setFormula(formulaPresup);
 
-    // REAL (col F): SUMPRODUCT desde CARGA según subcategoría y mes
-    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$D$4:$D$500="${item.concepto}")*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
+    // REAL (col F): SUMPRODUCT desde CARGA donde TIPO="Ahorro" y CATEGORÍA=item.concepto
+    // Nueva estructura: B=TIPO, C=CATEGORÍA (que contiene "Ahorro Clara", etc.)
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$B$4:$B$500="Ahorro")*(${hojaCarga}!$C$4:$C$500="${item.concepto}")*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
     sheet.getRange(row, 6).setFormula(formulaReal);
 
     // DIFERENCIA (col G)
