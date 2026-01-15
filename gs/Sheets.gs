@@ -951,30 +951,36 @@ function crearHojaMOVIMIENTO() {
   row++;
 
   // TOTAL GASTOS OPERATIVOS (solo gastos reales, sin AHORRO)
-  // AHORRO es transferencia, no gasto - se muestra por separado en TABLERO
   sheet.getRange(row, 1).setValue('📤 TOTAL GASTOS OPERATIVOS');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioFam}:F${filaFinFam};B${filaInicioFam}:B${filaFinFam};"Egreso";J${filaInicioFam}:J${filaFinFam};"Pagado");0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.ROJO_FONDO);
   const filaTotalEgresosPagadosFam = row;
   row++;
 
+  // TOTAL AHORRO (suma de TIPO="Ahorro" con EST.PAGO="Ahorrado")
+  sheet.getRange(row, 1).setValue('💰 TOTAL AHORRO');
+  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIF(B${filaInicioFam}:B${filaFinFam};"Ahorro";F${filaInicioFam}:F${filaFinFam});0)`);
+  sheet.getRange(row, 1, 1, 11).setBackground(C.VERDE_FONDO);
+  const filaTotalAhorroFam = row;
+  row++;
+
   // TOTAL EGRESOS PENDIENTES
-  sheet.getRange(row, 1).setValue('⏳ TOTAL EGRESOS PENDIENTES');
+  sheet.getRange(row, 1).setValue('⏳ TOTAL PENDIENTES');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioFam}:F${filaFinFam};B${filaInicioFam}:B${filaFinFam};"Egreso";J${filaInicioFam}:J${filaFinFam};"Pendiente");0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.AMARILLO_FONDO);
   const filaTotalEgresosPendientesFam = row;
   row++;
 
-  // SALDO DISPONIBLE (Ingresos - Pagados)
+  // SALDO DISPONIBLE (Ingresos - Gastos - Ahorro)
   sheet.getRange(row, 1).setValue('💵 SALDO DISPONIBLE').setFontWeight('bold');
-  sheet.getRange(row, 6).setFormula(`=F${filaTotalIngresosFam}-F${filaTotalEgresosPagadosFam}`).setFontWeight('bold');
+  sheet.getRange(row, 6).setFormula(`=F${filaTotalIngresosFam}-F${filaTotalEgresosPagadosFam}-F${filaTotalAhorroFam}`).setFontWeight('bold');
   sheet.getRange(row, 9).setFormula(`=IF(F${row}>=0;"✓ OK";"⚠ DÉFICIT")`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.GANANCIA_FONDO);
   const filaSaldoDisponibleFam = row;
   row++;
 
-  // SALDO PROYECTADO (Disponible - Pendientes)
-  sheet.getRange(row, 1).setValue('📉 SALDO PROYECTADO').setFontWeight('bold').setFontStyle('italic');
+  // SALDO FIN DE MES (Disponible - Pendientes)
+  sheet.getRange(row, 1).setValue('📉 SALDO FIN DE MES').setFontWeight('bold').setFontStyle('italic');
   sheet.getRange(row, 6).setFormula(`=F${filaSaldoDisponibleFam}-F${filaTotalEgresosPendientesFam}`).setFontWeight('bold').setFontStyle('italic');
   sheet.getRange(row, 9).setFormula(`=IF(F${row}>=0;"✓ OK";"⚠ DÉFICIT")`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.BALANCE_FONDO);
