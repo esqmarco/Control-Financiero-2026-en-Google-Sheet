@@ -1314,13 +1314,13 @@ function crearHojaTABLERO() {
   const filaTotalGastosFam = filaEgresosPagadosFam; // D${filaEgresosPagadosFam} tiene GASTOS PAGADOS
 
   // Categorías FAMILIA con colores financieros para las barras
+  // NOTA: AHORRO no se incluye porque no es gasto, es transferencia de activos
   const categoriasFAM = [
     { nombre: 'GASTOS FIJOS', barColor: '#2563EB' },        // Azul - obligaciones fijas
     { nombre: 'CUOTAS Y PRÉSTAMOS', barColor: '#DC2626' },  // Rojo - deuda
     { nombre: 'OBLIGACIONES LEGALES', barColor: '#7C3AED' }, // Púrpura - legal
     { nombre: 'SUSCRIPCIONES', barColor: '#0891B2' },       // Cyan - servicios
-    { nombre: 'VARIABLES', barColor: '#D97706' },           // Naranja - variable
-    { nombre: 'AHORRO', barColor: '#16A34A' }               // Verde - positivo
+    { nombre: 'VARIABLES', barColor: '#D97706' }            // Naranja - variable
   ];
 
   const filaInicioCatFam = rowFam;
