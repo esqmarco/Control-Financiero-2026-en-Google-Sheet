@@ -450,6 +450,37 @@ El sistema usa formato español/europeo para números:
 - Si = 0: Equilibrado 🟢
 - Si < 0: NT debe a FAMILIA 🟡 (FAM ha prestado más)
 
+### Auto-Creación de Transacciones Cruzadas (v7.0)
+
+> **DECISIÓN [2026-01-19]**: Las transacciones de préstamos/devoluciones entre entidades se crean automáticamente en ambas hojas.
+
+**Funcionamiento:**
+1. Cargas la transacción en UNA sola hoja (CARGA_FAMILIA o CARGA_NT)
+2. Al ingresar el MONTO, el sistema auto-crea la contraparte en la otra hoja
+3. Aparece un Toast de confirmación: "✓ Creado en CARGA_XX por Gs. X.XXX.XXX"
+
+**Casos desde CARGA_FAMILIA:**
+
+| Tú cargas | Se auto-crea en CARGA_NT |
+|-----------|--------------------------|
+| TIPO="Préstamo NeuroTEA" (ingreso) | Egreso NT → VARIABLES → "Préstamo NT → Familia" |
+| SUBCAT="Préstamo Familia → NT" (egreso) | TIPO="Préstamo Familia" (ingreso) |
+| SUBCAT="Devolución Familia → NT" (egreso) | TIPO="Devolución Familia → NT" (ingreso) |
+
+**Casos desde CARGA_NT:**
+
+| Tú cargas | Se auto-crea en CARGA_FAMILIA |
+|-----------|-------------------------------|
+| TIPO="Préstamo Familia" (ingreso) | Egreso Familiar → VARIABLES → "Préstamo Familia → NT" |
+| TIPO="Devolución Familia → NT" (ingreso) | Egreso Familiar → VARIABLES → "Devolución Familia → NT" |
+| SUBCAT="Préstamo NT → Familia" (egreso) | TIPO="Préstamo NeuroTEA" (ingreso) |
+| SUBCAT="Devolución NT → Familia" (egreso) | TIPO="Devolución NeuroTEA" (ingreso) |
+
+**Notas importantes:**
+- La cuenta destino se asigna automáticamente (ITAU Marco para FAM, Atlas NeuroTEA para NT)
+- Las transacciones auto-generadas tienen NOTAS="Auto-generado desde CARGA_XX"
+- El sistema usa una bandera anti-loop para evitar creaciones infinitas
+
 ### Validación Anti-Burro Completa (v6.8)
 
 **Decisión [2026-01-15]**: Sistema completo de validaciones para evitar incoherencias en la carga.
@@ -675,5 +706,5 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ---
 
-*Última actualización: 2026-01-15*
-*Versión: 6.9 - AHORRO separado de GASTOS OPERATIVOS (TIPO="Ahorro" independiente)*
+*Última actualización: 2026-01-19*
+*Versión: 7.0 - Auto-creación de transacciones cruzadas (préstamos/devoluciones)*
