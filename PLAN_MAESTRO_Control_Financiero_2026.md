@@ -125,9 +125,9 @@ FAMILIA, NEUROTEA
 | # | Cuenta | Descripción |
 |---|--------|-------------|
 | 1 | Atlas NeuroTEA | Cuenta bancaria principal |
-| 2 | Caja Chica NT | Efectivo en caja de la clínica |
+| 2 | UENO Marco | Cuenta compartida para gastos NT en efectivo |
 
-> **Nota**: Solo 2 cuentas. "Caja Chica NT" es el efectivo de la clínica.
+> **Nota**: Solo 2 cuentas. "UENO Marco" es la cuenta de Marco usada para gastos NT en efectivo.
 
 ### 3.7 CATEGORÍAS EGRESO FAMILIA (Agrupaciones principales)
 | # | Categoría |
@@ -1461,7 +1461,7 @@ DIFERENCIA:                Gs. -350.000 🔴
 | # | Adición/Aclaración | Estado |
 |---|-------------------|--------|
 | 36 | **EST.PAGO diferenciado**: Items de CARGA = fijo ("Recibido"/"Pagado"), GASTOS_FIJOS = dropdown | ✅ |
-| 37 | **Cuentas NT corregidas**: Solo 2 cuentas (Atlas NeuroTEA, Caja Chica NT) | ✅ |
+| 37 | **Cuentas NT corregidas**: Solo 2 cuentas (Atlas NeuroTEA, UENO Marco) | ✅ |
 | 38 | **SALDOS NT**: Columnas Esperado (automático) y Saldo Banco ✏️ (manual) | ✅ |
 | 39 | **Selector mes**: Aviso en TABLERO que el mes se selecciona en MOVIMIENTO | ✅ |
 

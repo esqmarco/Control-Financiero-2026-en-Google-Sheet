@@ -197,7 +197,7 @@ gs/
 
 ### NEUROTEA (2 cuentas)
 1. Atlas NeuroTEA (cuenta bancaria)
-2. Caja Chica NT (efectivo en caja)
+2. UENO Marco (cuenta compartida para gastos NT en efectivo)
 
 ---
 
@@ -359,7 +359,7 @@ MOVIMIENTO (columna D=DÍA, J=EST.PAGO, F=REAL)
 
 **Decisión [2026-01-06]**: Cada mes tiene su propio saldo inicial almacenado en CONFIG.
 
-### Ubicación de los saldos iniciales:
+### Ubicación de los saldos iniciales GLOBALES:
 ```
 CONFIG → Sección "SALDOS INICIALES POR MES" (filas 46-59)
 | MES       | FAMILIA    | NEUROTEA   |
@@ -370,12 +370,76 @@ CONFIG → Sección "SALDOS INICIALES POR MES" (filas 46-59)
 | Diciembre | [editable] | [editable] |
 ```
 
-### Fórmulas en TABLERO:
+### Fórmulas en TABLERO (saldo global):
 ```
 SALDO_INICIAL_FAM = INDEX(CONFIG!$B$48:$B$59;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$48:$A$59;0))
 SALDO_INICIAL_NT = INDEX(CONFIG!$C$48:$C$59;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$48:$A$59;0))
 DISPONIBLE = SALDO_INICIAL + INGRESOS_MES - EGRESOS_PAGADOS
 ```
+
+---
+
+## SALDO_INICIAL Por Cuenta (v7.4)
+
+**Decisión [2026-01-19]**: Cada cuenta tiene su propio saldo inicial por mes.
+
+### Ubicación en CONFIG:
+```
+CONFIG → "SALDOS INICIALES POR CUENTA - FAMILIA" (filas 63-75)
+| CUENTA              | ENE | FEB | MAR | ... | DIC |
+|---------------------|-----|-----|-----|-----|-----|
+| ITAU Marco          |  0  |  0  |  0  | ... |  0  |
+| Coop. Univ. Marco   |  0  |  0  |  0  | ... |  0  |
+| ITAU Clara          |  0  |  0  |  0  | ... |  0  |
+| UENO Clara          |  0  |  0  |  0  | ... |  0  |
+| Tarjeta Solar Clara |  0  |  0  |  0  | ... |  0  |
+| Tarjeta ITAU Clara  |  0  |  0  |  0  | ... |  0  |
+| Tarjeta ITAU Marco  |  0  |  0  |  0  | ... |  0  |
+| Tarjeta Comecipar   |  0  |  0  |  0  | ... |  0  |
+| Gourmed             |  0  |  0  |  0  | ... |  0  |
+| Efectivo            |  0  |  0  |  0  | ... |  0  |
+
+CONFIG → "SALDOS INICIALES POR CUENTA - NEUROTEA" (filas 77-81)
+| CUENTA              | ENE | FEB | MAR | ... | DIC |
+|---------------------|-----|-----|-----|-----|-----|
+| Atlas NeuroTEA      |  0  |  0  |  0  | ... |  0  |
+| UENO Marco          |  0  |  0  |  0  | ... |  0  |
+```
+
+### Fórmula "Esperado" en TABLERO (por cuenta):
+```
+ESPERADO_CUENTA = Saldo Inicial Cuenta (CONFIG) + Ingresos mes - Egresos mes
+
+// FAMILIA (filas 65-74):
+=IFERROR(INDEX(CONFIG!$B$65:$M$74;MATCH("cuenta";CONFIG!$A$65:$A$74;0);MOVIMIENTO!$N$3);0)
+  + Ingresos a esa cuenta - Egresos de esa cuenta - Gastos fijos pagados de esa cuenta
+
+// NEUROTEA (filas 79-80):
+=IFERROR(INDEX(CONFIG!$B$79:$M$80;MATCH("cuenta";CONFIG!$A$79:$A$80;0);MOVIMIENTO!$N$3);0)
+  + Ingresos a esa cuenta - Egresos de esa cuenta
+```
+
+### Flujo de cierre de mes (por cuenta):
+1. Ver saldo final de cada cuenta en TABLERO ("Esperado")
+2. Ir a CONFIG → "SALDOS INICIALES POR CUENTA"
+3. Ingresar cada saldo final como saldo inicial del mes siguiente
+4. Las transferencias entre cuentas NO afectan el total global
+
+### Ejemplo de transferencia entre cuentas:
+```
+Situación: Transferir 500.000 de ITAU Marco → ITAU Clara
+
+1. Registrar en CARGA_FAMILIA:
+   - Egreso desde ITAU Marco: "Transferencia a ITAU Clara" = 500.000
+   - Ingreso a ITAU Clara: "Transferencia desde ITAU Marco" = 500.000
+
+2. Efecto en TABLERO:
+   - ITAU Marco: Esperado baja 500.000
+   - ITAU Clara: Esperado sube 500.000
+   - TOTAL DISPONIBLE: Sin cambio (suma cero)
+```
+
+> **NOTA**: El saldo inicial por cuenta permite arrastrar el histórico individualmente.
 
 ### Flujo de cierre de mes:
 1. Ver saldo final del mes actual en TABLERO (DISPONIBLE - PENDIENTES)
@@ -607,13 +671,14 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 2. **GASTOS_FIJOS sin BASE** - Cada mes tiene su valor directo (columnas G-R = ENE-DIC)
 3. **MOVIMIENTO tiene columna DÍA** - Columna D copia el día de vencimiento para acceso directo
 4. **SALDO_INICIAL independiente por mes** - Cada mes tiene su saldo en CONFIG (filas 48-59)
-5. **TABLERO usa "Saldo Banco"** - Columna editable para verificar saldo real en banco
-6. **Variables PUROS van a CARGA** - Solo Supermercado, Combustible, etc.
-7. **AHORRO va a CARGA** - Se registra cuando realmente se hace la transferencia
-8. **EST. PAGO es el GATILLO** - Controla si un gasto cuenta como PAGADO o PENDIENTE
-9. **LIQUIDEZ lee de MOVIMIENTO** - Sin INDEX/MATCH, fórmulas simplificadas con DÍA en columna D
-10. **MOVIMIENTO tiene CATEGORÍA y ENTIDAD** - Columnas L y M (ocultas) para cálculos de % GASTOS POR CATEGORÍA
-11. **% GASTOS POR CATEGORÍA lee de MOVIMIENTO** - Filtra por EST.PAGO="Pagado" para mostrar solo gastos ejecutados
+5. **SALDO_INICIAL por cuenta (v7.4)** - Cada cuenta tiene saldo inicial por mes en CONFIG (FAMILIA: 65-74, NT: 79-80)
+6. **TABLERO usa "Saldo Banco"** - Columna editable para verificar saldo real en banco
+7. **Variables PUROS van a CARGA** - Solo Supermercado, Combustible, etc.
+8. **AHORRO va a CARGA** - Se registra cuando realmente se hace la transferencia
+9. **EST. PAGO es el GATILLO** - Controla si un gasto cuenta como PAGADO o PENDIENTE
+10. **LIQUIDEZ lee de MOVIMIENTO** - Sin INDEX/MATCH, fórmulas simplificadas con DÍA en columna D
+11. **MOVIMIENTO tiene CATEGORÍA y ENTIDAD** - Columnas L y M (ocultas) para cálculos de % GASTOS POR CATEGORÍA
+12. **% GASTOS POR CATEGORÍA lee de MOVIMIENTO** - Filtra por EST.PAGO="Pagado" para mostrar solo gastos ejecutados
 
 ---
 
@@ -743,4 +808,4 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 ---
 
 *Última actualización: 2026-01-19*
-*Versión: 7.3 - Caso faltante devolución NT auto-creación completa*
+*Versión: 7.4 - Saldos iniciales por cuenta + "Caja Chica NT" → "UENO Marco"*

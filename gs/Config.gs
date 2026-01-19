@@ -103,7 +103,7 @@ const CUENTAS_FAMILIA = [
 
 const CUENTAS_NT = [
   'Atlas NeuroTEA',
-  'Caja Chica NT'
+  'UENO Marco'  // v7.4: Cambiado de 'Caja Chica NT' para uso compartido
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -370,7 +370,7 @@ const CLINICA_NT = [
 const SUELDOS_NT = [
   { concepto: 'Sueldo Aracely', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Sueldo Fátima', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
-  { concepto: 'Limpieza NeuroTEA', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Variable/Mensual', dia: 30, cuenta: 'Caja Chica NT', monto: 0 },
+  { concepto: 'Limpieza NeuroTEA', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Variable/Mensual', dia: 30, cuenta: 'UENO Marco', monto: 0 },
   { concepto: 'Honorario Contador', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Salario Administrador (Marco)', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Honorario Mant. Sistema', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },

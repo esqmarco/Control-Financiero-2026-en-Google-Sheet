@@ -341,8 +341,9 @@ La versión anterior se marca como:
 **Descripción**:
 - NEUROTEA tiene solo 2 cuentas:
   1. Atlas NeuroTEA (cuenta bancaria)
-  2. Caja Chica NT (efectivo)
-- Se eliminó "Efectivo NT" que era redundante con Caja Chica
+  2. UENO Marco (cuenta compartida con Familia para gastos NT en efectivo)
+- Se eliminó "Efectivo NT" que era redundante
+- v7.4: "Caja Chica NT" renombrada a "UENO Marco" para reflejar uso real
 - En TABLERO, SALDOS NT muestra: Esperado (automático desde CARGA_NT) y Real ✏️ (manual)
 **Archivos afectados**: gs/Config.gs, gs/Tablero.gs
 **Razón**: El usuario corrigió que no existe cuenta "Efectivo NT" separada de Caja Chica.

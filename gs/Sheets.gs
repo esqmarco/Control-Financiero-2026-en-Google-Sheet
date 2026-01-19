@@ -149,11 +149,79 @@ function crearHojaCONFIG() {
 
   // Nota explicativa
   sheet.getRange(filaSaldos + 14, 1, 1, 3).merge()
-    .setValue('✏️ Ingrese aquí el saldo inicial de cada mes. Al cambiar el mes en MOVIMIENTO, TABLERO usará el saldo correspondiente.')
+    .setValue('✏️ Ingrese aquí el saldo inicial GLOBAL de cada mes.')
+    .setFontSize(9).setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
+
+  // ─── SALDOS INICIALES POR CUENTA - FAMILIA ───
+  // v7.4: Cada cuenta tiene su saldo inicial por mes
+  const filaSaldosCuentasFam = 63;
+  sheet.getRange(filaSaldosCuentasFam, 1, 1, 14).merge()
+    .setValue('💰 SALDOS INICIALES POR CUENTA - FAMILIA')
+    .setFontSize(12).setFontWeight('bold')
+    .setBackground(C.FAM_HEADER).setFontColor(C.BLANCO);
+
+  // Headers de meses para FAMILIA
+  const headersMesesFam = [['CUENTA'].concat(MESES.map(m => m.substring(0, 3).toUpperCase()))];
+  sheet.getRange(filaSaldosCuentasFam + 1, 1, 1, 13)
+    .setValues(headersMesesFam)
+    .setFontWeight('bold')
+    .setBackground(C.GRIS_FONDO)
+    .setHorizontalAlignment('center');
+
+  // Filas de cuentas FAMILIA con valores editables (inicializados en 0)
+  CUENTAS_FAMILIA.forEach((cuenta, i) => {
+    const filaCuenta = filaSaldosCuentasFam + 2 + i;
+    sheet.getRange(filaCuenta, 1).setValue(cuenta).setFontWeight('bold');
+    for (let mes = 0; mes < 12; mes++) {
+      sheet.getRange(filaCuenta, 2 + mes)
+        .setValue(0)
+        .setNumberFormat('#,##0')
+        .setBackground(C.FAM_FONDO);
+    }
+  });
+
+  // Nota FAMILIA
+  const notaFilaFam = filaSaldosCuentasFam + 2 + CUENTAS_FAMILIA.length;
+  sheet.getRange(notaFilaFam, 1, 1, 13).merge()
+    .setValue('✏️ Ingrese el saldo inicial de cada cuenta al inicio de cada mes.')
+    .setFontSize(9).setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
+
+  // ─── SALDOS INICIALES POR CUENTA - NEUROTEA ───
+  const filaSaldosCuentasNT = notaFilaFam + 2;
+  sheet.getRange(filaSaldosCuentasNT, 1, 1, 14).merge()
+    .setValue('💰 SALDOS INICIALES POR CUENTA - NEUROTEA')
+    .setFontSize(12).setFontWeight('bold')
+    .setBackground(C.NT_HEADER).setFontColor(C.BLANCO);
+
+  // Headers de meses para NEUROTEA
+  const headersMesesNT = [['CUENTA'].concat(MESES.map(m => m.substring(0, 3).toUpperCase()))];
+  sheet.getRange(filaSaldosCuentasNT + 1, 1, 1, 13)
+    .setValues(headersMesesNT)
+    .setFontWeight('bold')
+    .setBackground(C.GRIS_FONDO)
+    .setHorizontalAlignment('center');
+
+  // Filas de cuentas NEUROTEA con valores editables (inicializados en 0)
+  CUENTAS_NT.forEach((cuenta, i) => {
+    const filaCuenta = filaSaldosCuentasNT + 2 + i;
+    sheet.getRange(filaCuenta, 1).setValue(cuenta).setFontWeight('bold');
+    for (let mes = 0; mes < 12; mes++) {
+      sheet.getRange(filaCuenta, 2 + mes)
+        .setValue(0)
+        .setNumberFormat('#,##0')
+        .setBackground(C.NT_FONDO);
+    }
+  });
+
+  // Nota NEUROTEA
+  const notaFilaNT = filaSaldosCuentasNT + 2 + CUENTAS_NT.length;
+  sheet.getRange(notaFilaNT, 1, 1, 13).merge()
+    .setValue('✏️ El saldo inicial de cada cuenta se usa para calcular el "Esperado" en TABLERO.')
     .setFontSize(9).setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
 
   // Formato general
-  sheet.setColumnWidths(1, 14, 160);
+  sheet.setColumnWidths(1, 1, 180);  // Columna de cuentas más ancha
+  sheet.setColumnWidths(2, 12, 85);  // Columnas de meses
   sheet.setFrozenRows(3);
 
   return sheet;
