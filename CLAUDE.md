@@ -359,22 +359,24 @@ MOVIMIENTO (columna D=DÍA, J=EST.PAGO, F=REAL)
 
 **Decisión [2026-01-06]**: Cada mes tiene su propio saldo inicial almacenado en CONFIG.
 
-### Ubicación de los saldos iniciales GLOBALES:
+### Ubicación de los saldos iniciales GLOBALES (v7.5 - ahora son FÓRMULAS):
 ```
 CONFIG → Sección "SALDOS INICIALES POR MES" (filas 46-59)
-| MES       | FAMILIA    | NEUROTEA   |
-|-----------|------------|------------|
-| Enero     | [editable] | [editable] |
-| Febrero   | [editable] | [editable] |
-| ...       | ...        | ...        |
-| Diciembre | [editable] | [editable] |
+| MES       | FAMILIA           | NEUROTEA          |
+|-----------|-------------------|-------------------|
+| Enero     | =SUM(B65:B74)     | =SUM(B79:B80)     |  ← Fórmula automática
+| Febrero   | =SUM(C65:C74)     | =SUM(C79:C80)     |
+| ...       | ...               | ...               |
+| Diciembre | =SUM(M65:M74)     | =SUM(M79:M80)     |
 ```
 
-### Fórmulas en TABLERO (saldo global):
+> **v7.5**: Los saldos globales ya NO son editables. Se calculan automáticamente
+> sumando los saldos por cuenta. Solo se editan los saldos individuales por cuenta.
+
+### Fórmulas en TABLERO (saldo global - obsoleto):
 ```
-SALDO_INICIAL_FAM = INDEX(CONFIG!$B$48:$B$59;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$48:$A$59;0))
-SALDO_INICIAL_NT = INDEX(CONFIG!$C$48:$C$59;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$48:$A$59;0))
-DISPONIBLE = SALDO_INICIAL + INGRESOS_MES - EGRESOS_PAGADOS
+// NOTA: DISPONIBLE ya no usa estas fórmulas directamente
+// DISPONIBLE = SUM(Esperado por cuenta) - ver sección "DISPONIBLE = SUM(Esperado)"
 ```
 
 ---
@@ -408,15 +410,33 @@ CONFIG → "SALDOS INICIALES POR CUENTA - NEUROTEA" (filas 77-81)
 
 ### Fórmula "Esperado" en TABLERO (por cuenta):
 ```
-ESPERADO_CUENTA = Saldo Inicial Cuenta (CONFIG) + Ingresos mes - Egresos mes
+// v7.5: AHORRO ahora RESTA (antes sumaba incorrectamente)
+ESPERADO_CUENTA = Saldo Inicial Cuenta (CONFIG)
+                + Ingresos a esa cuenta
+                - Egresos de esa cuenta
+                - AHORRO de esa cuenta  ← FIX v7.5
+                - Gastos fijos PAGADOS de esa cuenta
 
 // FAMILIA (filas 65-74):
-=IFERROR(INDEX(CONFIG!$B$65:$M$74;MATCH("cuenta";CONFIG!$A$65:$A$74;0);MOVIMIENTO!$N$3);0)
-  + Ingresos a esa cuenta - Egresos de esa cuenta - Gastos fijos pagados de esa cuenta
+=INDEX(CONFIG!$B$65:$M$74;MATCH("cuenta";CONFIG!$A$65:$A$74;0);MES)
+  + SUMPRODUCT(CARGA donde CUENTA=cuenta Y TIPO<>"Egreso" Y TIPO<>"Ahorro")
+  - SUMPRODUCT(CARGA donde CUENTA=cuenta Y TIPO="Egreso Familiar")
+  - SUMPRODUCT(CARGA donde CUENTA=cuenta Y TIPO="Ahorro")
+  - SUMPRODUCT(GASTOS_FIJOS donde CUENTA=cuenta Y EST.PAGO="Pagado")
 
 // NEUROTEA (filas 79-80):
-=IFERROR(INDEX(CONFIG!$B$79:$M$80;MATCH("cuenta";CONFIG!$A$79:$A$80;0);MOVIMIENTO!$N$3);0)
+=INDEX(CONFIG!$B$79:$M$80;MATCH("cuenta";CONFIG!$A$79:$A$80;0);MES)
   + Ingresos a esa cuenta - Egresos de esa cuenta
+```
+
+### DISPONIBLE = SUM(Esperado) (v7.5)
+```
+// DISPONIBLE ya no se calcula independientemente
+// Ahora es simplemente la suma de todos los Esperados por cuenta
+// Esto garantiza coherencia total entre cuentas individuales y total
+
+DISPONIBLE FAMILIA = SUM(Esperado de las 10 cuentas FAMILIA)
+DISPONIBLE NEUROTEA = SUM(Esperado de las 2 cuentas NEUROTEA)
 ```
 
 ### Flujo de cierre de mes (por cuenta):
@@ -807,5 +827,27 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ---
 
+## Bug Fixes [2026-01-19] - v7.5
+
+### AHORRO sumaba en vez de restar en Esperado (BUG CRÍTICO)
+- **Problema**: La fórmula Esperado usaba `TIPO<>"Egreso Familiar"`, lo que incluía AHORRO como ingreso
+- **Impacto**: El saldo de cuenta se inflaba incorrectamente cuando se registraba ahorro
+- **Solución**: Añadir condición `*(TIPO<>"Ahorro")` y restar AHORRO explícitamente
+- **Archivos**: Tablero.gs (fórmula Esperado FAMILIA)
+
+### DISPONIBLE calculado independientemente de cuentas
+- **Problema**: DISPONIBLE usaba su propia fórmula (SALDO_INICIAL + INGRESOS - EGRESOS) separada de las cuentas
+- **Impacto**: Podía haber inconsistencia entre suma de cuentas y DISPONIBLE
+- **Solución**: DISPONIBLE ahora es simplemente `=SUM(Esperado de cuentas)`
+- **Archivos**: Tablero.gs (DISPONIBLE FAMILIA y NEUROTEA)
+
+### Saldos globales redundantes y editables
+- **Problema**: SALDOS INICIALES POR MES eran editables independientemente de SALDOS POR CUENTA
+- **Impacto**: Riesgo de datos inconsistentes si se editaban ambos
+- **Solución**: Saldos globales ahora son FÓRMULAS que suman los saldos por cuenta
+- **Archivos**: Sheets.gs (función crearHojaCONFIG)
+
+---
+
 *Última actualización: 2026-01-19*
-*Versión: 7.4 - Saldos iniciales por cuenta + "Caja Chica NT" → "UENO Marco"*
+*Versión: 7.5 - DISPONIBLE = SUM(Esperado), AHORRO resta, saldos globales automáticos*

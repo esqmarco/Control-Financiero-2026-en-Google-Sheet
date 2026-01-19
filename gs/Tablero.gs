@@ -201,14 +201,20 @@ function crearHojaTABLERO() {
       .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Esperado (fórmula: Saldo Inicial Cuenta + Ingresos - Egresos del mes en esa cuenta)
-    // v7.4: Incluye saldo inicial por cuenta desde CONFIG (filas 65-74 = 10 cuentas FAMILIA)
-    // NOTA: Para gastos fijos, usamos SUMPRODUCT buscando en GASTOS_FIJOS por cuenta (col F) y verificando en MOVIMIENTO si está pagado
+    // Esperado (fórmula: Saldo Inicial Cuenta + Ingresos - Egresos - Ahorro del mes en esa cuenta)
+    // v7.5: Corregido BUG - AHORRO ahora RESTA (antes sumaba incorrectamente)
     // ESTRUCTURA CONFIG v7.4: A=Cuenta, B-M=ENE-DIC (saldos iniciales por mes)
-    // ESTRUCTURA GASTOS_FIJOS v5.1: A=Concepto, B=Entidad, C=Categoría, D=Frecuencia, E=Día, F=Cuenta, G-R=Meses (SIN BASE)
+    // ESTRUCTURA CARGA_FAMILIA: A=Fecha, B=Tipo, F=Monto, G=Cuenta
+    // ESTRUCTURA GASTOS_FIJOS v5.1: A=Concepto, B=Entidad, C=Categoría, D=Frecuencia, E=Día, F=Cuenta, G-R=Meses
     // ESTRUCTURA MOVIMIENTO v5.1: J=EST.PAGO, F=REAL, N3=MES_NUM
     const formulaSaldoInicialFam = `IFERROR(INDEX(CONFIG!$B$65:$M$74;MATCH("${cuenta}";CONFIG!$A$65:$A$74;0);MOVIMIENTO!$N$3);0)`;
-    const formulaEsperado = `=IFERROR(${formulaSaldoInicialFam}+SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500<>"Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((GASTOS_FIJOS!$F$6:$F$100="${cuenta}")*(IFERROR(INDEX(MOVIMIENTO!$J:$J;MATCH(GASTOS_FIJOS!$A$6:$A$100;MOVIMIENTO!$A:$A;0))="Pagado";0))*(IFERROR(INDEX(MOVIMIENTO!$F:$F;MATCH(GASTOS_FIJOS!$A$6:$A$100;MOVIMIENTO!$A:$A;0));0)));0)`;
+    // Fórmula desglosada:
+    // + Saldo inicial de la cuenta (CONFIG)
+    // + Ingresos a esta cuenta (TIPO no es Egreso ni Ahorro)
+    // - Egresos de esta cuenta (TIPO = "Egreso Familiar")
+    // - Ahorro de esta cuenta (TIPO = "Ahorro") ← FIX v7.5
+    // - Gastos fijos PAGADOS de esta cuenta (GASTOS_FIJOS donde EST.PAGO="Pagado")
+    const formulaEsperado = `=IFERROR(${formulaSaldoInicialFam}+SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500<>"Egreso Familiar")*(CARGA_FAMILIA!B$4:B$500<>"Ahorro")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Ahorro")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((GASTOS_FIJOS!$F$6:$F$100="${cuenta}")*(IFERROR(INDEX(MOVIMIENTO!$J:$J;MATCH(GASTOS_FIJOS!$A$6:$A$100;MOVIMIENTO!$A:$A;0))="Pagado";0))*(IFERROR(INDEX(MOVIMIENTO!$F:$F;MATCH(GASTOS_FIJOS!$A$6:$A$100;MOVIMIENTO!$A:$A;0));0)));0)`;
     sheet.getRange(rowFam, 3).setFormula(formulaEsperado)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
@@ -913,16 +919,19 @@ function crearHojaTABLERO() {
   const filaAhorroFam = rowFam;
   rowFam++;
 
-  // DISPONIBLE = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS - AHORRO
+  // DISPONIBLE = SUM(Esperado por cuenta) - v7.5: Ahora referencia la suma de cuentas
+  // Esto garantiza coherencia: DISPONIBLE siempre = suma de saldos de todas las cuentas
   sheet.getRange(rowFam, 2).setValue('💰 DISPONIBLE')
     .setFontWeight('bold')
     .setBackground(UI.FAM_SUBTOTAL)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setValue('-')
+  sheet.getRange(rowFam, 3).setValue('= Σ Cuentas')
     .setBackground(UI.FAM_SUBTOTAL)
     .setHorizontalAlignment('center')
+    .setFontSize(9)
+    .setFontStyle('italic')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 4).setFormula(`=IFERROR(D${filaSaldoInicialFam}+D${filaIngresosFam}-D${filaEgresosPagadosFam}-D${filaAhorroFam};0)`)
+  sheet.getRange(rowFam, 4).setFormula(`=C${filaTotalCuentasFam}`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setFontSize(12)
@@ -1098,16 +1107,19 @@ function crearHojaTABLERO() {
   const filaEgresosPagadosNT = rowNT;
   rowNT++;
 
-  // DISPONIBLE NT = SALDO_INICIAL + INGRESOS - EGRESOS_PAGADOS
+  // DISPONIBLE NT = SUM(Esperado por cuenta) - v7.5: Ahora referencia la suma de cuentas
+  // Esto garantiza coherencia: DISPONIBLE siempre = suma de saldos de todas las cuentas NT
   sheet.getRange(rowNT, 8).setValue('💰 DISPONIBLE')
     .setFontWeight('bold')
     .setBackground(UI.NT_SUBTOTAL)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setValue('-')
+  sheet.getRange(rowNT, 9).setValue('= Σ Cuentas')
     .setBackground(UI.NT_SUBTOTAL)
     .setHorizontalAlignment('center')
+    .setFontSize(9)
+    .setFontStyle('italic')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 10).setFormula(`=IFERROR(J${filaSaldoInicialNT}+J${filaIngresosNTFlujo}-J${filaEgresosPagadosNT};0)`)
+  sheet.getRange(rowNT, 10).setFormula(`=I${filaTotalCuentasNT}`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setFontSize(12)
