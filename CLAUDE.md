@@ -201,15 +201,19 @@ gs/
 
 ---
 
-## Metas NeuroTEA
+## Metas NeuroTEA (Configurables v7.6)
 
-| Parámetro | Valor |
-|-----------|-------|
-| Meta Ganancia Mínima | **7%** sobre ingresos |
-| Meta Máximo Gastos | **93%** de ingresos |
-| Distribución Utilidad Dueño | 33.33% |
-| Distribución Fondo Emergencia | 33.33% |
-| Distribución Fondo Inversión | 33.34% |
+| Parámetro | Valor Default | Ubicación CONFIG |
+|-----------|---------------|------------------|
+| Meta Ganancia Mínima | **7%** sobre ingresos | CONFIG!$B$40 |
+| Meta Máximo Gastos | **93%** de ingresos | CONFIG!$B$41 |
+| Distribución Utilidad Dueño | 33.33% | CONFIG!$B$42 |
+| Distribución Fondo Emergencia | 33.33% | CONFIG!$B$43 |
+| Distribución Fondo Inversión | 33.34% | CONFIG!$B$44 |
+
+> **v7.6**: Todas las METAS son editables desde CONFIG (sección "🎯 METAS NEUROTEA").
+> Las fórmulas en PRESUPUESTO, MOVIMIENTO y TABLERO leen estos valores con referencias
+> como `CONFIG!$B$40/100` en lugar de valores hardcodeados.
 
 **IMPORTANTE**: Los fondos son **VIRTUALES** (asignación contable, no cuentas bancarias separadas).
 
@@ -849,5 +853,24 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ---
 
+## Mejoras [2026-01-19] - v7.6
+
+### METAS NEUROTEA configurables desde CONFIG
+- **Solicitud**: Las metas (7%, 93%, 33.33%) estaban hardcodeadas en las fórmulas
+- **Mejora**: Ahora son editables desde CONFIG (filas 40-44, columna B)
+- **Ubicación**:
+  - CONFIG!$B$40: Meta Ganancia Mínima (%)
+  - CONFIG!$B$41: Meta Máximo Gastos (%)
+  - CONFIG!$B$42: Distribución Utilidad Dueño (%)
+  - CONFIG!$B$43: Distribución Fondo Emergencia (%)
+  - CONFIG!$B$44: Distribución Fondo Inversión (%)
+- **Archivos modificados**:
+  - Sheets.gs (PRESUPUESTO y MOVIMIENTO)
+  - Tablero.gs (indicadores NT)
+  - WebApp.gs (dashboard HTML)
+- **Fórmulas ahora usan**: `CONFIG!$B$40/100` en lugar de `0,07`
+
+---
+
 *Última actualización: 2026-01-19*
-*Versión: 7.5 - DISPONIBLE = SUM(Esperado), AHORRO resta, saldos globales automáticos*
+*Versión: 7.6 - METAS NEUROTEA configurables desde CONFIG*

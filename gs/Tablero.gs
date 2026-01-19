@@ -657,8 +657,9 @@ function crearHojaTABLERO() {
     .setBorder(true, true, true, true, false, false, UI.VERDE, SpreadsheetApp.BorderStyle.SOLID);
 
   // Label Meta
+  // v7.6: El % se lee de CONFIG!$B$40
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setValue('META 7%')
+    .setFormula('="META "&CONFIG!$B$40&"%"')
     .setFontSize(9)
     .setFontColor(UI.AMARILLO)
     .setBackground(UI.AMARILLO_FONDO)
@@ -681,9 +682,10 @@ function crearHojaTABLERO() {
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, false, false, UI.VERDE, SpreadsheetApp.BorderStyle.SOLID);
 
-  // Valor Meta 7%
+  // Valor Meta (% leído de CONFIG!$B$40)
+  // v7.6: El % se lee de CONFIG!$B$40 y se divide por 100
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(H${filaIngresosNT}*0,07;0)`)
+    .setFormula(`=IFERROR(H${filaIngresosNT}*CONFIG!$B$40/100;0)`)
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -701,8 +703,9 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Barra de progreso: % Gastos sobre Ingresos
+  // v7.6: El % máximo se lee de CONFIG!$B$41
   sheet.getRange(rowNT, 8, 1, 4).merge()
-    .setFormula(`="📊 % Gastos: "&TEXT(IFERROR(IF(H${filaIngresosNT}>0;J${filaIngresosNT}/H${filaIngresosNT};0);0);"0%")&" de 93% máximo"`)
+    .setFormula(`="📊 % Gastos: "&TEXT(IFERROR(IF(H${filaIngresosNT}>0;J${filaIngresosNT}/H${filaIngresosNT};0);0);"0%")&" de "&CONFIG!$B$41&"% máximo"`)
     .setFontSize(11)
     .setBackground('#E0F2FE')
     .setHorizontalAlignment('center')
@@ -762,20 +765,21 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Valores de distribución
-  sheet.getRange(rowNT, 8).setFormula(`=IFERROR(H${filaGananciaNT}*0,3333;0)`)
+  // v7.6: Los % se leen de CONFIG (filas 42-44)
+  sheet.getRange(rowNT, 8).setFormula(`=IFERROR(H${filaGananciaNT}*CONFIG!$B$42/100;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#F3E8FF')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(H${filaGananciaNT}*0,3333;0)`)
+  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(H${filaGananciaNT}*CONFIG!$B$43/100;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#FFEDD5')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(H${filaGananciaNT}*0,3334;0)`)
+    .setFormula(`=IFERROR(H${filaGananciaNT}*CONFIG!$B$44/100;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#CFFAFE')

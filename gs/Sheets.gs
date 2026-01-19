@@ -103,21 +103,55 @@ function crearHojaCONFIG() {
   // ─── METAS NEUROTEA ───
   const filaMetas = 38;
   sheet.getRange(filaMetas, 1, 1, 4).merge()
-    .setValue('🎯 METAS NEUROTEA')
+    .setValue('🎯 METAS NEUROTEA (Editables)')
     .setFontSize(12).setFontWeight('bold')
     .setBackground(C.NT_HEADER).setFontColor(C.BLANCO);
 
-  const metas = [
-    ['Parámetro', 'Valor', 'Descripción'],
-    ['Meta Ganancia Mínima', METAS_NT.GANANCIA_MINIMA_PCT + '%', '% mínimo de ganancia sobre ingresos'],
-    ['Meta Máximo Gastos', METAS_NT.MAXIMO_GASTOS_PCT + '%', '% máximo de gastos sobre ingresos'],
-    ['Distribución Utilidad Dueño', METAS_NT.DIST_UTILIDAD_DUEÑO + '%', 'Tercio de la ganancia para Marco'],
-    ['Distribución Fondo Emergencia', METAS_NT.DIST_FONDO_EMERGENCIA + '%', 'Tercio para contingencias'],
-    ['Distribución Fondo Inversión', METAS_NT.DIST_FONDO_INVERSION + '%', 'Tercio para crecimiento']
-  ];
+  // v7.6: METAS ahora son valores numéricos editables que las fórmulas referencian
+  // Estructura: Parámetro | Valor (numérico) | Unidad | Descripción
+  const metasHeaders = [['Parámetro', 'Valor', 'Unidad', 'Descripción']];
+  sheet.getRange(filaMetas + 1, 1, 1, 4).setValues(metasHeaders)
+    .setFontWeight('bold').setBackground(C.GRIS_FONDO);
 
-  sheet.getRange(filaMetas + 1, 1, metas.length, 3).setValues(metas);
-  sheet.getRange(filaMetas + 1, 1, 1, 3).setFontWeight('bold').setBackground(C.GRIS_FONDO);
+  // Fila 40: Meta Ganancia Mínima (CONFIG!$B$40)
+  sheet.getRange(filaMetas + 2, 1).setValue('Meta Ganancia Mínima');
+  sheet.getRange(filaMetas + 2, 2).setValue(METAS_NT.GANANCIA_MINIMA_PCT)
+    .setNumberFormat('0').setBackground(C.NT_FONDO).setFontWeight('bold');
+  sheet.getRange(filaMetas + 2, 3).setValue('%');
+  sheet.getRange(filaMetas + 2, 4).setValue('% mínimo de ganancia sobre ingresos');
+
+  // Fila 41: Meta Máximo Gastos (CONFIG!$B$41)
+  sheet.getRange(filaMetas + 3, 1).setValue('Meta Máximo Gastos');
+  sheet.getRange(filaMetas + 3, 2).setValue(METAS_NT.MAXIMO_GASTOS_PCT)
+    .setNumberFormat('0').setBackground(C.NT_FONDO).setFontWeight('bold');
+  sheet.getRange(filaMetas + 3, 3).setValue('%');
+  sheet.getRange(filaMetas + 3, 4).setValue('% máximo de gastos sobre ingresos');
+
+  // Fila 42: Distribución Utilidad Dueño (CONFIG!$B$42)
+  sheet.getRange(filaMetas + 4, 1).setValue('Distribución Utilidad Dueño');
+  sheet.getRange(filaMetas + 4, 2).setValue(METAS_NT.DIST_UTILIDAD_DUEÑO)
+    .setNumberFormat('0.00').setBackground(C.NT_FONDO).setFontWeight('bold');
+  sheet.getRange(filaMetas + 4, 3).setValue('%');
+  sheet.getRange(filaMetas + 4, 4).setValue('Porcentaje de ganancia para Marco');
+
+  // Fila 43: Distribución Fondo Emergencia (CONFIG!$B$43)
+  sheet.getRange(filaMetas + 5, 1).setValue('Distribución Fondo Emergencia');
+  sheet.getRange(filaMetas + 5, 2).setValue(METAS_NT.DIST_FONDO_EMERGENCIA)
+    .setNumberFormat('0.00').setBackground(C.NT_FONDO).setFontWeight('bold');
+  sheet.getRange(filaMetas + 5, 3).setValue('%');
+  sheet.getRange(filaMetas + 5, 4).setValue('Porcentaje para contingencias');
+
+  // Fila 44: Distribución Fondo Inversión (CONFIG!$B$44)
+  sheet.getRange(filaMetas + 6, 1).setValue('Distribución Fondo Inversión');
+  sheet.getRange(filaMetas + 6, 2).setValue(METAS_NT.DIST_FONDO_INVERSION)
+    .setNumberFormat('0.00').setBackground(C.NT_FONDO).setFontWeight('bold');
+  sheet.getRange(filaMetas + 6, 3).setValue('%');
+  sheet.getRange(filaMetas + 6, 4).setValue('Porcentaje para crecimiento');
+
+  // Nota explicativa
+  sheet.getRange(filaMetas + 7, 1, 1, 4).merge()
+    .setValue('✏️ Edite los valores en columna B. Las fórmulas de PRESUPUESTO y TABLERO se actualizan automáticamente.')
+    .setFontSize(9).setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
 
   // ─── SALDOS INICIALES POR MES ───
   // Decisión [2026-01-06]: Cada mes tiene su propio saldo inicial independiente
@@ -433,36 +467,38 @@ function crearHojaPRESUPUESTO() {
   row++;
 
   // Semáforo de estado
-  // NOTA: Usamos "0,07" directamente como string para evitar problemas de locale
-  const metaGananciaStr = '0,07'; // 7% en formato español (coma decimal)
+  // v7.6: Usa referencia a CONFIG!$B$40 (Meta Ganancia Mínima %) en lugar de valor hardcodeado
   sheet.getRange(row, 1).setValue('Estado Meta').setFontWeight('bold');
   sheet.getRange(row, 2).setValue('Calculado');
   sheet.getRange(row, 3).setValue('-');
   for (let col = 4; col <= 16; col++) {
     const colLetra = String.fromCharCode(64 + col);
-    // Semáforo: <0% = Rojo (Pérdida), 0-7% = Amarillo, >=7% = Verde
+    // Semáforo: <0% = Rojo (Pérdida), 0-META% = Amarillo, >=META% = Verde
+    // La fórmula lee el % de CONFIG y lo divide por 100 para comparar
     sheet.getRange(row, col).setFormula(
-      `=IF(${colLetra}${filaPctGanancia}<0;"🔴 PÉRDIDA";IF(${colLetra}${filaPctGanancia}<${metaGananciaStr};"🟡 <7%";"🟢 META"))`
+      `=IF(${colLetra}${filaPctGanancia}<0;"🔴 PÉRDIDA";IF(${colLetra}${filaPctGanancia}<CONFIG!$B$40/100;"🟡 <"&CONFIG!$B$40&"%";"🟢 META"))`
     );
   }
   const filaEstadoMeta = row;
   row++;
 
   // Distribución de ganancia
+  // v7.6: Los porcentajes se leen de CONFIG (filas 42-44) en lugar de hardcodeados
   const distItems = [
-    { nombre: `→ Utilidad al propietario (${METAS_NT.DIST_UTILIDAD_DUEÑO}%)`, pct: METAS_NT.DIST_UTILIDAD_DUEÑO / 100 },
-    { nombre: `→ Fondo de emergencia (${METAS_NT.DIST_FONDO_EMERGENCIA}%)`, pct: METAS_NT.DIST_FONDO_EMERGENCIA / 100 },
-    { nombre: `→ Fondo de Inversión (${METAS_NT.DIST_FONDO_INVERSION}%)`, pct: METAS_NT.DIST_FONDO_INVERSION / 100 }
+    { nombre: '→ Utilidad al propietario', configRef: 'CONFIG!$B$42' }, // Distribución Utilidad Dueño
+    { nombre: '→ Fondo de emergencia', configRef: 'CONFIG!$B$43' },     // Distribución Fondo Emergencia
+    { nombre: '→ Fondo de Inversión', configRef: 'CONFIG!$B$44' }       // Distribución Fondo Inversión
   ];
   distItems.forEach(item => {
-    sheet.getRange(row, 1).setValue(item.nombre).setFontStyle('italic');
+    // El nombre de la fila incluye el % leído de CONFIG
+    sheet.getRange(row, 1).setFormula(`="${item.nombre} ("&${item.configRef}&"%)"`).setFontStyle('italic');
     sheet.getRange(row, 2).setValue('Calculado');
     sheet.getRange(row, 3).setValue('-');
     for (let col = 4; col <= 16; col++) {
       const colLetra = String.fromCharCode(64 + col);
-      // Solo distribuir si ganancia > 0
+      // Solo distribuir si ganancia > 0. El % se divide por 100 para convertir a decimal
       sheet.getRange(row, col).setFormula(
-        `=IF(${colLetra}${filaGananciaCalculada}>0;${colLetra}${filaGananciaCalculada}*${item.pct.toString().replace('.',',')};0)`
+        `=IF(${colLetra}${filaGananciaCalculada}>0;${colLetra}${filaGananciaCalculada}*${item.configRef}/100;0)`
       );
     }
     row++;
@@ -1119,26 +1155,29 @@ function crearHojaMOVIMIENTO() {
   row++;
 
   // GANANCIA NT (Ingresos - Egresos)
-  sheet.getRange(row, 1).setValue('📈 GANANCIA (META 7%)').setFontWeight('bold');
+  // v7.6: El texto muestra el % de meta leído de CONFIG!$B$40
+  sheet.getRange(row, 1).setFormula('="📈 GANANCIA (META "&CONFIG!$B$40&"%)"').setFontWeight('bold');
   sheet.getRange(row, 6).setFormula(`=F${filaTotalIngresosNT}-(F${filaTotalEgresosPagadosNT}+F${filaTotalEgresosPendientesNT})`).setFontWeight('bold');
   const filaGananciaNT = row;
   row++;
 
   // % Ganancia
+  // v7.6: El semáforo compara contra CONFIG!$B$40/100
   sheet.getRange(row, 1).setValue('  % Ganancia sobre Ingresos').setFontStyle('italic');
   sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaTotalIngresosNT}>0;F${filaGananciaNT}/F${filaTotalIngresosNT};0);0)`).setNumberFormat('0,00%');
-  sheet.getRange(row, 9).setFormula(`=IF(F${row}>=0,07;"🟢 META";"🟡 <7%")`);
+  sheet.getRange(row, 9).setFormula(`=IF(F${row}>=CONFIG!$B$40/100;"🟢 META";"🟡 <"&CONFIG!$B$40&"%")`);
   row++;
 
   // Distribución de Ganancia (solo si > 0)
-  sheet.getRange(row, 1).setValue('    → Utilidad Dueño (33.33%)').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
-  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*0,3333;0);0)`);
+  // v7.6: Los porcentajes se leen de CONFIG (filas 42-44)
+  sheet.getRange(row, 1).setFormula('="    → Utilidad Dueño ("&CONFIG!$B$42&"%)"').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
+  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*CONFIG!$B$42/100;0);0)`);
   row++;
-  sheet.getRange(row, 1).setValue('    → Fondo Emergencia (33.33%)').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
-  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*0,3333;0);0)`);
+  sheet.getRange(row, 1).setFormula('="    → Fondo Emergencia ("&CONFIG!$B$43&"%)"').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
+  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*CONFIG!$B$43/100;0);0)`);
   row++;
-  sheet.getRange(row, 1).setValue('    → Fondo Inversión (33.34%)').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
-  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*0,3334;0);0)`);
+  sheet.getRange(row, 1).setFormula('="    → Fondo Inversión ("&CONFIG!$B$44&"%)"').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
+  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*CONFIG!$B$44/100;0);0)`);
   row++;
 
   // SALDO DISPONIBLE NT

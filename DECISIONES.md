@@ -691,4 +691,33 @@ Reestructuración del sistema de saldos para garantizar coherencia total:
 
 ---
 
-*Última actualización: 2026-01-19 - Agregada decisión v7.5 (saldos coherentes)*
+### [2026-01-19] - METAS NEUROTEA configurables desde CONFIG (v7.6)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+Las metas de NEUROTEA (% ganancia, % máximo gastos, distribución de utilidades) deben ser editables desde CONFIG, no hardcodeadas en fórmulas.
+
+**Cambios implementados**:
+1. **CONFIG tiene nueva sección "🎯 METAS NEUROTEA (Editables)"** (filas 38-45):
+   - B40: Meta Ganancia Mínima (%) = 7
+   - B41: Meta Máximo Gastos (%) = 93
+   - B42: Distribución Utilidad Dueño (%) = 33.33
+   - B43: Distribución Fondo Emergencia (%) = 33.33
+   - B44: Distribución Fondo Inversión (%) = 33.34
+
+2. **Fórmulas usan referencias en lugar de valores hardcodeados**:
+   - PRESUPUESTO: `CONFIG!$B$40/100` en lugar de `0,07`
+   - MOVIMIENTO: Semáforo lee de CONFIG
+   - TABLERO: Indicadores NT leen de CONFIG
+   - WebApp.gs: Lee valores de CONFIG y los usa en HTML
+
+3. **Textos dinámicos**:
+   - "META 7%" ahora muestra `"META "&CONFIG!$B$40&"%"`
+   - "93% máximo" ahora muestra valor de CONFIG!$B$41
+   - Distribución muestra % leídos de CONFIG
+
+**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs, gs/WebApp.gs, CLAUDE.md
+**Razón**: El usuario solicitó que las metas sean configurables para poder ajustarlas sin modificar código. Esto sigue el principio de separar datos de lógica.
+
+---
+
+*Última actualización: 2026-01-19 - Agregada decisión v7.6 (METAS configurables)*

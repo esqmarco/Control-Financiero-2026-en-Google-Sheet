@@ -210,20 +210,23 @@ FAMILIA, NEUROTEA
 | 2 | Pagado | Ya fue abonado |
 | 3 | Cancelado | No se pagará (anulado) |
 
-### 3.14 METAS NEUROTEA (parámetros editables)
-| Parámetro | Valor | Descripción |
-|-----------|-------|-------------|
-| Meta Ganancia Mínima | **7%** | Porcentaje mínimo de ganancia sobre ingresos |
-| Meta Máximo Gastos | **93%** | Porcentaje máximo de gastos sobre ingresos |
-| Distribución Utilidad Dueño | **33.33%** | Tercio de la ganancia para Marco |
-| Distribución Fondo Emergencia | **33.33%** | Tercio para contingencias |
-| Distribución Fondo Inversión | **33.33%** | Tercio para crecimiento |
+### 3.14 METAS NEUROTEA (parámetros editables desde CONFIG v7.6)
+| Parámetro | Valor Default | Ubicación CONFIG | Descripción |
+|-----------|---------------|------------------|-------------|
+| Meta Ganancia Mínima | **7%** | CONFIG!$B$40 | Porcentaje mínimo de ganancia sobre ingresos |
+| Meta Máximo Gastos | **93%** | CONFIG!$B$41 | Porcentaje máximo de gastos sobre ingresos |
+| Distribución Utilidad Dueño | **33.33%** | CONFIG!$B$42 | Tercio de la ganancia para Marco |
+| Distribución Fondo Emergencia | **33.33%** | CONFIG!$B$43 | Tercio para contingencias |
+| Distribución Fondo Inversión | **33.34%** | CONFIG!$B$44 | Tercio para crecimiento |
+
+> **v7.6**: Estos valores son editables directamente en CONFIG (sección "🎯 METAS NEUROTEA").
+> Las fórmulas en PRESUPUESTO, MOVIMIENTO y TABLERO los referencian automáticamente.
 
 **ACLARACIÓN IMPORTANTE - FONDOS VIRTUALES:**
 Los fondos de NeuroTEA (Utilidad, Fondo Emergencia, Fondo Inversión) son **VIRTUALES**:
 - Se CALCULAN automáticamente basados en la ganancia
 - **NO son cuentas bancarias separadas**
-- El dinero físico permanece en las cuentas NT (Atlas, Caja Chica, Efectivo)
+- El dinero físico permanece en las cuentas NT (Atlas, UENO Marco)
 - Los fondos son una **asignación contable** para saber cuánto hay disponible para cada propósito
 - Ayudan a tomar decisiones: "¿Puedo hacer esta inversión?" → Mirar Fondo Inversión
 
