@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.9 - AHORRO separado de GASTOS OPERATIVOS + Anti-Burro completo
+ * Versión 7.0 - Auto-creación de transacciones cruzadas (préstamos/devoluciones)
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -358,6 +358,11 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
     }
   }
 
+  // Columna F = MONTO (columna 6) - Disparar auto-creación de transacciones cruzadas
+  if (col === 6 && valor && Number(valor) > 0) {
+    autoCrearTransaccionCruzadaFamilia(sheet, row);
+  }
+
   // Columna C = CATEGORÍA (columna 3)
   if (col === 3) {
     const tipoActual = sheet.getRange(row, 2).getValue();
@@ -455,6 +460,11 @@ function procesarEdicionCargaNT(sheet, row, col, valor) {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
     }
+  }
+
+  // Columna F = MONTO (columna 6) - Disparar auto-creación de transacciones cruzadas
+  if (col === 6 && valor && Number(valor) > 0) {
+    autoCrearTransaccionCruzadaNT(sheet, row);
   }
 
   // Columna C = CATEGORÍA (columna 3)
@@ -789,5 +799,243 @@ function validarPrestamoDevolucionNT(sheet, row, valor) {
       );
       sheet.getRange(row, 4).setValue(''); // Limpiar la celda
     }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AUTO-CREACIÓN DE TRANSACCIONES CRUZADAS (PRÉSTAMOS/DEVOLUCIONES)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Bandera para evitar loops infinitos en auto-creación
+ * Usa PropertiesService del documento para persistir entre llamadas
+ */
+function estaEnModoAutoCreacion() {
+  const props = PropertiesService.getDocumentProperties();
+  return props.getProperty('AUTO_CREACION_ACTIVA') === 'true';
+}
+
+function activarModoAutoCreacion() {
+  const props = PropertiesService.getDocumentProperties();
+  props.setProperty('AUTO_CREACION_ACTIVA', 'true');
+}
+
+function desactivarModoAutoCreacion() {
+  const props = PropertiesService.getDocumentProperties();
+  props.deleteProperty('AUTO_CREACION_ACTIVA');
+}
+
+/**
+ * Encuentra la primera fila vacía en una hoja (desde fila 4)
+ */
+function encontrarPrimeraFilaVacia(sheet) {
+  const ultimaFila = sheet.getLastRow();
+  if (ultimaFila < 4) return 4;
+  return ultimaFila + 1;
+}
+
+/**
+ * Auto-crea transacción cruzada cuando se completa una fila en CARGA_FAMILIA
+ * Se llama después de que el usuario ingresa el MONTO (columna F)
+ */
+function autoCrearTransaccionCruzadaFamilia(sheet, row) {
+  // Verificar si ya estamos en modo auto-creación (evitar loop)
+  if (estaEnModoAutoCreacion()) return;
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const datos = sheet.getRange(row, 1, 1, 7).getValues()[0];
+  // [0]=FECHA, [1]=TIPO, [2]=CATEGORÍA, [3]=SUBCATEGORÍA, [4]=DESCRIPCIÓN, [5]=MONTO, [6]=CUENTA
+
+  const fecha = datos[0];
+  const tipo = datos[1];
+  const subcategoria = datos[3];
+  const descripcion = datos[4] || '';
+  const monto = datos[5];
+
+  // Validar que tengamos fecha y monto
+  if (!fecha || !monto || monto <= 0) return;
+
+  const cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
+  if (!cargaNT) return;
+
+  let transaccionCreada = false;
+  let mensajeToast = '';
+
+  try {
+    activarModoAutoCreacion();
+
+    // CASO 1: TIPO="Préstamo NeuroTEA" (NT presta a FAM)
+    // → Crear egreso en CARGA_NT: Egreso NT / VARIABLES / Préstamo NT → Familia
+    if (tipo === 'Préstamo NeuroTEA') {
+      const filaDestino = encontrarPrimeraFilaVacia(cargaNT);
+      cargaNT.getRange(filaDestino, 1, 1, 8).setValues([[
+        fecha,                        // A: FECHA
+        'Egreso NT',                  // B: TIPO
+        'VARIABLES',                  // C: CATEGORÍA
+        'Préstamo NT → Familia',      // D: SUBCATEGORÍA
+        descripcion || 'Auto: Préstamo a Familia',  // E: DESCRIPCIÓN
+        monto,                        // F: MONTO
+        'Atlas NeuroTEA',             // G: CUENTA (cuenta principal NT)
+        'Auto-generado desde CARGA_FAMILIA'  // H: NOTAS
+      ]]);
+      transaccionCreada = true;
+      mensajeToast = '✓ Creado egreso en CARGA_NT: "Préstamo NT → Familia" por ' + formatearGuaranies(monto);
+    }
+
+    // CASO 2: SUBCAT="Préstamo Familia → NT" (FAM presta a NT)
+    // → Crear ingreso en CARGA_NT: Préstamo Familia
+    else if (subcategoria === 'Préstamo Familia → NT') {
+      const filaDestino = encontrarPrimeraFilaVacia(cargaNT);
+      cargaNT.getRange(filaDestino, 1, 1, 8).setValues([[
+        fecha,                        // A: FECHA
+        'Préstamo Familia',           // B: TIPO (ingreso para NT)
+        '-',                          // C: CATEGORÍA (bloqueada para ingresos)
+        '-',                          // D: SUBCATEGORÍA (bloqueada para ingresos)
+        descripcion || 'Auto: Préstamo recibido de Familia',  // E: DESCRIPCIÓN
+        monto,                        // F: MONTO
+        'Atlas NeuroTEA',             // G: CUENTA
+        'Auto-generado desde CARGA_FAMILIA'  // H: NOTAS
+      ]]);
+      transaccionCreada = true;
+      mensajeToast = '✓ Creado ingreso en CARGA_NT: "Préstamo Familia" por ' + formatearGuaranies(monto);
+    }
+
+    // CASO 3: SUBCAT="Devolución Familia → NT" (FAM devuelve a NT)
+    // → Crear ingreso en CARGA_NT: Devolución Familia → NT
+    else if (subcategoria === 'Devolución Familia → NT') {
+      const filaDestino = encontrarPrimeraFilaVacia(cargaNT);
+      cargaNT.getRange(filaDestino, 1, 1, 8).setValues([[
+        fecha,                        // A: FECHA
+        'Devolución Familia → NT',    // B: TIPO (ingreso para NT)
+        '-',                          // C: CATEGORÍA (bloqueada para ingresos)
+        '-',                          // D: SUBCATEGORÍA (bloqueada para ingresos)
+        descripcion || 'Auto: Devolución recibida de Familia',  // E: DESCRIPCIÓN
+        monto,                        // F: MONTO
+        'Atlas NeuroTEA',             // G: CUENTA
+        'Auto-generado desde CARGA_FAMILIA'  // H: NOTAS
+      ]]);
+      transaccionCreada = true;
+      mensajeToast = '✓ Creado ingreso en CARGA_NT: "Devolución Familia → NT" por ' + formatearGuaranies(monto);
+    }
+
+  } finally {
+    desactivarModoAutoCreacion();
+  }
+
+  // Mostrar Toast de confirmación
+  if (transaccionCreada) {
+    ss.toast(mensajeToast, '🔄 Auto-creación', 5);
+  }
+}
+
+/**
+ * Auto-crea transacción cruzada cuando se completa una fila en CARGA_NT
+ * Se llama después de que el usuario ingresa el MONTO (columna F)
+ */
+function autoCrearTransaccionCruzadaNT(sheet, row) {
+  // Verificar si ya estamos en modo auto-creación (evitar loop)
+  if (estaEnModoAutoCreacion()) return;
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const datos = sheet.getRange(row, 1, 1, 7).getValues()[0];
+  // [0]=FECHA, [1]=TIPO, [2]=CATEGORÍA, [3]=SUBCATEGORÍA, [4]=DESCRIPCIÓN, [5]=MONTO, [6]=CUENTA
+
+  const fecha = datos[0];
+  const tipo = datos[1];
+  const subcategoria = datos[3];
+  const descripcion = datos[4] || '';
+  const monto = datos[5];
+
+  // Validar que tengamos fecha y monto
+  if (!fecha || !monto || monto <= 0) return;
+
+  const cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
+  if (!cargaFam) return;
+
+  let transaccionCreada = false;
+  let mensajeToast = '';
+
+  try {
+    activarModoAutoCreacion();
+
+    // CASO 1: TIPO="Préstamo Familia" (FAM presta a NT)
+    // → Crear egreso en CARGA_FAMILIA: Egreso Familiar / VARIABLES / Préstamo Familia → NT
+    if (tipo === 'Préstamo Familia') {
+      const filaDestino = encontrarPrimeraFilaVacia(cargaFam);
+      cargaFam.getRange(filaDestino, 1, 1, 8).setValues([[
+        fecha,                        // A: FECHA
+        'Egreso Familiar',            // B: TIPO
+        'VARIABLES',                  // C: CATEGORÍA
+        'Préstamo Familia → NT',      // D: SUBCATEGORÍA
+        descripcion || 'Auto: Préstamo a NeuroTEA',  // E: DESCRIPCIÓN
+        monto,                        // F: MONTO
+        'ITAU Marco',                 // G: CUENTA (cuenta principal FAM)
+        'Auto-generado desde CARGA_NT'  // H: NOTAS
+      ]]);
+      transaccionCreada = true;
+      mensajeToast = '✓ Creado egreso en CARGA_FAMILIA: "Préstamo Familia → NT" por ' + formatearGuaranies(monto);
+    }
+
+    // CASO 2: TIPO="Devolución Familia → NT" (FAM devuelve a NT - ingreso para NT)
+    // → Crear egreso en CARGA_FAMILIA: Egreso Familiar / VARIABLES / Devolución Familia → NT
+    else if (tipo === 'Devolución Familia → NT') {
+      const filaDestino = encontrarPrimeraFilaVacia(cargaFam);
+      cargaFam.getRange(filaDestino, 1, 1, 8).setValues([[
+        fecha,                        // A: FECHA
+        'Egreso Familiar',            // B: TIPO
+        'VARIABLES',                  // C: CATEGORÍA
+        'Devolución Familia → NT',    // D: SUBCATEGORÍA
+        descripcion || 'Auto: Devolución a NeuroTEA',  // E: DESCRIPCIÓN
+        monto,                        // F: MONTO
+        'ITAU Marco',                 // G: CUENTA
+        'Auto-generado desde CARGA_NT'  // H: NOTAS
+      ]]);
+      transaccionCreada = true;
+      mensajeToast = '✓ Creado egreso en CARGA_FAMILIA: "Devolución Familia → NT" por ' + formatearGuaranies(monto);
+    }
+
+    // CASO 3: SUBCAT="Préstamo NT → Familia" (NT presta a FAM)
+    // → Crear ingreso en CARGA_FAMILIA: Préstamo NeuroTEA
+    else if (subcategoria === 'Préstamo NT → Familia') {
+      const filaDestino = encontrarPrimeraFilaVacia(cargaFam);
+      cargaFam.getRange(filaDestino, 1, 1, 8).setValues([[
+        fecha,                        // A: FECHA
+        'Préstamo NeuroTEA',          // B: TIPO (ingreso para FAM)
+        '-',                          // C: CATEGORÍA (bloqueada para ingresos)
+        '-',                          // D: SUBCATEGORÍA (bloqueada para ingresos)
+        descripcion || 'Auto: Préstamo recibido de NeuroTEA',  // E: DESCRIPCIÓN
+        monto,                        // F: MONTO
+        'ITAU Marco',                 // G: CUENTA
+        'Auto-generado desde CARGA_NT'  // H: NOTAS
+      ]]);
+      transaccionCreada = true;
+      mensajeToast = '✓ Creado ingreso en CARGA_FAMILIA: "Préstamo NeuroTEA" por ' + formatearGuaranies(monto);
+    }
+
+    // CASO 4: SUBCAT="Devolución NT → Familia" (NT devuelve a FAM)
+    // → Crear ingreso en CARGA_FAMILIA: Devolución NeuroTEA
+    else if (subcategoria === 'Devolución NT → Familia') {
+      const filaDestino = encontrarPrimeraFilaVacia(cargaFam);
+      cargaFam.getRange(filaDestino, 1, 1, 8).setValues([[
+        fecha,                        // A: FECHA
+        'Devolución NeuroTEA',        // B: TIPO (ingreso para FAM)
+        '-',                          // C: CATEGORÍA (bloqueada para ingresos)
+        '-',                          // D: SUBCATEGORÍA (bloqueada para ingresos)
+        descripcion || 'Auto: Devolución recibida de NeuroTEA',  // E: DESCRIPCIÓN
+        monto,                        // F: MONTO
+        'ITAU Marco',                 // G: CUENTA
+        'Auto-generado desde CARGA_NT'  // H: NOTAS
+      ]]);
+      transaccionCreada = true;
+      mensajeToast = '✓ Creado ingreso en CARGA_FAMILIA: "Devolución NeuroTEA" por ' + formatearGuaranies(monto);
+    }
+
+  } finally {
+    desactivarModoAutoCreacion();
+  }
+
+  // Mostrar Toast de confirmación
+  if (transaccionCreada) {
+    ss.toast(mensajeToast, '🔄 Auto-creación', 5);
   }
 }
