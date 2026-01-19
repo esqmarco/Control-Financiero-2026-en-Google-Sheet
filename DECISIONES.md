@@ -657,4 +657,38 @@ AHORRO conceptualmente NO es un gasto, es una transferencia a cuenta de ahorro. 
 
 ---
 
-*Última actualización: 2026-01-15 - Agregada decisión c (AHORRO separado v6.9)*
+### [2026-01-19] - Saldos por cuenta y DISPONIBLE coherente (v7.5)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+Reestructuración del sistema de saldos para garantizar coherencia total:
+
+1. **Saldos iniciales por cuenta (v7.4)**:
+   - CONFIG tiene tabla "SALDOS INICIALES POR CUENTA" (FAMILIA: filas 65-74, NT: filas 79-80)
+   - Cada cuenta tiene su saldo inicial editable por mes
+   - Esta es la ÚNICA fuente de verdad para saldos iniciales
+
+2. **Saldos globales ahora son FÓRMULAS (v7.5)**:
+   - CONFIG "SALDOS INICIALES POR MES" ya NO es editable
+   - FAMILIA = SUM(saldos de las 10 cuentas FAMILIA)
+   - NEUROTEA = SUM(saldos de las 2 cuentas NT)
+
+3. **DISPONIBLE = SUM(Esperado) (v7.5)**:
+   - DISPONIBLE ya no calcula independientemente
+   - DISPONIBLE = suma de todos los "Esperado" por cuenta
+   - Garantiza coherencia: suma de cuentas = total disponible
+
+4. **FIX: AHORRO ahora RESTA en Esperado (v7.5)**:
+   - Bug anterior: AHORRO sumaba (TIPO<>"Egreso Familiar" incluía Ahorro)
+   - Corrección: AHORRO resta explícitamente en fórmula Esperado
+   - Fórmula: `+ Ingresos - Egresos - AHORRO - Gastos fijos pagados`
+
+5. **Renombrado: "Caja Chica NT" → "UENO Marco" (v7.4)**:
+   - La cuenta de efectivo de NT ahora se llama "UENO Marco"
+   - Refleja mejor el uso real (cuenta compartida para gastos NT)
+
+**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs, gs/Config.gs, CLAUDE.md
+**Razón**: El usuario identificó que los saldos globales y por cuenta podían ser inconsistentes si se editaban por separado. También detectó que AHORRO inflaba incorrectamente los saldos de cuenta.
+
+---
+
+*Última actualización: 2026-01-19 - Agregada decisión v7.5 (saldos coherentes)*

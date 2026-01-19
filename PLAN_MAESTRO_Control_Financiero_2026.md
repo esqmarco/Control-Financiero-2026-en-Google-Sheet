@@ -1503,7 +1503,7 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 60 | **Bloqueo en CARGA_NT**: Si NT debe a FAM, bloqueado "Préstamo NT → Familia" | ✅ |
 | 61 | **Alertas explicativas**: Mensaje indica cuánto se debe y qué acción usar | ✅ |
 
-### Versión 3.2 (Actual)
+### Versión 3.2
 | # | Adición/Aclaración | Estado |
 |---|-------------------|--------|
 | 62 | **TIPO Ingreso bloquea CATEGORÍA**: Si TIPO es ingreso, CATEGORÍA y SUBCATEGORÍA = "-" | ✅ |
@@ -1511,6 +1511,16 @@ DIFERENCIA:                Gs. -350.000 🔴
 | 64 | **AHORRO con subcategoría correcta**: Solo permite Ahorro Clara/Marco/Fondo Emergencia | ✅ |
 | 65 | **VARIABLES con subcategoría correcta**: Valida pertenencia a lista correcta | ✅ |
 | 66 | **EVENTOS con subcategoría correcta**: Valida pertenencia a lista de eventos | ✅ |
+
+### Versión 3.3 (Actual)
+| # | Adición/Aclaración | Estado |
+|---|-------------------|--------|
+| 67 | **Saldos iniciales por cuenta**: Cada cuenta tiene saldo editable por mes en CONFIG (FAMILIA: filas 65-74, NT: filas 79-80) | ✅ |
+| 68 | **Saldos globales automáticos**: SALDOS POR MES = SUM(saldos por cuenta), no editables | ✅ |
+| 69 | **DISPONIBLE = SUM(Esperado)**: Coherencia garantizada entre cuentas individuales y total | ✅ |
+| 70 | **FIX: AHORRO resta en Esperado**: Corregido bug donde AHORRO sumaba en vez de restar | ✅ |
+| 71 | **Renombrado "Caja Chica NT" → "UENO Marco"**: Refleja uso real de cuenta compartida | ✅ |
+| 72 | **Auto-creación transacciones cruzadas**: Préstamos/devoluciones FAM↔NT se crean en ambas hojas | ✅ |
 
 ---
 
@@ -1548,5 +1558,5 @@ DIFERENCIA:                Gs. -350.000 🔴
 
 ---
 
-*Documento actualizado el 15 de enero de 2026*
-*Versión: 3.2 - Validación Anti-Burro completa (TIPO/CATEGORÍA/SUBCATEGORÍA coherentes)*
+*Documento actualizado el 19 de enero de 2026*
+*Versión: 3.3 - Saldos por cuenta, DISPONIBLE = SUM(Esperado), AHORRO corregido*
