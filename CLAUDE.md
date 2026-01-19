@@ -176,8 +176,8 @@ gs/
 | Ahorro | Ahorro Marco | - (bloqueada) |
 | Ahorro | Fondo de Emergencia | - (bloqueada) |
 
-> AHORRO no es gasto operativo. Se separa en TABLERO para mostrar:
-> - INGRESOS = GASTOS OPERATIVOS + AHORRO + FONDO EMERGENCIA + DISPONIBLE
+> AHORRO no es egreso. Se separa en TABLERO para mostrar:
+> - INGRESOS = EGRESOS PAGADOS + AHORRO + FONDO EMERGENCIA + DISPONIBLE
 
 ---
 
@@ -628,21 +628,22 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ---
 
-## AHORRO vs GASTOS (Tratamiento Conceptual)
+## AHORRO vs EGRESOS (Tratamiento Conceptual)
 
-**Decisión [2026-01-13]**: AHORRO es transferencia, NO gasto.
+**Decisión [2026-01-13]**: AHORRO es transferencia, NO egreso.
 
 | Concepto | Descripción | Cómo afecta |
 |----------|-------------|-------------|
-| **GASTOS OPERATIVOS** | Gastos reales (EST.PAGO = "Pagado") | Reduce DISPONIBLE |
-| **AHORRO** | Transferencia a cuenta de ahorro (EST.PAGO = "Ahorrado") | Reduce DISPONIBLE pero NO es gasto |
-| **DISPONIBLE** | INGRESOS - GASTOS - AHORRO | Dinero para más gastos/ahorro |
-| **PATRIMONIO FAMILIA** | INGRESOS - GASTOS (sin restar ahorro) | Total de activos de FAMILIA |
+| **EGRESOS PAGADOS** | Egresos reales ya pagados (EST.PAGO = "Pagado") | Reduce DISPONIBLE |
+| **EGRESOS PENDIENTES** | Egresos aún no pagados (EST.PAGO = "Pendiente") | Reduce PROYECCIÓN |
+| **AHORRO** | Transferencia a cuenta de ahorro (EST.PAGO = "Ahorrado") | Reduce DISPONIBLE pero NO es egreso |
+| **DISPONIBLE** | INGRESOS - EGRESOS PAGADOS - AHORRO | Dinero para más egresos/ahorro |
+| **PATRIMONIO FAMILIA** | INGRESOS - EGRESOS (sin restar ahorro) | Total de activos de FAMILIA |
 
 ### Visualización en TABLERO
 
 ```
-📥 INGRESOS DEL MES     📤 GASTOS OPERATIVOS
+📥 INGRESOS DEL MES     📤 EGRESOS PAGADOS
     20.000.000               6.200.000
 
 💰 AHORRO               🛡️ FONDO EMERGENCIA
@@ -652,7 +653,7 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 🏦 PATRIMONIO FAMILIA: Gs. 13.800.000 (incl. ahorros)
 ```
 
-> **NOTA**: PATRIMONIO = INGRESOS - GASTOS (incluye ahorros como activos de FAMILIA)
+> **NOTA**: PATRIMONIO = INGRESOS - EGRESOS (incluye ahorros como activos de FAMILIA)
 
 ---
 
@@ -686,7 +687,7 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ## Bug Fixes Testing [2026-01-14]
 
-### GASTOS OPERATIVOS FAMILIA (rango corregido)
+### EGRESOS PAGADOS FAMILIA (rango corregido)
 - **Problema**: Rango F9:F70 excluía SUSCRIPCIONES y VARIABLES
 - **Solución**: Rango expandido a F9:F113
 - **Además**: Se incluye EST.PAGO="Ahorrado" junto con "Pagado"
@@ -728,7 +729,13 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 - **Solución**: Corregido a FAMILIA: 9-113, NEUROTEA: 119-200
 - **Archivos**: Sheets.gs (líneas 1544-1545, 1553-1555)
 
+### Nomenclatura unificada: EGRESOS PAGADOS
+- **Problema**: FAMILIA mostraba "GASTOS OPERATIVOS" y NEUROTEA mostraba "GASTOS PAGADOS"
+- **Solución**: Unificado a "EGRESOS PAGADOS" en ambas entidades
+- **Diferenciación**: "EGRESOS PAGADOS" vs "EGRESOS PENDIENTES" (estados claros)
+- **Archivos**: Tablero.gs, Sheets.gs, WebApp.gs
+
 ---
 
 *Última actualización: 2026-01-19*
-*Versión: 7.1 - Corrección bugs auto-creación (fecha, duplicados, alertas, rangos)*
+*Versión: 7.2 - Nomenclatura unificada EGRESOS PAGADOS/PENDIENTES*

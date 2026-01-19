@@ -950,8 +950,8 @@ function crearHojaMOVIMIENTO() {
   const filaTotalIngresosFam = row;
   row++;
 
-  // TOTAL GASTOS OPERATIVOS (solo gastos reales, sin AHORRO)
-  sheet.getRange(row, 1).setValue('📤 TOTAL GASTOS OPERATIVOS');
+  // TOTAL EGRESOS PAGADOS (solo gastos reales, sin AHORRO)
+  sheet.getRange(row, 1).setValue('📤 TOTAL EGRESOS PAGADOS');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioFam}:F${filaFinFam};B${filaInicioFam}:B${filaFinFam};"Egreso";J${filaInicioFam}:J${filaFinFam};"Pagado");0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.ROJO_FONDO);
   const filaTotalEgresosPagadosFam = row;
@@ -965,7 +965,7 @@ function crearHojaMOVIMIENTO() {
   row++;
 
   // TOTAL EGRESOS PENDIENTES
-  sheet.getRange(row, 1).setValue('⏳ TOTAL PENDIENTES');
+  sheet.getRange(row, 1).setValue('⏳ TOTAL EGRESOS PENDIENTES');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioFam}:F${filaFinFam};B${filaInicioFam}:B${filaFinFam};"Egreso";J${filaInicioFam}:J${filaFinFam};"Pendiente");0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.AMARILLO_FONDO);
   const filaTotalEgresosPendientesFam = row;
