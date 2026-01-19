@@ -25,7 +25,7 @@ ITAU Marco, Coop. Univ. Marco, ITAU Clara, UENO Clara, Tarjeta Solar Clara, Tarj
 
 ### Cuentas NT (2 items)
 1. Atlas NeuroTEA
-2. Caja Chica NT
+2. UENO Marco
 
 ### Categorías Egreso FAMILIA (6)
 GASTOS FIJOS, CUOTAS Y PRÉSTAMOS, OBLIGACIONES LEGALES, SUSCRIPCIONES, VARIABLES, AHORRO
@@ -86,6 +86,17 @@ Ahorro Clara, Ahorro Marco, Fondo de Emergencia
 | NEUROTEA | 119-200 | Fórmulas para indicadores NEUROTEA |
 
 ⚠️ **ERROR COMÚN**: Las fórmulas de NEUROTEA NO deben usar rango 73-150 (eso incluye FAMILIA)
+
+## 4b. Verificar Rangos de Saldos por Cuenta en CONFIG (v7.4)
+
+**CRÍTICO - Las fórmulas "Esperado" en Tablero.gs deben referenciar las filas correctas:**
+
+| Entidad | Filas Cuentas | Rango Datos |
+|---------|---------------|-------------|
+| FAMILIA | 65-74 (10 cuentas) | CONFIG!$B$65:$M$74 |
+| NEUROTEA | 79-80 (2 cuentas) | CONFIG!$B$79:$M$80 |
+
+⚠️ **ERROR COMÚN**: Usar filas incorrectas causa que el saldo inicial sea 0
 
 ## 5. Verificar Lógica de Negocio
 
