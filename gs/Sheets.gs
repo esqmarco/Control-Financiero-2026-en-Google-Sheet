@@ -133,23 +133,27 @@ function crearHojaCONFIG() {
     .setBackground(C.GRIS_FONDO)
     .setHorizontalAlignment('center');
 
-  // Filas de meses con valores editables (inicializados en 0)
+  // v7.5: Saldos globales ahora son FÓRMULAS que suman los saldos por cuenta
+  // Esto garantiza coherencia: solo se editan saldos por cuenta, el global se calcula
   MESES.forEach((mes, i) => {
     const filaMes = filaSaldos + 2 + i;
+    const colLetra = String.fromCharCode(66 + i); // B=Enero, C=Febrero, ... M=Diciembre
     sheet.getRange(filaMes, 1).setValue(mes);
-    sheet.getRange(filaMes, 2).setValue(0)
+    // FAMILIA = SUM de las 10 cuentas (filas 65-74)
+    sheet.getRange(filaMes, 2).setFormula(`=SUM(${colLetra}65:${colLetra}74)`)
       .setNumberFormat('#,##0')
       .setBackground(C.FAM_FONDO)
       .setFontWeight('bold');
-    sheet.getRange(filaMes, 3).setValue(0)
+    // NEUROTEA = SUM de las 2 cuentas (filas 79-80)
+    sheet.getRange(filaMes, 3).setFormula(`=SUM(${colLetra}79:${colLetra}80)`)
       .setNumberFormat('#,##0')
       .setBackground(C.NT_FONDO)
       .setFontWeight('bold');
   });
 
-  // Nota explicativa
+  // Nota explicativa (actualizada v7.5)
   sheet.getRange(filaSaldos + 14, 1, 1, 3).merge()
-    .setValue('✏️ Ingrese aquí el saldo inicial GLOBAL de cada mes.')
+    .setValue('📊 Calculado automáticamente desde SALDOS POR CUENTA (abajo)')
     .setFontSize(9).setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
 
   // ─── SALDOS INICIALES POR CUENTA - FAMILIA ───
