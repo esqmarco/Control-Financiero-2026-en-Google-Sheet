@@ -228,8 +228,10 @@ function generarHTMLDashboard() {
   }
 
   // Meta distribución
-  var metaFondo = Math.round(datos.distribucion.metaTotal * 0.3333);
-  var metaFondoInv = Math.round(datos.distribucion.metaTotal * 0.3334);
+  // v7.6: Los porcentajes se leen de datos.metas (desde CONFIG)
+  var metaFondo = Math.round(datos.distribucion.metaTotal * datos.metas.distUtilidad / 100);
+  var metaFondoEmerg = Math.round(datos.distribucion.metaTotal * datos.metas.distEmergencia / 100);
+  var metaFondoInv = Math.round(datos.distribucion.metaTotal * datos.metas.distInversion / 100);
 
   return '<!DOCTYPE html>' +
 '<html lang="es">' +
@@ -411,11 +413,11 @@ function generarHTMLDashboard() {
 '        <div style="margin-top:12px">' +
 '          <div class="kpi-grid">' +
 '            <div class="kpi-box" style="background:#dcfce7"><div class="kpi-label">💰 GANANCIA REAL</div><div class="kpi-value text-green">' + formatearGuaranies(datos.neurotea.ganancia) + '</div></div>' +
-'            <div class="kpi-box" style="background:#fef3c7"><div class="kpi-label">🎯 META 7%</div><div class="kpi-value text-yellow">' + formatearGuaranies(datos.neurotea.meta) + '</div></div>' +
+'            <div class="kpi-box" style="background:#fef3c7"><div class="kpi-label">🎯 META ' + datos.metas.ganancia + '%</div><div class="kpi-value text-yellow">' + formatearGuaranies(datos.neurotea.meta) + '</div></div>' +
 '          </div>' +
 '        </div>' +
 '        <div class="progress-container">' +
-'          <div style="display:flex;justify-content:space-between;font-size:0.9em;margin-bottom:8px"><span>% Gastos sobre Ingresos</span><span class="font-bold">' + pctGastosNT + '% / 93% máx</span></div>' +
+'          <div style="display:flex;justify-content:space-between;font-size:0.9em;margin-bottom:8px"><span>% Gastos sobre Ingresos</span><span class="font-bold">' + pctGastosNT + '% / ' + datos.metas.maxGastos + '% máx</span></div>' +
 '          <div class="progress-bar"><div class="progress-fill ' + progressClass + '" style="width:' + Math.min(pctGastosNT, 100) + '%"></div><span class="progress-text">' + pctGastosNT + '%</span></div>' +
 '        </div>' +
 '        <div style="text-align:center;margin:15px 0">' +
@@ -426,9 +428,9 @@ function generarHTMLDashboard() {
 '        <div style="border-top:1px solid #e5e7eb;padding-top:15px;margin-top:15px">' +
 '          <div class="font-bold" style="margin-bottom:12px">Distribución de Ganancia (Meta: ' + formatearGuaranies(datos.distribucion.metaTotal) + ')</div>' +
 '          <div class="fondos-grid">' +
-'            <div class="fondo-box utilidad"><div class="fondo-label" style="color:#1d4ed8">Utilidad Dueño</div><div class="fondo-meta">' + formatearGuaranies(metaFondo) + '</div><div class="fondo-real ' + (datos.distribucion.utilidad >= metaFondo ? 'ok' : 'warning') + '">' + (datos.distribucion.utilidad >= metaFondo ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.utilidad) + '</div></div>' +
-'            <div class="fondo-box emergencia"><div class="fondo-label" style="color:#ea580c">Fondo Emerg.</div><div class="fondo-meta">' + formatearGuaranies(metaFondo) + '</div><div class="fondo-real ' + (datos.distribucion.emergencia >= metaFondo ? 'ok' : 'warning') + '">' + (datos.distribucion.emergencia >= metaFondo ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.emergencia) + '</div></div>' +
-'            <div class="fondo-box inversion"><div class="fondo-label" style="color:#0891b2">Fondo Inversión</div><div class="fondo-meta">' + formatearGuaranies(metaFondoInv) + '</div><div class="fondo-real ' + (datos.distribucion.inversion >= metaFondoInv ? 'ok' : 'warning') + '">' + (datos.distribucion.inversion >= metaFondoInv ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.inversion) + '</div></div>' +
+'            <div class="fondo-box utilidad"><div class="fondo-label" style="color:#1d4ed8">Utilidad Dueño (' + datos.metas.distUtilidad + '%)</div><div class="fondo-meta">' + formatearGuaranies(metaFondo) + '</div><div class="fondo-real ' + (datos.distribucion.utilidad >= metaFondo ? 'ok' : 'warning') + '">' + (datos.distribucion.utilidad >= metaFondo ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.utilidad) + '</div></div>' +
+'            <div class="fondo-box emergencia"><div class="fondo-label" style="color:#ea580c">Fondo Emerg. (' + datos.metas.distEmergencia + '%)</div><div class="fondo-meta">' + formatearGuaranies(metaFondoEmerg) + '</div><div class="fondo-real ' + (datos.distribucion.emergencia >= metaFondoEmerg ? 'ok' : 'warning') + '">' + (datos.distribucion.emergencia >= metaFondoEmerg ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.emergencia) + '</div></div>' +
+'            <div class="fondo-box inversion"><div class="fondo-label" style="color:#0891b2">Fondo Inversión (' + datos.metas.distInversion + '%)</div><div class="fondo-meta">' + formatearGuaranies(metaFondoInv) + '</div><div class="fondo-real ' + (datos.distribucion.inversion >= metaFondoInv ? 'ok' : 'warning') + '">' + (datos.distribucion.inversion >= metaFondoInv ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.inversion) + '</div></div>' +
 '          </div>' +
 '        </div>' +
 '      </div>' +
@@ -492,8 +494,20 @@ function obtenerDatosDashboard() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var tablero = ss.getSheetByName(NOMBRES_HOJAS.TABLERO);
   var movimiento = ss.getSheetByName(NOMBRES_HOJAS.MOVIMIENTO);
+  var config = ss.getSheetByName(NOMBRES_HOJAS.CONFIG);
 
   var mesSeleccionado = movimiento ? movimiento.getRange('B3').getValue() : 'Enero';
+
+  // v7.6: Leer METAS desde CONFIG (filas 40-44, columna B)
+  var metaGananciaPct = 7, metaMaxGastosPct = 93;
+  var distUtilidadPct = 33.33, distEmergenciaPct = 33.33, distInversionPct = 33.34;
+  if (config) {
+    metaGananciaPct = Number(config.getRange('B40').getValue()) || 7;
+    metaMaxGastosPct = Number(config.getRange('B41').getValue()) || 93;
+    distUtilidadPct = Number(config.getRange('B42').getValue()) || 33.33;
+    distEmergenciaPct = Number(config.getRange('B43').getValue()) || 33.33;
+    distInversionPct = Number(config.getRange('B44').getValue()) || 33.34;
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CÁLCULO DINÁMICO DE POSICIONES (basado en Tablero.gs)
@@ -787,6 +801,14 @@ function obtenerDatosDashboard() {
       // Balance neto
       balanceNetoMes: balanceNetoMes,
       balanceNeto: balanceNeto
+    },
+    // v7.6: METAS leídas desde CONFIG
+    metas: {
+      ganancia: metaGananciaPct,
+      maxGastos: metaMaxGastosPct,
+      distUtilidad: distUtilidadPct,
+      distEmergencia: distEmergenciaPct,
+      distInversion: distInversionPct
     }
   };
 }
