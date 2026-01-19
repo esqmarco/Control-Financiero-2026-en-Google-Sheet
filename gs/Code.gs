@@ -914,10 +914,11 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
 
   // Verificar si es una transacción que requiere auto-creación
   const esPrestamo = tipo === 'Préstamo NeuroTEA';
+  const esDevolucionNT = tipo === 'Devolución NeuroTEA';  // v7.3: Caso faltante
   const esPrestamoFamNT = subcategoria === 'Préstamo Familia → NT';
   const esDevolucionFamNT = subcategoria === 'Devolución Familia → NT';
 
-  if (!esPrestamo && !esPrestamoFamNT && !esDevolucionFamNT) return;
+  if (!esPrestamo && !esDevolucionNT && !esPrestamoFamNT && !esDevolucionFamNT) return;
 
   const cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
   if (!cargaNT) return;
@@ -999,6 +1000,31 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
       mensajeToast = '✓ Creado ingreso en CARGA_NT: "Devolución Familia → NT" por ' + formatearGuaranies(monto);
+    }
+
+    // CASO 4: TIPO="Devolución NeuroTEA" (NT devuelve a FAM - ingreso para FAM)
+    // → Crear egreso en CARGA_NT: Egreso NT / VARIABLES / Devolución NT → Familia
+    // v7.3: Caso faltante - cuando FAM registra ingreso, auto-crear egreso en NT
+    else if (esDevolucionNT) {
+      // Verificar duplicado
+      if (existeTransaccionCruzada(cargaNT, fecha, 'Devolución NT → Familia', monto, 'subcategoria')) {
+        ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
+        return;
+      }
+      filaDestino = encontrarPrimeraFilaVacia(cargaNT);
+      cargaNT.getRange(filaDestino, 1, 1, 8).setValues([[
+        fecha,                        // A: FECHA
+        'Egreso NT',                  // B: TIPO
+        'VARIABLES',                  // C: CATEGORÍA
+        'Devolución NT → Familia',    // D: SUBCATEGORÍA
+        descripcion || 'Auto: Devolución a Familia',  // E: DESCRIPCIÓN
+        monto,                        // F: MONTO
+        'Atlas NeuroTEA',             // G: CUENTA
+        'Auto-generado desde CARGA_FAMILIA'  // H: NOTAS
+      ]]);
+      aplicarFormatoFecha(cargaNT, filaDestino);
+      transaccionCreada = true;
+      mensajeToast = '✓ Creado egreso en CARGA_NT: "Devolución NT → Familia" por ' + formatearGuaranies(monto);
     }
 
   } catch (error) {
