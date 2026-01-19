@@ -706,5 +706,29 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ---
 
+## Bug Fixes [2026-01-19] - v7.1
+
+### INGRESOS vuelven a cero después de préstamo (BUG CRÍTICO)
+- **Problema**: Al cargar un préstamo, la auto-creación copiaba la fecha sin formato, causando que `MONTH()` fallara y SUMPRODUCT devolviera 0
+- **Solución**: Nueva función `aplicarFormatoFecha()` que aplica 'dd/mm/yyyy' después de `setValues()`
+- **Archivos**: Code.gs (líneas 878-885, y en cada caso de auto-creación)
+
+### Duplicación de transacciones cruzadas
+- **Problema**: Cada vez que se editaba el MONTO (no solo al crear), se generaba una nueva transacción cruzada duplicada
+- **Solución**: Nueva función `existeTransaccionCruzada()` que verifica por fecha+tipo+monto antes de crear
+- **Archivos**: Code.gs (líneas 837-876)
+
+### Fallo silencioso sin fecha
+- **Problema**: Si el usuario ingresaba MONTO sin FECHA, la auto-creación fallaba sin mostrar error
+- **Solución**: Alerta toast "⚠️ Falta la FECHA. La transacción cruzada NO se creó."
+- **Archivos**: Code.gs (líneas 909-913, 1038-1042)
+
+### Rangos incorrectos en LIQUIDEZ
+- **Problema**: LIQUIDEZ_FAMILIA usaba 9-70 y LIQUIDEZ_NT usaba 73-150
+- **Solución**: Corregido a FAMILIA: 9-113, NEUROTEA: 119-200
+- **Archivos**: Sheets.gs (líneas 1544-1545, 1553-1555)
+
+---
+
 *Última actualización: 2026-01-19*
-*Versión: 7.0 - Auto-creación de transacciones cruzadas (préstamos/devoluciones)*
+*Versión: 7.1 - Corrección bugs auto-creación (fecha, duplicados, alertas, rangos)*
