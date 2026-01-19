@@ -684,8 +684,9 @@ function crearHojaTABLERO() {
 
   // Valor Meta (% leído de CONFIG!$B$40)
   // v7.6: El % se lee de CONFIG!$B$40 y se divide por 100
+  // FIX: Usar VALUE() para asegurar conversión numérica
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(H${filaIngresosNT}*CONFIG!$B$40/100;0)`)
+    .setFormula(`=IFERROR(H${filaIngresosNT}*VALUE(CONFIG!$B$40)/100;0)`)
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -766,20 +767,21 @@ function crearHojaTABLERO() {
 
   // Valores de distribución
   // v7.6: Los % se leen de CONFIG (filas 42-44)
-  sheet.getRange(rowNT, 8).setFormula(`=IFERROR(H${filaGananciaNT}*CONFIG!$B$42/100;0)`)
+  // FIX: Usar VALUE() para asegurar conversión numérica
+  sheet.getRange(rowNT, 8).setFormula(`=IFERROR(H${filaGananciaNT}*VALUE(CONFIG!$B$42)/100;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#F3E8FF')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(H${filaGananciaNT}*CONFIG!$B$43/100;0)`)
+  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(H${filaGananciaNT}*VALUE(CONFIG!$B$43)/100;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#FFEDD5')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(H${filaGananciaNT}*CONFIG!$B$44/100;0)`)
+    .setFormula(`=IFERROR(H${filaGananciaNT}*VALUE(CONFIG!$B$44)/100;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#CFFAFE')

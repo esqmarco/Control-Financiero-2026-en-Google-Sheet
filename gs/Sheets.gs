@@ -474,9 +474,9 @@ function crearHojaPRESUPUESTO() {
   for (let col = 4; col <= 16; col++) {
     const colLetra = String.fromCharCode(64 + col);
     // Semáforo: <0% = Rojo (Pérdida), 0-META% = Amarillo, >=META% = Verde
-    // La fórmula lee el % de CONFIG y lo divide por 100 para comparar
+    // FIX: Usar VALUE() para comparación numérica
     sheet.getRange(row, col).setFormula(
-      `=IF(${colLetra}${filaPctGanancia}<0;"🔴 PÉRDIDA";IF(${colLetra}${filaPctGanancia}<CONFIG!$B$40/100;"🟡 <"&CONFIG!$B$40&"%";"🟢 META"))`
+      `=IF(${colLetra}${filaPctGanancia}<0;"🔴 PÉRDIDA";IF(${colLetra}${filaPctGanancia}<VALUE(CONFIG!$B$40)/100;"🟡 <"&CONFIG!$B$40&"%";"🟢 META"))`
     );
   }
   const filaEstadoMeta = row;
@@ -484,21 +484,22 @@ function crearHojaPRESUPUESTO() {
 
   // Distribución de ganancia
   // v7.6: Los porcentajes se leen de CONFIG (filas 42-44) en lugar de hardcodeados
+  // FIX: Usar VALUE() para asegurar que el valor de CONFIG sea numérico
   const distItems = [
     { nombre: '→ Utilidad al propietario', configRef: 'CONFIG!$B$42' }, // Distribución Utilidad Dueño
     { nombre: '→ Fondo de emergencia', configRef: 'CONFIG!$B$43' },     // Distribución Fondo Emergencia
     { nombre: '→ Fondo de Inversión', configRef: 'CONFIG!$B$44' }       // Distribución Fondo Inversión
   ];
   distItems.forEach(item => {
-    // El nombre de la fila incluye el % leído de CONFIG
-    sheet.getRange(row, 1).setFormula(`="${item.nombre} ("&${item.configRef}&"%)"`).setFontStyle('italic');
+    // El nombre de la fila incluye el % leído de CONFIG (usar TEXT para formato correcto)
+    sheet.getRange(row, 1).setFormula(`="${item.nombre} ("&TEXT(${item.configRef};"0,00")&"%)"`).setFontStyle('italic');
     sheet.getRange(row, 2).setValue('Calculado');
     sheet.getRange(row, 3).setValue('-');
     for (let col = 4; col <= 16; col++) {
       const colLetra = String.fromCharCode(64 + col);
-      // Solo distribuir si ganancia > 0. El % se divide por 100 para convertir a decimal
+      // Solo distribuir si ganancia > 0. Usar VALUE() para asegurar conversión numérica
       sheet.getRange(row, col).setFormula(
-        `=IF(${colLetra}${filaGananciaCalculada}>0;${colLetra}${filaGananciaCalculada}*${item.configRef}/100;0)`
+        `=IFERROR(IF(${colLetra}${filaGananciaCalculada}>0;${colLetra}${filaGananciaCalculada}*VALUE(${item.configRef})/100;0);0)`
       );
     }
     row++;
@@ -1163,21 +1164,23 @@ function crearHojaMOVIMIENTO() {
 
   // % Ganancia
   // v7.6: El semáforo compara contra CONFIG!$B$40/100
+  // FIX: Usar VALUE() para comparación numérica
   sheet.getRange(row, 1).setValue('  % Ganancia sobre Ingresos').setFontStyle('italic');
   sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaTotalIngresosNT}>0;F${filaGananciaNT}/F${filaTotalIngresosNT};0);0)`).setNumberFormat('0,00%');
-  sheet.getRange(row, 9).setFormula(`=IF(F${row}>=CONFIG!$B$40/100;"🟢 META";"🟡 <"&CONFIG!$B$40&"%")`);
+  sheet.getRange(row, 9).setFormula(`=IF(F${row}>=VALUE(CONFIG!$B$40)/100;"🟢 META";"🟡 <"&CONFIG!$B$40&"%")`);
   row++;
 
   // Distribución de Ganancia (solo si > 0)
   // v7.6: Los porcentajes se leen de CONFIG (filas 42-44)
-  sheet.getRange(row, 1).setFormula('="    → Utilidad Dueño ("&CONFIG!$B$42&"%)"').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
-  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*CONFIG!$B$42/100;0);0)`);
+  // FIX: Usar TEXT() para etiquetas y VALUE() para cálculos
+  sheet.getRange(row, 1).setFormula('="    → Utilidad Dueño ("&TEXT(CONFIG!$B$42;"0,00")&"%)"').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
+  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*VALUE(CONFIG!$B$42)/100;0);0)`);
   row++;
-  sheet.getRange(row, 1).setFormula('="    → Fondo Emergencia ("&CONFIG!$B$43&"%)"').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
-  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*CONFIG!$B$43/100;0);0)`);
+  sheet.getRange(row, 1).setFormula('="    → Fondo Emergencia ("&TEXT(CONFIG!$B$43;"0,00")&"%)"').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
+  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*VALUE(CONFIG!$B$43)/100;0);0)`);
   row++;
-  sheet.getRange(row, 1).setFormula('="    → Fondo Inversión ("&CONFIG!$B$44&"%)"').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
-  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*CONFIG!$B$44/100;0);0)`);
+  sheet.getRange(row, 1).setFormula('="    → Fondo Inversión ("&TEXT(CONFIG!$B$44;"0,00")&"%)"').setFontStyle('italic').setFontColor(C.TEXTO_CLARO);
+  sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaGananciaNT}>0;F${filaGananciaNT}*VALUE(CONFIG!$B$44)/100;0);0)`);
   row++;
 
   // SALDO DISPONIBLE NT
