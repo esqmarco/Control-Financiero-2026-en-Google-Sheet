@@ -404,7 +404,7 @@ function generarHTMLDashboard() {
 '        <div class="card-title">🎯 INDICADORES DE METAS</div>' +
 '        <div class="kpi-grid">' +
 '          <div class="kpi-box" style="background:#dbeafe"><div class="kpi-label">💵 INGRESOS DEL MES</div><div class="kpi-value text-blue">' + formatearGuaranies(datos.neurotea.ingresos) + '</div></div>' +
-'          <div class="kpi-box" style="background:#fee2e2"><div class="kpi-label">📤 GASTOS PAGADOS</div><div class="kpi-value text-red">' + formatearGuaranies(datos.neurotea.gastos) + '</div></div>' +
+'          <div class="kpi-box" style="background:#fee2e2"><div class="kpi-label">📤 EGRESOS PAGADOS</div><div class="kpi-value text-red">' + formatearGuaranies(datos.neurotea.gastos) + '</div></div>' +
 '          <div class="kpi-box" style="background:#fef3c7"><div class="kpi-label">⏳ EGRESOS PENDIENTES</div><div class="kpi-value text-yellow">' + formatearGuaranies(datos.neurotea.egresosPendientes) + '</div></div>' +
 '          <div class="kpi-box" style="background:#f3f4f6"><div class="kpi-label">📊 PROYECCIÓN FIN MES</div><div class="kpi-value">' + formatearGuaranies(datos.neurotea.ingresos - datos.neurotea.gastos - datos.neurotea.egresosPendientes) + '</div></div>' +
 '        </div>' +

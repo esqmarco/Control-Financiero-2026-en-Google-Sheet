@@ -286,7 +286,7 @@ function crearHojaTABLERO() {
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowFam, 4, 1, 2).merge()
-    .setValue('📤 GASTOS OPERATIVOS')
+    .setValue('📤 EGRESOS PAGADOS')
     .setFontSize(9)
     .setFontColor(UI.PAGADO_TEXTO)
     .setBackground(UI.PAGADO_FONDO)
@@ -536,7 +536,7 @@ function crearHojaTABLERO() {
 
   // Label Gastos (solo pagados)
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setValue('📤 GASTOS PAGADOS')
+    .setValue('📤 EGRESOS PAGADOS')
     .setFontSize(9)
     .setFontColor(UI.PAGADO_TEXTO)
     .setBackground(UI.PAGADO_FONDO)

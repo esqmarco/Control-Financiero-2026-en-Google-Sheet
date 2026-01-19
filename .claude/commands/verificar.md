@@ -113,10 +113,11 @@ Ahorro Clara, Ahorro Marco, Fondo de Emergencia
 
 ## 6. Verificar Visualización AHORRO
 
-- **GASTOS OPERATIVOS**: Solo EST.PAGO = "Pagado" (sin incluir "Ahorrado")
+- **EGRESOS PAGADOS**: Solo EST.PAGO = "Pagado" (sin incluir "Ahorrado")
+- **EGRESOS PENDIENTES**: Solo EST.PAGO = "Pendiente"
 - **AHORRO**: Mostrado separadamente
-- **DISPONIBLE**: INGRESOS - GASTOS - AHORRO
-- **PATRIMONIO FAMILIA**: INGRESOS - GASTOS (incluye ahorros)
+- **DISPONIBLE**: INGRESOS - EGRESOS PAGADOS - AHORRO
+- **PATRIMONIO FAMILIA**: INGRESOS - EGRESOS (incluye ahorros)
 
 ## 7. Verificar Colores (Estilo Sobrio v6.1)
 
