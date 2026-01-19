@@ -735,7 +735,12 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 - **Diferenciación**: "EGRESOS PAGADOS" vs "EGRESOS PENDIENTES" (estados claros)
 - **Archivos**: Tablero.gs, Sheets.gs, WebApp.gs
 
+### Caso faltante: Devolución NeuroTEA no auto-creaba egreso en NT
+- **Problema**: Si FAM registraba TIPO="Devolución NeuroTEA" (ingreso), no se auto-creaba el egreso correspondiente en CARGA_NT
+- **Solución**: Agregado CASO 4 en `autoCrearTransaccionCruzadaFamilia()` para crear "Devolución NT → Familia" en NT
+- **Archivos**: Code.gs (líneas 1005-1028)
+
 ---
 
 *Última actualización: 2026-01-19*
-*Versión: 7.2 - Nomenclatura unificada EGRESOS PAGADOS/PENDIENTES*
+*Versión: 7.3 - Caso faltante devolución NT auto-creación completa*
