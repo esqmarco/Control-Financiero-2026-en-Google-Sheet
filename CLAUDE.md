@@ -151,14 +151,19 @@ gs/
 12. **Devolución Familia → NT** (FAM devuelve préstamo a NT)
 13. **Préstamo Familia → NT** (FAM presta a NT)
 
-### NEUROTEA - VARIABLES (7 items)
+### NEUROTEA - VARIABLES (12 items - v7.7)
 1. Insumos y Papelería
 2. Reparaciones Clínica
 3. Mantenimiento Aire
 4. Gastos Cursos
 5. Gastos Varios Cumple
-6. **Préstamo NT → Familia** (NT presta a FAM)
-7. **Devolución NT → Familia** (NT devuelve préstamo a FAM)
+6. **Horas Extras Aracely** (v7.7)
+7. **Horas Extras Fatima** (v7.7)
+8. **Préstamo NT → Familia** (NT presta a FAM)
+9. **Devolución NT → Familia** (NT devuelve préstamo a FAM)
+10. Reserva Var. 1
+11. Reserva Var. 2
+12. Reserva Var. 3
 
 ### NEUROTEA - EVENTOS (18 items: 6 definidos + 12 reservas) - v7.7
 > **DECISIÓN [2026-01-20]**: EVENTOS ahora se registra en GASTOS_FIJOS (no en CARGA_NT).

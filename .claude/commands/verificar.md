@@ -39,8 +39,8 @@ CLÍNICA, SUELDOS Y HONORARIOS, TELEFONÍA E INTERNET, OBLIGACIONES LEGALES, EVE
 ### Subcategorías Variables FAMILIA (13 items - v7.7)
 Incluye "Alimentación", "Gastos Varios", "Devolución Familia → NT" y "Préstamo Familia → NT"
 
-### Subcategorías Variables NT (7 items)
-Incluye "Préstamo NT → Familia" y "Devolución NT → Familia"
+### Subcategorías Variables NT (12 items - v7.7)
+Incluye "Horas Extras Aracely", "Horas Extras Fatima", "Préstamo NT → Familia", "Devolución NT → Familia" y 3 reservas
 
 ### Eventos NT (18 - v7.7)
 6 definidos + 12 reservas (van en GASTOS_FIJOS, NO en CARGA_NT)
