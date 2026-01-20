@@ -418,7 +418,7 @@ const SUELDOS_NT = [
   { concepto: 'Honorario Contador', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Salario Administrador (Marco)', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Honorario Mant. Sistema', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
-  { concepto: 'Reserva Sueldo 1', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Community Manager', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Reserva Sueldo 2', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Reserva Sueldo 3', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 }
 ];
