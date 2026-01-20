@@ -757,4 +757,33 @@ EVENTOS son gastos PLANIFICADOS (Variable/Anual), no gastos variables puros. Por
 
 ---
 
-*Última actualización: 2026-01-20 - Agregada decisión v7.7 (EVENTOS a GASTOS_FIJOS, dropdowns limpios)*
+### [2026-01-20] - FIX CRÍTICO: Esperado por cuenta ahora resta gastos fijos (v7.8)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+Corregido bug crítico donde las fórmulas "Esperado" por cuenta en TABLERO no restaban los gastos fijos pagados correctamente.
+
+**Problema identificado**:
+1. **FAMILIA**: La fórmula usaba `INDEX/MATCH` dentro de `SUMPRODUCT` para buscar EST.PAGO y REAL en MOVIMIENTO basándose en el CONCEPTO. Pero `INDEX/MATCH` con un array como argumento de búsqueda NO funciona correctamente - solo retorna el primer match, no procesa cada elemento del array.
+2. **NEUROTEA**: La fórmula ni siquiera intentaba restar gastos fijos - solo leía de CARGA_NT.
+3. **Impacto**: Los saldos "Esperado" estaban inflados (~44M en FAMILIA, ~27M en NEUROTEA).
+
+**Solución implementada**:
+1. **Nueva columna N (CUENTA) en MOVIMIENTO**:
+   - Para items que vienen de GASTOS_FIJOS: `=INDEX(GASTOS_FIJOS!$F:$F;MATCH(concepto;GASTOS_FIJOS!$A:$A;0))`
+   - Para items de CARGA (Variables, Ahorro, Ingresos): vacío (ya tienen CUENTA en CARGA)
+   - Columna oculta junto con L y M
+
+2. **Fórmulas "Esperado" corregidas**:
+   - La parte de gastos fijos ahora usa: `-SUMPRODUCT((MOVIMIENTO!$N$rango="${cuenta}")*(MOVIMIENTO!$J$rango="Pagado")*(MOVIMIENTO!$F$rango))`
+   - Esta fórmula funciona correctamente porque usa igualdad simple en arrays, no INDEX/MATCH
+
+3. **Rangos utilizados**:
+   - FAMILIA: N9:N113
+   - NEUROTEA: N119:N200
+
+**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs, CLAUDE.md
+**Razón**: El usuario identificó que los valores calculados en TABLERO eran incoherentes con los datos ingresados. El análisis reveló que los gastos fijos no se restaban del saldo esperado por cuenta.
+
+---
+
+*Última actualización: 2026-01-20 - Agregada decisión v7.8 (FIX CRÍTICO: Esperado por cuenta)*

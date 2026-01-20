@@ -1007,9 +1007,9 @@ function crearHojaMOVIMIENTO() {
   sheet.getRange('D3').setValue('Hoy:').setFontWeight('bold');
   sheet.getRange('E3').setFormula('=TODAY()').setNumberFormat('dd/mm/yyyy');
 
-  // ─── HEADERS DE COLUMNAS (con DÍA, CATEGORÍA y ENTIDAD) ───
-  // A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD (ocultas)
-  const headers = ['CONCEPTO', 'TIPO', 'FREC.', 'DÍA', 'PRESUPUESTO', 'REAL', 'DIFERENCIA', '%', 'ESTADO', 'EST. PAGO', '🚦', 'CATEGORÍA', 'ENTIDAD'];
+  // ─── HEADERS DE COLUMNAS (con DÍA, CATEGORÍA, ENTIDAD y CUENTA) ───
+  // A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD, N=CUENTA (ocultas)
+  const headers = ['CONCEPTO', 'TIPO', 'FREC.', 'DÍA', 'PRESUPUESTO', 'REAL', 'DIFERENCIA', '%', 'ESTADO', 'EST. PAGO', '🚦', 'CATEGORÍA', 'ENTIDAD', 'CUENTA'];
   headers.forEach((h, i) => {
     sheet.getRange(5, i + 1)
       .setValue(h)
@@ -1017,8 +1017,8 @@ function crearHojaMOVIMIENTO() {
       .setBackground(C.GRIS_FONDO)
       .setHorizontalAlignment('center');
   });
-  // Ocultar columnas L-M (CATEGORÍA, ENTIDAD) - solo para cálculos internos
-  sheet.hideColumns(12, 2);
+  // Ocultar columnas L-N (CATEGORÍA, ENTIDAD, CUENTA) - solo para cálculos internos
+  sheet.hideColumns(12, 3);
 
   let row = 7;
   const filaInicioFam = 9; // Primera fila de datos FAMILIA
@@ -1269,6 +1269,15 @@ function escribirSeccionMovimientoIngresos(sheet, row, titulo, items, entidad, c
       .setFontStyle('italic')
       .setFontColor('#6B7280');
 
+    // CATEGORÍA (col L) - vacío para ingresos
+    sheet.getRange(row, 12).setValue('');
+
+    // ENTIDAD (col M) - para filtrar en TABLERO
+    sheet.getRange(row, 13).setValue(entidad);
+
+    // CUENTA (col N) - vacío para ingresos (vienen de CARGA que ya tiene CUENTA)
+    sheet.getRange(row, 14).setValue('');
+
     row++;
   });
 
@@ -1340,6 +1349,11 @@ function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, co
     // ENTIDAD (col M) - para filtrar en TABLERO
     sheet.getRange(row, 13).setValue(entidad);
 
+    // CUENTA (col N) - para cálculos de Esperado en TABLERO (v7.8)
+    // Busca la cuenta asignada en GASTOS_FIJOS columna F
+    const formulaCuenta = `=IFERROR(INDEX(GASTOS_FIJOS!$F:$F;MATCH("${item.concepto}";GASTOS_FIJOS!$A:$A;0));"")`;
+    sheet.getRange(row, 14).setFormula(formulaCuenta);
+
     row++;
   });
 
@@ -1357,7 +1371,7 @@ function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, co
 }
 
 // ─── SECCIÓN VARIABLES PUROS (vienen de CARGA) ───
-// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD
+// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD, N=CUENTA
 function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
   // La categoría siempre es "VARIABLES" para esta sección
   const categoria = 'VARIABLES';
@@ -1405,6 +1419,9 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
     // ENTIDAD (col M) - para filtrar en TABLERO
     sheet.getRange(row, 13).setValue(entidad);
 
+    // CUENTA (col N) - vacío para variables puros (vienen de CARGA que ya tiene CUENTA)
+    sheet.getRange(row, 14).setValue('');
+
     row++;
   });
 
@@ -1422,7 +1439,7 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
 }
 
 // ─── SECCIÓN AHORRO (viene de CARGA, EST.PAGO = "Ahorrado") ───
-// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA
+// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD, N=CUENTA
 function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, colorFondo, colorSubtotal) {
   // La categoría siempre es "AHORRO" para esta sección
   // Ahora AHORRO es un TIPO separado (no Egreso), se carga en CARGA_FAMILIA con:
@@ -1475,6 +1492,9 @@ function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, col
     // ENTIDAD (col M) - para filtrar en TABLERO
     sheet.getRange(row, 13).setValue(entidad);
 
+    // CUENTA (col N) - vacío para ahorro (viene de CARGA que ya tiene CUENTA)
+    sheet.getRange(row, 14).setValue('');
+
     row++;
   });
 
@@ -1493,7 +1513,7 @@ function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, col
 
 // ─── SECCIÓN EVENTOS NT ───
 // v7.7: EVENTOS ahora lee de GASTOS_FIJOS (como otros gastos fijos), NO de CARGA_NT
-// Estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD
+// Estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD, N=CUENTA
 function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal) {
   // La categoría siempre es "EVENTOS" para esta sección
   const categoria = 'EVENTOS';
@@ -1547,6 +1567,11 @@ function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal)
 
     // ENTIDAD (col M) - EVENTOS es solo para NEUROTEA
     sheet.getRange(row, 13).setValue('NEUROTEA');
+
+    // CUENTA (col N) - para cálculos de Esperado en TABLERO (v7.8)
+    // Busca la cuenta asignada en GASTOS_FIJOS columna F
+    const formulaCuenta = `=IFERROR(INDEX(GASTOS_FIJOS!$F:$F;MATCH("${evento.nombre}";GASTOS_FIJOS!$A:$A;0));"")`;
+    sheet.getRange(row, 14).setFormula(formulaCuenta);
 
     row++;
   });
