@@ -597,8 +597,9 @@ function escribirSeccionPresupuesto(sheet, row, titulo, items, tipo, colorFondo,
 }
 
 function escribirSeccionEventos(sheet, row, colorFondo, colorSubtotal) {
+  // v7.7: Actualizado a 18 eventos (6 definidos + 12 reservas)
   sheet.getRange(row, 1, 1, 16).merge()
-    .setValue('▶ EVENTOS (6 definidos + 10 reservas)')
+    .setValue('▶ EVENTOS (6 definidos + 12 reservas)')
     .setFontWeight('bold')
     .setBackground(colorFondo);
   row++;
@@ -718,11 +719,13 @@ function crearHojaGASTOS_FIJOS() {
     .setHorizontalAlignment('center');
   row += 2;
 
+  // v7.7: EVENTOS ahora está en GASTOS_FIJOS (antes estaba solo en CARGA_NT)
   const todosGastosNT = [
     ...CLINICA_NT,
     ...SUELDOS_NT,
     ...TELEFONIA_NT,
-    ...OBLIGACIONES_NT
+    ...OBLIGACIONES_NT,
+    ...EVENTOS_GASTOS_NT  // v7.7: EVENTOS agregado a GASTOS_FIJOS
   ];
 
   todosGastosNT.forEach(gasto => {
@@ -837,11 +840,11 @@ function aplicarValidacionesCargaFamilia(sheet) {
       .build()
   );
 
-  // CATEGORÍA (columna C) - incluye categorías de egreso Y categorías de ahorro
-  // El sistema Anti-Burro en Code.gs controla cuáles se muestran según el TIPO
+  // CATEGORÍA (columna C) - solo VARIABLES (para egresos) y opciones de AHORRO
+  // v7.7: Se eliminaron GASTOS FIJOS, CUOTAS, OBLIGACIONES, SUSCRIPCIONES (van en GASTOS_FIJOS)
   sheet.getRange('C4:C500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['-', ...CATEGORIAS_EGRESO_FAMILIA, ...CATEGORIAS_AHORRO_FAMILIA], true)
+      .requireValueInList(['-', ...CARGA_CATEGORIAS_FAMILIA, ...CATEGORIAS_AHORRO_FAMILIA], true)
       .setAllowInvalid(false)
       .build()
   );
@@ -873,13 +876,13 @@ function crearHojaCARGA_NT() {
 
   // ─── HEADER PRINCIPAL ───
   sheet.getRange('A1:I1').merge()
-    .setValue('🏥 CARGA NEUROTEA - Variables + Eventos')
+    .setValue('🏥 CARGA NEUROTEA - Variables')
     .setFontSize(16).setFontWeight('bold')
     .setBackground(C.NT_HEADER).setFontColor(C.BLANCO)
     .setHorizontalAlignment('center');
 
   sheet.getRange('A2:I2').merge()
-    .setValue('Solo para gastos VARIABLES puros y EVENTOS. Los gastos fijos van en GASTOS_FIJOS.')
+    .setValue('Solo para gastos VARIABLES puros. Los gastos fijos y EVENTOS van en GASTOS_FIJOS.')
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
 
   // ─── HEADERS DE COLUMNAS ───
@@ -931,19 +934,20 @@ function aplicarValidacionesCargaNT(sheet) {
       .build()
   );
 
-  // CATEGORÍA (columna C)
+  // CATEGORÍA (columna C) - solo VARIABLES (EVENTOS y otros van en GASTOS_FIJOS)
+  // v7.7: Se eliminaron CLÍNICA, SUELDOS, TELEFONÍA, OBLIGACIONES, EVENTOS
   sheet.getRange('C4:C500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['-', ...CATEGORIAS_EGRESO_NT], true)
+      .requireValueInList(['-', ...CARGA_CATEGORIAS_NT], true)
       .setAllowInvalid(false)
       .build()
   );
 
-  // SUBCATEGORÍA/EVENTO (columna D)
-  const subcatEventos = ['-', ...VARIABLES_NT, ...EVENTOS_NT.map(e => e.nombre)];
+  // SUBCATEGORÍA (columna D) - solo VARIABLES_NT (EVENTOS se eliminaron - van en GASTOS_FIJOS)
+  // v7.7: EVENTOS ya no aparece aquí
   sheet.getRange('D4:D500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(subcatEventos, true)
+      .requireValueInList(['-', ...VARIABLES_NT], true)
       .setAllowInvalid(false)
       .build()
   );
@@ -1488,55 +1492,63 @@ function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, col
 }
 
 // ─── SECCIÓN EVENTOS NT ───
-// Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD
+// v7.7: EVENTOS ahora lee de GASTOS_FIJOS (como otros gastos fijos), NO de CARGA_NT
+// Estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA, M=ENTIDAD
 function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal) {
   // La categoría siempre es "EVENTOS" para esta sección
   const categoria = 'EVENTOS';
 
   sheet.getRange(row, 1, 1, 11).merge()
-    .setValue('▶ EVENTOS')
+    .setValue('▶ EVENTOS (6 definidos + 12 reservas)')
     .setFontWeight('bold').setBackground(colorFondo);
   row++;
 
   const filaInicio = row;
 
+  // v7.7: Incluimos TODOS los eventos (incluyendo reservas)
   EVENTOS_NT.forEach(evento => {
-    if (!evento.nombre.includes('Reserva')) {
-      sheet.getRange(row, 1).setValue(evento.nombre);
-      sheet.getRange(row, 2).setValue('Egreso');
-      sheet.getRange(row, 3).setValue('Variable');
-      sheet.getRange(row, 4).setValue(0).setHorizontalAlignment('center'); // DÍA (eventos no tienen)
+    sheet.getRange(row, 1).setValue(evento.nombre);
+    sheet.getRange(row, 2).setValue('Egreso');
+    sheet.getRange(row, 3).setValue('Variable/Anual');
 
-      // PRESUPUESTO (col E): Busca en hoja PRESUPUESTO
-      const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH("${evento.nombre}";PRESUPUESTO!$A:$A;0);$N$3);0)`;
-      sheet.getRange(row, 5).setFormula(formulaPresup);
+    // DÍA (col D): Lee de GASTOS_FIJOS
+    const formulaDia = `=IFERROR(INDEX(GASTOS_FIJOS!$E:$E;MATCH("${evento.nombre}";GASTOS_FIJOS!$A:$A;0));0)`;
+    sheet.getRange(row, 4).setFormula(formulaDia).setHorizontalAlignment('center');
 
-      // REAL (col F): SUMPRODUCT desde CARGA_NT según evento y mes
-      const formulaReal = `=IFERROR(SUMPRODUCT((CARGA_NT!$D$4:$D$500="${evento.nombre}")*(MONTH(CARGA_NT!$A$4:$A$500)=$N$3)*(YEAR(CARGA_NT!$A$4:$A$500)=${AÑO})*(CARGA_NT!$F$4:$F$500));0)`;
-      sheet.getRange(row, 6).setFormula(formulaReal);
+    // PRESUPUESTO (col E): Busca en hoja PRESUPUESTO
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH("${evento.nombre}";PRESUPUESTO!$A:$A;0);$N$3);0)`;
+    sheet.getRange(row, 5).setFormula(formulaPresup);
 
-      // DIFERENCIA (col G)
-      sheet.getRange(row, 7).setFormula(`=F${row}-E${row}`);
+    // REAL (col F): Lee de GASTOS_FIJOS (columnas G-R = meses, $N$3 = mes seleccionado)
+    // v7.7: Cambiado de CARGA_NT a GASTOS_FIJOS
+    const formulaReal = `=IFERROR(INDEX(GASTOS_FIJOS!$G:$R;MATCH("${evento.nombre}";GASTOS_FIJOS!$A:$A;0);$N$3);0)`;
+    sheet.getRange(row, 6).setFormula(formulaReal);
 
-      // % (col H)
-      sheet.getRange(row, 8).setFormula(`=IF(E${row}=0;0;F${row}/E${row})`);
+    // DIFERENCIA (col G)
+    sheet.getRange(row, 7).setFormula(`=F${row}-E${row}`);
 
-      // ESTADO (col I)
-      sheet.getRange(row, 9).setFormula(`=IF(F${row}<=E${row};"✓";"⚠")`);
+    // % (col H)
+    sheet.getRange(row, 8).setFormula(`=IF(E${row}=0;0;F${row}/E${row})`);
 
-      // EST. PAGO (col J): Eventos de CARGA ya están PAGADOS (sin dropdown)
-      sheet.getRange(row, 10).setValue('Pagado')
-        .setFontStyle('italic')
-        .setFontColor('#6B7280');
+    // ESTADO (col I)
+    sheet.getRange(row, 9).setFormula(`=IF(F${row}<=E${row};"✓";"⚠")`);
 
-      // CATEGORÍA (col L) - para cálculos de % GASTOS POR CATEGORÍA
-      sheet.getRange(row, 12).setValue(categoria);
+    // EST. PAGO (col J): Dropdown como otros gastos fijos (v7.7)
+    sheet.getRange(row, 10).setValue('Pendiente')
+      .setDataValidation(
+        SpreadsheetApp.newDataValidation()
+          .requireValueInList(ESTADOS, true)
+          .setAllowInvalid(false)
+          .build()
+      );
 
-      // ENTIDAD (col M) - EVENTOS es solo para NEUROTEA
-      sheet.getRange(row, 13).setValue('NEUROTEA');
+    // CATEGORÍA (col L) - para cálculos de % GASTOS POR CATEGORÍA
+    sheet.getRange(row, 12).setValue(categoria);
 
-      row++;
-    }
+    // ENTIDAD (col M) - EVENTOS es solo para NEUROTEA
+    sheet.getRange(row, 13).setValue('NEUROTEA');
+
+    row++;
   });
 
   // Subtotal Eventos

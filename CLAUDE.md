@@ -39,7 +39,7 @@ gs/
 | 2 | PRESUPUESTO | Plan anual con cálculos automáticos (subtotales, totales, ganancia NT) | Sí (montos) |
 | 3 | GASTOS_FIJOS | Montos recurrentes con CUENTA y meses (sin BASE) | Sí |
 | 4 | CARGA_FAMILIA | Transacciones variables puras + AHORRO | Sí |
-| 5 | CARGA_NT | Transacciones variables + eventos | Sí |
+| 5 | CARGA_NT | Transacciones variables puras (v7.7: EVENTOS va en GASTOS_FIJOS) | Sí |
 | 6 | MOVIMIENTO | Real vs Presupuesto (automático) | Parcial |
 | 7 | TABLERO | KPIs y dashboard (automático) | Parcial* |
 | 8 | LIQUIDEZ | Vencimientos y flujo de caja (automático) | No |
@@ -136,18 +136,20 @@ gs/
 
 ## Subcategorías Variables
 
-### FAMILIA - VARIABLES (11 items)
+### FAMILIA - VARIABLES (13 items - v7.7)
 1. Supermercado
 2. Combustible
-3. Mantenimiento / Reparaciones Auto Clara
-4. Mantenimiento / Reparaciones Auto Niños
-5. Mantenimiento / Reparaciones Camioneta Marco
-6. Ropa/Vestidos
-7. Recreación (Pizza, hamburguesa, helados, etc)
-8. Salud y Medicamentos
-9. Gastos no identificados
-10. **Devolución Familia → NT** (FAM devuelve préstamo a NT)
-11. **Préstamo Familia → NT** (FAM presta a NT)
+3. **Alimentación** (v7.7)
+4. **Gastos Varios** (v7.7)
+5. Mantenimiento / Reparaciones Auto Clara
+6. Mantenimiento / Reparaciones Auto Niños
+7. Mantenimiento / Reparaciones Camioneta Marco
+8. Ropa/Vestidos
+9. Recreación (Pizza, hamburguesa, helados, etc)
+10. Salud y Medicamentos
+11. Gastos no identificados
+12. **Devolución Familia → NT** (FAM devuelve préstamo a NT)
+13. **Préstamo Familia → NT** (FAM presta a NT)
 
 ### NEUROTEA - VARIABLES (7 items)
 1. Insumos y Papelería
@@ -158,14 +160,17 @@ gs/
 6. **Préstamo NT → Familia** (NT presta a FAM)
 7. **Devolución NT → Familia** (NT devuelve préstamo a FAM)
 
-### NEUROTEA - EVENTOS (16 items: 6 definidos + 10 reservas)
+### NEUROTEA - EVENTOS (18 items: 6 definidos + 12 reservas) - v7.7
+> **DECISIÓN [2026-01-20]**: EVENTOS ahora se registra en GASTOS_FIJOS (no en CARGA_NT).
+> Son gastos PLANIFICADOS, no variables puros.
+
 1. Día del Autismo (Abril)
 2. San Juan (Junio)
 3. Día del Niño (Agosto)
 4. Clausura Padres (Noviembre)
 5. Navidad Papá Noel (Diciembre)
 6. Cena Fin de Año (Diciembre)
-7-16. Reserva 1 a Reserva 10 (renombrables)
+7-18. Reserva Evento 1 a Reserva Evento 12 (renombrables)
 
 ### TIPO AHORRO (FAMILIA) - 3 categorías
 > **DECISIÓN [2026-01-15]**: AHORRO es un TIPO separado (no Egreso). Sus opciones van en CATEGORÍA, no SUBCATEGORÍA.
@@ -872,5 +877,39 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ---
 
-*Última actualización: 2026-01-19*
-*Versión: 7.6 - METAS NEUROTEA configurables desde CONFIG*
+## Mejoras [2026-01-20] - v7.7
+
+### Dropdowns CARGA limpios (categorías eliminadas)
+- **Problema**: CARGA_FAMILIA mostraba GASTOS FIJOS, CUOTAS, OBLIGACIONES, SUSCRIPCIONES en dropdown CATEGORÍA
+- **Problema**: CARGA_NT mostraba CLÍNICA, SUELDOS, TELEFONÍA, OBLIGACIONES, EVENTOS en dropdown CATEGORÍA
+- **Impacto**: Confusión al usuario - esas categorías van en GASTOS_FIJOS
+- **Solución**:
+  - CARGA_FAMILIA CATEGORÍA: Solo muestra `['-', 'VARIABLES', opciones_ahorro]`
+  - CARGA_NT CATEGORÍA: Solo muestra `['-', 'VARIABLES']`
+  - CARGA_NT SUBCATEGORÍA: Ya no incluye EVENTOS
+- **Archivos**: Config.gs (nuevos arrays CARGA_CATEGORIAS_*), Sheets.gs (validaciones)
+
+### EVENTOS movido de CARGA a GASTOS_FIJOS
+- **Problema**: EVENTOS se cargaba en CARGA_NT como gasto variable
+- **Análisis**: EVENTOS son gastos PLANIFICADOS (Variable/Anual), no variables puros
+- **Solución**:
+  - EVENTOS ahora está en GASTOS_FIJOS junto a CLÍNICA, SUELDOS, etc.
+  - MOVIMIENTO lee EVENTOS de GASTOS_FIJOS (INDEX/MATCH) no de CARGA_NT (SUMPRODUCT)
+  - EST.PAGO de EVENTOS ahora tiene dropdown (Pendiente/Pagado/Cancelado)
+- **Archivos**: Config.gs (EVENTOS_GASTOS_NT), Sheets.gs (GASTOS_FIJOS y MOVIMIENTO)
+
+### Reservas de EVENTOS ampliadas
+- **Antes**: 6 eventos definidos + 10 reservas = 16 total
+- **Ahora**: 6 eventos definidos + 12 reservas = 18 total
+- **Cambio**: Reservas renombradas de "Reserva X" a "Reserva Evento X" para claridad
+- **Archivos**: Config.gs (EVENTOS_NT, EVENTOS_GASTOS_NT)
+
+### Nuevas subcategorías VARIABLES FAMILIA
+- **Agregadas**: "Alimentación" y "Gastos Varios"
+- **Total**: 13 items (antes 11)
+- **Archivos**: Config.gs (VARIABLES_FAMILIA, VARIABLES_PRESUP_FAM)
+
+---
+
+*Última actualización: 2026-01-20*
+*Versión: 7.7 - EVENTOS a GASTOS_FIJOS, dropdowns limpios, nuevas subcategorías*

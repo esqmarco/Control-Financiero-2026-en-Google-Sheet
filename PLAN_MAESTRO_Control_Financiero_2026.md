@@ -53,7 +53,7 @@ Este documento consolida la interpretación completa del proyecto de planilla de
 | 2 | **PRESUPUESTO** | Plan anual de ingresos/gastos (excepto Ganancia NT que es calculada) | Marco | Sí (parcial) |
 | 3 | **GASTOS_FIJOS** | Montos base × 12 meses + día de vencimiento | Marco | Sí |
 | 4 | **CARGA_FAMILIA** | Registro cronológico de variables familiares | Clara/Marco | Sí |
-| 5 | **CARGA_NT** | Registro cronológico de variables NeuroTEA | Marco | Sí |
+| 5 | **CARGA_NT** | Registro cronológico de variables NeuroTEA (v7.7: solo VARIABLES, EVENTOS va en GASTOS_FIJOS) | Marco | Sí |
 | 6 | **MOVIMIENTO** | Real vs Presupuesto + EST. PAGO (gatillo de contabilización) | Marco | Parcial |
 | 7 | **TABLERO** | KPIs, SALDO_INICIAL, resumen PAGADOS vs PENDIENTES | Lectura | Parcial (SALDO_INICIAL) |
 | 8 | **LIQUIDEZ** | Gastos atrasados, esta semana, próxima semana (fórmulas TODAY()) | Lectura | No |
@@ -173,27 +173,28 @@ FAMILIA, NEUROTEA
 | 5 | Gastos Varios Cumple (Tortas, bocaditos, meriendas) | Celebraciones menores |
 | 6 | Préstamo NT → Familia | Cuando NT presta dinero a Familia |
 
-### 3.11 SUBCATEGORÍAS EVENTOS NEUROTEA (para desplegable cuando Categoría = EVENTOS)
-| # | Evento | Mes típico |
-|---|--------|------------|
-| 1 | Día del Autismo | Abril |
-| 2 | San Juan | Junio |
-| 3 | Día del Niño | Agosto |
-| 4 | Clausura Padres | Noviembre |
-| 5 | Navidad Papá Noel | Diciembre |
-| 6 | Cena Fin de Año | Diciembre |
-| 7 | Reserva 1 | (por definir) |
-| 8 | Reserva 2 | (por definir) |
-| 9 | Reserva 3 | (por definir) |
-| 10 | Reserva 4 | (por definir) |
-| 11 | Reserva 5 | (por definir) |
-| 12 | Reserva 6 | (por definir) |
-| 13 | Reserva 7 | (por definir) |
-| 14 | Reserva 8 | (por definir) |
-| 15 | Reserva 9 | (por definir) |
-| 16 | Reserva 10 | (por definir) |
+### 3.11 EVENTOS NEUROTEA (van en GASTOS_FIJOS - v7.7)
 
-**SISTEMA DE EVENTOS (Opción A):** Cada evento tiene su propio presupuesto individual. Las Reservas se renombran cuando se define el evento real (Ej: "Reserva 3" → "Cumple Empleados").
+> **DECISIÓN [2026-01-20]**: EVENTOS son gastos PLANIFICADOS (Variable/Anual), no variables puros.
+> Se registran en GASTOS_FIJOS igual que otros gastos fijos, NO en CARGA_NT.
+
+| # | Evento | Mes típico | Día estimado |
+|---|--------|------------|--------------|
+| 1 | Día del Autismo | Abril | 2 |
+| 2 | San Juan | Junio | 24 |
+| 3 | Día del Niño | Agosto | 16 |
+| 4 | Clausura Padres | Noviembre | 15 |
+| 5 | Navidad Papá Noel | Diciembre | 20 |
+| 6 | Cena Fin de Año | Diciembre | 28 |
+| 7-18 | Reserva Evento 1-12 | (por definir) | - |
+
+**Total: 18 eventos (6 definidos + 12 reservas)**
+
+**SISTEMA DE EVENTOS (v7.7):**
+- Los eventos se registran en GASTOS_FIJOS con monto en el mes correspondiente
+- Las Reservas se renombran cuando se define el evento real
+- MOVIMIENTO lee de GASTOS_FIJOS (INDEX/MATCH) no de CARGA_NT
+- EST.PAGO tiene dropdown (Pendiente/Pagado/Cancelado)
 
 ### 3.12 FRECUENCIA (para clasificar gastos)
 | # | Frecuencia | Descripción |
@@ -799,18 +800,19 @@ SI CATEGORÍA = "GASTOS FIJOS", "CUOTAS Y PRÉSTAMOS", etc.:
 
 ---
 
-## 7. HOJA CARGA_NT - SISTEMA "ANTI-BURRO"
+## 7. HOJA CARGA_NT - SISTEMA "ANTI-BURRO" (v7.7)
 
 **IMPORTANTE:** Esta hoja es para:
 - **VARIABLES PUROS** (compras puntuales de la clínica)
-- **EVENTOS** (gastos de celebraciones y actividades especiales)
 - **INGRESOS** (aportes de terapeutas, cursos, devoluciones)
 
+> **v7.7**: EVENTOS ya NO va en CARGA_NT. Ahora va en GASTOS_FIJOS porque son gastos PLANIFICADOS.
+
 - ✅ Insumos (cada compra es diferente)
-- ✅ Evento "Día del Niño" (gasto puntual)
 - ✅ Aporte Terapeutas (ingreso)
 - ❌ Alquiler (es Fijo/Mensual → va en GASTOS_FIJOS)
 - ❌ Sueldos (es Fijo/Mensual → va en GASTOS_FIJOS)
+- ❌ **EVENTOS** (es Variable/Anual PLANIFICADO → va en GASTOS_FIJOS)
 
 **Usuarios:** Marco y Clara cargan de forma **independiente**. Ambos tienen acceso completo.
 
@@ -830,20 +832,21 @@ SI TIPO está en lista de "TIPOS DE INGRESO NT":
 
 SI TIPO = "Egreso NT":
    → Es un EGRESO
-   → CATEGORÍA se habilita (CLÍNICA, SUELDOS, TELEFONÍA, OBLIGACIONES, EVENTOS, VARIABLES)
-   → SUBCATEGORÍA depende de la CATEGORÍA
+   → CATEGORÍA se habilita (solo VARIABLES - v7.7)
+   → SUBCATEGORÍA muestra lista de VARIABLES_NT
 ```
+
+> **v7.7**: Se eliminaron del dropdown: CLÍNICA, SUELDOS, TELEFONÍA, OBLIGACIONES, EVENTOS
+> Esas categorías van en GASTOS_FIJOS, no en CARGA_NT.
 
 #### Regla 2: CATEGORÍA determina opciones de SUBCATEGORÍA
 
 | CATEGORÍA | SUBCATEGORÍA disponible |
 |-----------|------------------------|
-| CLÍNICA | - (deshabilitado, son fijos) |
-| SUELDOS Y HONORARIOS | - (deshabilitado, son fijos) |
-| TELEFONÍA E INTERNET | - (deshabilitado, son fijos) |
-| OBLIGACIONES LEGALES | - (deshabilitado, son fijos) |
-| **EVENTOS** | Lista de eventos (Día del Niño, San Juan, etc.) |
 | **VARIABLES** | Lista de variables (Insumos, Reparaciones, etc.) |
+
+> **NOTA v7.7**: Las categorías CLÍNICA, SUELDOS, TELEFONÍA, OBLIGACIONES, EVENTOS
+> ya no aparecen en el dropdown porque esos gastos se registran en GASTOS_FIJOS.
 
 ### 7.3 Tipos de Ingreso NT (Desplegable)
 1. Aporte NeuroTEA Terapeutas
@@ -854,18 +857,10 @@ SI TIPO = "Egreso NT":
 ### 7.4 Tipo de Egreso NT
 - **Egreso NT** (único tipo que habilita CATEGORÍA y SUBCATEGORÍA)
 
-### 7.5 Subcategorías EVENTOS NT (cuando CATEGORÍA = EVENTOS)
-1. Día del Autismo (Abril)
-2. San Juan (Junio)
-3. Día del Niño (Agosto)
-4. Clausura Padres (Noviembre)
-5. Navidad Papá Noel (Diciembre)
-6. Cena Fin de Año (Diciembre)
-7. Reserva 1 (por definir)
-8. Reserva 2 (por definir)
-9. Reserva 3 (por definir)
-10. Reserva 4 (por definir)
-11. Reserva 5 (por definir)
+### 7.5 ~~Subcategorías EVENTOS NT~~ (ELIMINADO en v7.7)
+
+> **DEPRECADO**: EVENTOS ya no aparece en CARGA_NT.
+> Ver sección 3.11 para lista de EVENTOS en GASTOS_FIJOS.
 12. Reserva 6 (por definir)
 13. Reserva 7 (por definir)
 14. Reserva 8 (por definir)

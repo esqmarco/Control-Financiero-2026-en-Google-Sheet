@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CONFIG.GS - DATOS MAESTROS Y CONFIGURACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.9 - AHORRO separado de GASTOS OPERATIVOS
+ * Versión 7.7 - EVENTOS a GASTOS_FIJOS, dropdowns limpios, nuevas subcategorías
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '6.9';
+const VERSION = '7.7';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -176,6 +176,8 @@ const CATEGORIAS_EGRESO_NT = [
 const VARIABLES_FAMILIA = [
   'Supermercado',
   'Combustible',
+  'Alimentación',               // v7.7: Agregado
+  'Gastos Varios',              // v7.7: Agregado
   'Mantenimiento / Reparaciones Auto Clara',
   'Mantenimiento / Reparaciones Auto Niños',
   'Mantenimiento / Reparaciones Camioneta Marco',
@@ -186,6 +188,13 @@ const VARIABLES_FAMILIA = [
   'Devolución Familia → NT',
   'Préstamo Familia → NT'       // Familia presta a NT
 ];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CATEGORÍAS PARA DROPDOWNS DE CARGA (solo VARIABLES - las fijas van en GASTOS_FIJOS)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const CARGA_CATEGORIAS_FAMILIA = ['VARIABLES'];
+const CARGA_CATEGORIAS_NT = ['VARIABLES'];
 
 // NOTA: AHORRO_FAMILIA ya no existe como subcategoría
 // Ahora se usa CATEGORIAS_AHORRO_FAMILIA como categoría del TIPO "Ahorro"
@@ -204,6 +213,7 @@ const VARIABLES_NT = [
 // EVENTOS NEUROTEA (6 definidos + 10 reservas)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// EVENTOS_NT: Lista para PRESUPUESTO y referencia (6 definidos + 12 reservas = 18 total)
 const EVENTOS_NT = [
   { nombre: 'Día del Autismo', mes: 'Abril' },
   { nombre: 'San Juan', mes: 'Junio' },
@@ -211,16 +221,40 @@ const EVENTOS_NT = [
   { nombre: 'Clausura Padres', mes: 'Noviembre' },
   { nombre: 'Navidad Papá Noel', mes: 'Diciembre' },
   { nombre: 'Cena Fin de Año', mes: 'Diciembre' },
-  { nombre: 'Reserva 1', mes: '(por definir)' },
-  { nombre: 'Reserva 2', mes: '(por definir)' },
-  { nombre: 'Reserva 3', mes: '(por definir)' },
-  { nombre: 'Reserva 4', mes: '(por definir)' },
-  { nombre: 'Reserva 5', mes: '(por definir)' },
-  { nombre: 'Reserva 6', mes: '(por definir)' },
-  { nombre: 'Reserva 7', mes: '(por definir)' },
-  { nombre: 'Reserva 8', mes: '(por definir)' },
-  { nombre: 'Reserva 9', mes: '(por definir)' },
-  { nombre: 'Reserva 10', mes: '(por definir)' }
+  { nombre: 'Reserva Evento 1', mes: '(por definir)' },
+  { nombre: 'Reserva Evento 2', mes: '(por definir)' },
+  { nombre: 'Reserva Evento 3', mes: '(por definir)' },
+  { nombre: 'Reserva Evento 4', mes: '(por definir)' },
+  { nombre: 'Reserva Evento 5', mes: '(por definir)' },
+  { nombre: 'Reserva Evento 6', mes: '(por definir)' },
+  { nombre: 'Reserva Evento 7', mes: '(por definir)' },
+  { nombre: 'Reserva Evento 8', mes: '(por definir)' },
+  { nombre: 'Reserva Evento 9', mes: '(por definir)' },
+  { nombre: 'Reserva Evento 10', mes: '(por definir)' },
+  { nombre: 'Reserva Evento 11', mes: '(por definir)' },  // v7.7: Agregado
+  { nombre: 'Reserva Evento 12', mes: '(por definir)' }   // v7.7: Agregado
+];
+
+// EVENTOS para GASTOS_FIJOS (con estructura completa: concepto, categoria, frecuencia, dia, cuenta, monto)
+const EVENTOS_GASTOS_NT = [
+  { concepto: 'Día del Autismo', categoria: 'EVENTOS', frecuencia: 'Variable/Anual', dia: 2, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'San Juan', categoria: 'EVENTOS', frecuencia: 'Variable/Anual', dia: 24, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Día del Niño', categoria: 'EVENTOS', frecuencia: 'Variable/Anual', dia: 16, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Clausura Padres', categoria: 'EVENTOS', frecuencia: 'Variable/Anual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Navidad Papá Noel', categoria: 'EVENTOS', frecuencia: 'Variable/Anual', dia: 20, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Cena Fin de Año', categoria: 'EVENTOS', frecuencia: 'Variable/Anual', dia: 28, cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 1', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 2', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 3', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 4', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 5', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 6', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 7', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 8', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 9', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 10', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 11', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
+  { concepto: 'Reserva Evento 12', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -323,6 +357,8 @@ const SUSCRIPCIONES_FAM = [
 const VARIABLES_PRESUP_FAM = [
   { concepto: 'Supermercado', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Combustible', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
+  { concepto: 'Alimentación', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },      // v7.7
+  { concepto: 'Gastos Varios', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },     // v7.7
   { concepto: 'Mantenimiento / Reparaciones Auto Clara', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Mantenimiento / Reparaciones Auto Niños', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Mantenimiento / Reparaciones Camioneta Marco', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
