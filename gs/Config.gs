@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '7.7';
+const VERSION = '7.9';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -251,18 +251,18 @@ const EVENTOS_GASTOS_NT = [
   { concepto: 'Clausura Padres', categoria: 'EVENTOS', frecuencia: 'Variable/Anual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Navidad Papá Noel', categoria: 'EVENTOS', frecuencia: 'Variable/Anual', dia: 20, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Cena Fin de Año', categoria: 'EVENTOS', frecuencia: 'Variable/Anual', dia: 28, cuenta: 'Atlas NeuroTEA', monto: 0 },
-  { concepto: 'Reserva Evento 1', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 2', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 3', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 4', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 5', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 6', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 7', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 8', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 9', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 10', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 11', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Evento 12', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
+  { concepto: 'Reserva Evento 1', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 2', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 3', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 4', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 5', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 6', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 7', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 8', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 9', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 10', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 11', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Evento 12', categoria: 'EVENTOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 }
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -406,21 +406,21 @@ const CLINICA_NT = [
   { concepto: 'Alquiler 1 (Principal)', categoria: 'CLÍNICA', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Alquiler 2 (Secundario)', categoria: 'CLÍNICA', frecuencia: 'Fijo/Mensual', dia: 5, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'ANDE clínica', categoria: 'CLÍNICA', frecuencia: 'Variable/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
-  { concepto: 'Reserva Clín. 1', categoria: 'CLÍNICA', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Clín. 2', categoria: 'CLÍNICA', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Clín. 3', categoria: 'CLÍNICA', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
+  { concepto: 'Reserva Clín. 1', categoria: 'CLÍNICA', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Clín. 2', categoria: 'CLÍNICA', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Clín. 3', categoria: 'CLÍNICA', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 }
 ];
 
 const SUELDOS_NT = [
   { concepto: 'Sueldo Aracely', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Sueldo Fátima', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
-  { concepto: 'Limpieza NeuroTEA', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Variable/Mensual', dia: 30, cuenta: 'UENO Marco', monto: 0 },
+  { concepto: 'Limpieza NeuroTEA', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Variable/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Honorario Contador', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 10, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Salario Administrador (Marco)', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 30, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Honorario Mant. Sistema', categoria: 'SUELDOS Y HONORARIOS', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
-  { concepto: 'Reserva Sueldo 1', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Sueldo 2', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Sueldo 3', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
+  { concepto: 'Reserva Sueldo 1', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Sueldo 2', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Sueldo 3', categoria: 'SUELDOS Y HONORARIOS', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 }
 ];
 
 const TELEFONIA_NT = [
@@ -428,9 +428,9 @@ const TELEFONIA_NT = [
   { concepto: 'Celular Tigo Sistema', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 28, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'WhatsFlow', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Internet NeuroTEA', categoria: 'TELEFONÍA E INTERNET', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
-  { concepto: 'Reserva Tel. 1', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Tel. 2', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Tel. 3', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
+  { concepto: 'Reserva Tel. 1', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Tel. 2', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Tel. 3', categoria: 'TELEFONÍA E INTERNET', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 }
 ];
 
 const OBLIGACIONES_NT = [
@@ -438,9 +438,9 @@ const OBLIGACIONES_NT = [
   { concepto: 'IPS', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Fijo/Mensual', dia: 15, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Ministerio de Salud', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Variable/Anual', dia: 31, cuenta: 'Atlas NeuroTEA', monto: 0 },
   { concepto: 'Mora de Alquiler', categoria: 'OBLIGACIONES LEGALES', frecuencia: 'Variable/Mensual', dia: 10, cuenta: 'Atlas NeuroTEA', monto: 0 },
-  { concepto: 'Reserva Oblig. 1', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Oblig. 2', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: '', monto: 0 },
-  { concepto: 'Reserva Oblig. 3', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: '', monto: 0 }
+  { concepto: 'Reserva Oblig. 1', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Oblig. 2', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 },
+  { concepto: 'Reserva Oblig. 3', categoria: 'OBLIGACIONES LEGALES', frecuencia: '-', dia: '', cuenta: 'Atlas NeuroTEA', monto: 0 }
 ];
 
 const VARIABLES_PRESUP_NT = [
