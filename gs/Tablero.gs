@@ -2,7 +2,8 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * TABLERO.GS - DASHBOARD PROFESIONAL DE CONTROL FINANCIERO
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.9 - AHORRO separado de GASTOS OPERATIVOS (TIPO="Ahorro" independiente)
+ * Versión 7.8 - FIX CRÍTICO: Esperado por cuenta ahora resta gastos fijos correctamente
+ *               usando nueva columna CUENTA (N) en MOVIMIENTO
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -201,20 +202,19 @@ function crearHojaTABLERO() {
       .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Esperado (fórmula: Saldo Inicial Cuenta + Ingresos - Egresos - Ahorro del mes en esa cuenta)
-    // v7.5: Corregido BUG - AHORRO ahora RESTA (antes sumaba incorrectamente)
+    // Esperado (fórmula: Saldo Inicial Cuenta + Ingresos - Egresos - Ahorro - Gastos Fijos Pagados)
+    // v7.8: Corregido BUG CRÍTICO - Gastos fijos ahora usan columna CUENTA (N) de MOVIMIENTO
     // ESTRUCTURA CONFIG v7.4: A=Cuenta, B-M=ENE-DIC (saldos iniciales por mes)
     // ESTRUCTURA CARGA_FAMILIA: A=Fecha, B=Tipo, F=Monto, G=Cuenta
-    // ESTRUCTURA GASTOS_FIJOS v5.1: A=Concepto, B=Entidad, C=Categoría, D=Frecuencia, E=Día, F=Cuenta, G-R=Meses
-    // ESTRUCTURA MOVIMIENTO v5.1: J=EST.PAGO, F=REAL, N3=MES_NUM
+    // ESTRUCTURA MOVIMIENTO v7.8: J=EST.PAGO, F=REAL, N=CUENTA (nueva columna oculta)
     const formulaSaldoInicialFam = `IFERROR(INDEX(CONFIG!$B$65:$M$74;MATCH("${cuenta}";CONFIG!$A$65:$A$74;0);MOVIMIENTO!$N$3);0)`;
     // Fórmula desglosada:
     // + Saldo inicial de la cuenta (CONFIG)
-    // + Ingresos a esta cuenta (TIPO no es Egreso ni Ahorro)
-    // - Egresos de esta cuenta (TIPO = "Egreso Familiar")
-    // - Ahorro de esta cuenta (TIPO = "Ahorro") ← FIX v7.5
-    // - Gastos fijos PAGADOS de esta cuenta (GASTOS_FIJOS donde EST.PAGO="Pagado")
-    const formulaEsperado = `=IFERROR(${formulaSaldoInicialFam}+SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500<>"Egreso Familiar")*(CARGA_FAMILIA!B$4:B$500<>"Ahorro")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Ahorro")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((GASTOS_FIJOS!$F$6:$F$100="${cuenta}")*(IFERROR(INDEX(MOVIMIENTO!$J:$J;MATCH(GASTOS_FIJOS!$A$6:$A$100;MOVIMIENTO!$A:$A;0))="Pagado";0))*(IFERROR(INDEX(MOVIMIENTO!$F:$F;MATCH(GASTOS_FIJOS!$A$6:$A$100;MOVIMIENTO!$A:$A;0));0)));0)`;
+    // + Ingresos a esta cuenta desde CARGA (TIPO no es Egreso ni Ahorro)
+    // - Egresos de esta cuenta desde CARGA (TIPO = "Egreso Familiar")
+    // - Ahorro de esta cuenta desde CARGA (TIPO = "Ahorro")
+    // - Gastos fijos PAGADOS de esta cuenta desde MOVIMIENTO (v7.8: usa columna N=CUENTA)
+    const formulaEsperado = `=IFERROR(${formulaSaldoInicialFam}+SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500<>"Egreso Familiar")*(CARGA_FAMILIA!B$4:B$500<>"Ahorro")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Ahorro")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((MOVIMIENTO!$N$9:$N$113="${cuenta}")*(MOVIMIENTO!$J$9:$J$113="Pagado")*(MOVIMIENTO!$F$9:$F$113));0)`;
     sheet.getRange(rowFam, 3).setFormula(formulaEsperado)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
@@ -462,11 +462,18 @@ function crearHojaTABLERO() {
       .setBackground(bgColor)
       .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
 
-    // Esperado (fórmula: Saldo Inicial Cuenta + Ingresos - Egresos de CARGA_NT para esta cuenta)
-    // v7.4: Incluye saldo inicial por cuenta desde CONFIG (filas 79-80 = 2 cuentas NEUROTEA)
+    // Esperado (fórmula: Saldo Inicial Cuenta + Ingresos - Egresos - Gastos Fijos Pagados)
+    // v7.8: Corregido BUG CRÍTICO - Ahora resta gastos fijos PAGADOS usando columna N de MOVIMIENTO
     // ESTRUCTURA CONFIG v7.4: A=Cuenta, B-M=ENE-DIC (saldos iniciales por mes)
+    // ESTRUCTURA CARGA_NT: A=Fecha, B=Tipo, F=Monto, G=Cuenta
+    // ESTRUCTURA MOVIMIENTO v7.8: J=EST.PAGO, F=REAL, N=CUENTA (nueva columna oculta)
     const formulaSaldoInicialNT = `IFERROR(INDEX(CONFIG!$B$79:$M$80;MATCH("${cuenta}";CONFIG!$A$79:$A$80;0);MOVIMIENTO!$N$3);0)`;
-    const formulaEsperado = `=IFERROR(${formulaSaldoInicialNT}+SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500<>"Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500))-SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500="Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500));0)`;
+    // Fórmula desglosada:
+    // + Saldo inicial de la cuenta (CONFIG)
+    // + Ingresos a esta cuenta desde CARGA (TIPO no es Egreso NT)
+    // - Egresos de esta cuenta desde CARGA (TIPO = "Egreso NT")
+    // - Gastos fijos PAGADOS de esta cuenta desde MOVIMIENTO (v7.8: usa columna N=CUENTA)
+    const formulaEsperado = `=IFERROR(${formulaSaldoInicialNT}+SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500<>"Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500))-SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500="Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500))-SUMPRODUCT((MOVIMIENTO!$N$119:$N$200="${cuenta}")*(MOVIMIENTO!$J$119:$J$200="Pagado")*(MOVIMIENTO!$F$119:$F$200));0)`;
     sheet.getRange(rowNT, 9).setFormula(formulaEsperado)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)

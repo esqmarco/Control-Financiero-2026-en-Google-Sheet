@@ -263,15 +263,19 @@ CONFIG (listas maestras)
 | K | 🚦 | Semáforo visual |
 | L | CATEGORÍA (oculta) | Categoría del egreso (GASTOS FIJOS, VARIABLES, etc.) |
 | M | ENTIDAD (oculta) | FAMILIA o NEUROTEA |
-| N | MES_NUM (oculta) | Número de mes calculado
+| N | CUENTA (oculta) | Cuenta bancaria del gasto fijo (v7.8) |
 
-> **NOTA**: Las columnas L y M son ocultas y se usan para cálculos de % GASTOS POR CATEGORÍA en TABLERO.
+> **NOTA**: Las columnas L, M y N son ocultas y se usan para cálculos internos.
+> - L y M: % GASTOS POR CATEGORÍA en TABLERO
+> - N: Cálculo de "Esperado" por cuenta en TABLERO (v7.8 - corrige bug crítico)
+> - Celda N3: Contiene la fórmula MES_NUM (número de mes seleccionado)
 
 ---
 
 ## Fórmulas Clave en MOVIMIENTO
 
-### Celda N3 (número de mes oculto - MES_NUM)
+### Celda N3 (número de mes - MES_NUM)
+> **NOTA v7.8**: N3 contiene MES_NUM. La columna N ahora tiene CUENTA en las filas de datos.
 ```
 =MATCH(B3;{"Enero";"Febrero";"Marzo";"Abril";"Mayo";"Junio";"Julio";"Agosto";"Septiembre";"Octubre";"Noviembre";"Diciembre"};0)
 ```
@@ -919,5 +923,29 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ---
 
+## Bug Fixes [2026-01-20] - v7.8 (CRÍTICO)
+
+### "Esperado" por cuenta no restaba gastos fijos (BUG CRÍTICO)
+- **Problema FAMILIA**: La fórmula usaba INDEX/MATCH dentro de SUMPRODUCT para buscar EST.PAGO, pero INDEX/MATCH con arrays como argumento no funciona correctamente
+- **Problema NEUROTEA**: La fórmula ni siquiera intentaba restar gastos fijos - solo leía de CARGA_NT
+- **Impacto**: Los saldos "Esperado" por cuenta estaban inflados (~44M FAMILIA, ~27M NEUROTEA) porque no se restaban los gastos fijos pagados
+- **Solución**:
+  1. Nueva columna N (CUENTA) en MOVIMIENTO que almacena la cuenta de cada gasto fijo
+  2. Fórmulas "Esperado" ahora usan SUMPRODUCT simple con la columna N
+  3. Tanto FAMILIA como NEUROTEA restan gastos fijos correctamente
+- **Archivos modificados**:
+  - Sheets.gs (columna N=CUENTA en todas las funciones de MOVIMIENTO)
+  - Tablero.gs (fórmulas Esperado para FAMILIA y NEUROTEA)
+- **Fórmula corregida**:
+  ```
+  Esperado = Saldo_Inicial
+           + Ingresos_CARGA_a_cuenta
+           - Egresos_CARGA_de_cuenta
+           - Ahorro_CARGA_de_cuenta (solo FAMILIA)
+           - SUMPRODUCT(MOVIMIENTO!N=cuenta * MOVIMIENTO!J="Pagado" * MOVIMIENTO!F)
+  ```
+
+---
+
 *Última actualización: 2026-01-20*
-*Versión: 7.7 - EVENTOS a GASTOS_FIJOS, dropdowns limpios, nuevas subcategorías*
+*Versión: 7.8 - FIX CRÍTICO: Esperado por cuenta ahora resta gastos fijos correctamente*
