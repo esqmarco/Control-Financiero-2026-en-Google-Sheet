@@ -186,7 +186,10 @@ const VARIABLES_FAMILIA = [
   'Salud y Medicamentos',
   'Gastos no identificados',
   'Devolución Familia → NT',
-  'Préstamo Familia → NT'       // Familia presta a NT
+  'Préstamo Familia → NT',      // Familia presta a NT
+  'Reserva Var. 1',             // v7.7: Agregado al dropdown
+  'Reserva Var. 2',
+  'Reserva Var. 3'
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -205,8 +208,13 @@ const VARIABLES_NT = [
   'Mantenimiento Aire',
   'Gastos Cursos',
   'Gastos Varios Cumple (Tortas, bocaditos, meriendas)',
+  'Horas Extras Aracely',        // v7.7: Agregado
+  'Horas Extras Fatima',         // v7.7: Agregado
   'Préstamo NT → Familia',
-  'Devolución NT → Familia'     // NT devuelve préstamo a Familia
+  'Devolución NT → Familia',     // NT devuelve préstamo a Familia
+  'Reserva Var. 1',              // v7.7: Agregado al dropdown
+  'Reserva Var. 2',
+  'Reserva Var. 3'
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -441,6 +449,8 @@ const VARIABLES_PRESUP_NT = [
   { concepto: 'Mantenimiento Aire', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Gastos Cursos', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Gastos Varios Cumple (Tortas, bocaditos, meriendas)', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
+  { concepto: 'Horas Extras Aracely', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },     // v7.7: Agregado
+  { concepto: 'Horas Extras Fatima', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },      // v7.7: Agregado
   { concepto: 'Préstamo NT → Familia', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Devolución NT → Familia', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },  // NT devuelve a Familia
   { concepto: 'Reserva Var. 1', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
