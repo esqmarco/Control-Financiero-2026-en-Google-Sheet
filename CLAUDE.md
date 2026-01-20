@@ -947,5 +947,35 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ---
 
+## Bug Fixes [2026-01-20] - v7.11 (CRÍTICO)
+
+### DISPONIBLE ahora referencia TOTAL DISPONIBLE (coherencia garantizada)
+- **Problema FAMILIA**: DISPONIBLE se calculaba como `INGRESOS - EGRESOS - AHORRO - FONDO`,
+  pero TOTAL DISPONIBLE se calculaba como `SUM(Esperado de cuentas)`.
+  Estas fórmulas usaban fuentes de datos diferentes, causando discrepancias de ~1.6M.
+- **Problema NEUROTEA**: GANANCIA REAL y PROYECCIÓN usaban `Ingresos - Egresos` en lugar
+  de TOTAL DISPONIBLE NT.
+- **Solución FAMILIA**:
+  - DISPONIBLE = `C${filaTotalCuentasFam}` (referencia directa a TOTAL DISPONIBLE)
+  - PATRIMONIO = `TOTAL DISPONIBLE + AHORRO + FONDO`
+- **Solución NEUROTEA**:
+  - GANANCIA REAL = `I${filaTotalCuentasNT}` (referencia a TOTAL DISPONIBLE NT)
+  - PROYECCIÓN = `I${filaTotalCuentasNT} - Pendientes`
+- **Archivos modificados**: Tablero.gs (líneas 398-424, 636-691)
+
+### Lógica corregida
+```
+ANTES (incorrecto):
+  DISPONIBLE = INGRESOS - EGRESOS_PAGADOS - AHORRO - FONDO
+  TOTAL DISPONIBLE = SUM(Esperado de cuentas)
+  → Usaban fuentes diferentes → DISCREPANCIA
+
+AHORA (correcto):
+  DISPONIBLE = TOTAL DISPONIBLE (referencia directa)
+  → Siempre iguales por definición → SIN DISCREPANCIA
+```
+
+---
+
 *Última actualización: 2026-01-20*
-*Versión: 7.8 - FIX CRÍTICO: Esperado por cuenta ahora resta gastos fijos correctamente*
+*Versión: 7.11 - FIX CRÍTICO: DISPONIBLE ahora referencia TOTAL DISPONIBLE*
