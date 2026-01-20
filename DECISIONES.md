@@ -720,4 +720,41 @@ Las metas de NEUROTEA (% ganancia, % máximo gastos, distribución de utilidades
 
 ---
 
-*Última actualización: 2026-01-19 - Agregada decisión v7.6 (METAS configurables)*
+### [2026-01-20] - EVENTOS movido de CARGA a GASTOS_FIJOS (v7.7)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+EVENTOS son gastos PLANIFICADOS (Variable/Anual), no gastos variables puros. Por lo tanto, deben registrarse en GASTOS_FIJOS.
+
+**Cambios implementados**:
+
+1. **EVENTOS ahora está en GASTOS_FIJOS**:
+   - Nueva constante EVENTOS_GASTOS_NT con estructura completa (concepto, categoria, frecuencia, dia, cuenta, monto)
+   - Columnas G-R = meses ENE-DIC (igual que otros gastos fijos)
+   - El usuario ingresa el monto del evento en el mes correspondiente
+
+2. **Dropdowns de CARGA limpios**:
+   - CARGA_FAMILIA CATEGORÍA: Solo `['-', 'VARIABLES', opciones_ahorro]`
+   - Se eliminaron: GASTOS FIJOS, CUOTAS Y PRÉSTAMOS, OBLIGACIONES LEGALES, SUSCRIPCIONES
+   - CARGA_NT CATEGORÍA: Solo `['-', 'VARIABLES']`
+   - Se eliminaron: CLÍNICA, SUELDOS Y HONORARIOS, TELEFONÍA E INTERNET, OBLIGACIONES LEGALES, EVENTOS
+
+3. **MOVIMIENTO lee EVENTOS de GASTOS_FIJOS**:
+   - Fórmula REAL: `INDEX(GASTOS_FIJOS!$G:$R;MATCH(concepto;GASTOS_FIJOS!$A:$A;0);$N$3)`
+   - EST.PAGO: Dropdown (Pendiente/Pagado/Cancelado) en lugar de fijo "Pagado"
+   - Se incluyen TODOS los eventos (6 definidos + 12 reservas = 18 total)
+
+4. **Reservas ampliadas**:
+   - Antes: 6 definidos + 10 reservas = 16 total
+   - Ahora: 6 definidos + 12 reservas = 18 total
+   - Renombradas de "Reserva X" a "Reserva Evento X"
+
+5. **Nuevas subcategorías VARIABLES FAMILIA**:
+   - Agregadas: "Alimentación" y "Gastos Varios"
+   - Total: 13 items (antes 11)
+
+**Archivos afectados**: gs/Config.gs, gs/Sheets.gs, CLAUDE.md
+**Razón**: El usuario identificó que EVENTOS no son variables puros (impredecibles) sino gastos planificados con fecha conocida. Además, los dropdowns de CARGA mostraban categorías que solo se usan en GASTOS_FIJOS, causando confusión.
+
+---
+
+*Última actualización: 2026-01-20 - Agregada decisión v7.7 (EVENTOS a GASTOS_FIJOS, dropdowns limpios)*

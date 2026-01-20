@@ -27,20 +27,23 @@ ITAU Marco, Coop. Univ. Marco, ITAU Clara, UENO Clara, Tarjeta Solar Clara, Tarj
 1. Atlas NeuroTEA
 2. UENO Marco
 
-### Categorías Egreso FAMILIA (6)
-GASTOS FIJOS, CUOTAS Y PRÉSTAMOS, OBLIGACIONES LEGALES, SUSCRIPCIONES, VARIABLES, AHORRO
+### Categorías Egreso FAMILIA (5) - para referencia
+GASTOS FIJOS, CUOTAS Y PRÉSTAMOS, OBLIGACIONES LEGALES, SUSCRIPCIONES, VARIABLES
 
-### Categorías Egreso NT (6)
+### Categorías para dropdown CARGA_FAMILIA (v7.7): Solo VARIABLES
+### Categorías para dropdown CARGA_NT (v7.7): Solo VARIABLES
+
+### Categorías Egreso NT (6) - para referencia
 CLÍNICA, SUELDOS Y HONORARIOS, TELEFONÍA E INTERNET, OBLIGACIONES LEGALES, EVENTOS, VARIABLES
 
-### Subcategorías Variables FAMILIA (11 items)
-Incluye "Devolución Familia → NT" y "Préstamo Familia → NT"
+### Subcategorías Variables FAMILIA (13 items - v7.7)
+Incluye "Alimentación", "Gastos Varios", "Devolución Familia → NT" y "Préstamo Familia → NT"
 
 ### Subcategorías Variables NT (7 items)
 Incluye "Préstamo NT → Familia" y "Devolución NT → Familia"
 
-### Eventos NT (16)
-6 definidos + 10 reservas
+### Eventos NT (18 - v7.7)
+6 definidos + 12 reservas (van en GASTOS_FIJOS, NO en CARGA_NT)
 
 ### AHORRO FAMILIA (3 items)
 Ahorro Clara, Ahorro Marco, Fondo de Emergencia
@@ -111,12 +114,13 @@ Ahorro Clara, Ahorro Marco, Fondo de Emergencia
 - **FAM → NT**: Préstamo Familia → NT, Devolución NT → Familia
 - Balance Neto = Deuda FAM - Deuda NT
 
-### Sistema Anti-Burro
+### Sistema Anti-Burro (v7.7)
 - Ingreso → deshabilita CATEGORÍA y SUBCATEGORÍA
-- CATEGORÍA ≠ VARIABLES/EVENTOS/AHORRO → deshabilita SUBCATEGORÍA
-- CATEGORÍA = EVENTOS → lista de 16 eventos
+- CARGA_FAMILIA: dropdown CATEGORÍA solo tiene VARIABLES y opciones AHORRO
+- CARGA_NT: dropdown CATEGORÍA solo tiene VARIABLES (v7.7: EVENTOS eliminado)
 - CATEGORÍA = VARIABLES → lista de subcategorías
 - CATEGORÍA = AHORRO → lista de 3 items (Clara, Marco, Fondo)
+- **EVENTOS ahora va en GASTOS_FIJOS** (no en CARGA_NT)
 
 ### EST. PAGO como Gatillo
 - **De CARGA**: Fijo ("Recibido", "Pagado", "Ahorrado")
