@@ -836,15 +836,16 @@ function encontrarPrimeraFilaVacia(sheet) {
 
 /**
  * Verifica si ya existe una transacción cruzada para evitar duplicados
- * Busca por fecha, tipo/subcategoría y monto similar
+ * v7.10 - Mejorado: verifica por descripción además de monto
  * @param {Sheet} sheet - Hoja donde buscar
  * @param {Date} fecha - Fecha de la transacción
  * @param {string} tipoOSubcat - Tipo o subcategoría a buscar
  * @param {number} monto - Monto de la transacción
  * @param {string} campo - 'tipo' o 'subcategoria' para indicar qué columna buscar
+ * @param {string} descripcion - Descripción de la transacción (opcional)
  * @returns {boolean} true si ya existe
  */
-function existeTransaccionCruzada(sheet, fecha, tipoOSubcat, monto, campo) {
+function existeTransaccionCruzada(sheet, fecha, tipoOSubcat, monto, campo, descripcion) {
   const datos = sheet.getDataRange().getValues();
   const colBusqueda = campo === 'tipo' ? 1 : 3; // B=TIPO, D=SUBCATEGORÍA
 
@@ -854,10 +855,14 @@ function existeTransaccionCruzada(sheet, fecha, tipoOSubcat, monto, campo) {
 
   if (!fechaBuscar) return false;
 
+  // Normalizar descripción para comparación
+  const descripNorm = String(descripcion || '').toLowerCase().trim();
+
   for (let i = 3; i < datos.length; i++) {
     const fila = datos[i];
     const fechaFila = fila[0];
     const valorColumna = fila[colBusqueda];
+    const descripFila = String(fila[4] || '').toLowerCase().trim();
     const montoFila = Number(fila[5]) || 0;
 
     // Verificar si la fecha es válida
@@ -865,10 +870,19 @@ function existeTransaccionCruzada(sheet, fecha, tipoOSubcat, monto, campo) {
 
     const fechaFilaNorm = new Date(fechaFila.getFullYear(), fechaFila.getMonth(), fechaFila.getDate()).getTime();
 
-    // Comparar: misma fecha, mismo tipo/subcat, mismo monto (con tolerancia de 1)
-    if (fechaFilaNorm === fechaBuscar &&
-        valorColumna === tipoOSubcat &&
-        Math.abs(montoFila - monto) < 1) {
+    // Condición 1: Mismo fecha + tipo/subcat + monto (con tolerancia de 1)
+    const coincidePorMonto = (fechaFilaNorm === fechaBuscar &&
+                              valorColumna === tipoOSubcat &&
+                              Math.abs(montoFila - monto) < 1);
+
+    // Condición 2: Mismo fecha + tipo/subcat + descripción similar (v7.10)
+    // Esto evita duplicados cuando el usuario edita el monto después
+    const coincidePorDescripcion = (descripNorm.length >= 5 &&
+                                     fechaFilaNorm === fechaBuscar &&
+                                     valorColumna === tipoOSubcat &&
+                                     descripFila.includes(descripNorm.substring(0, 10)));
+
+    if (coincidePorMonto || coincidePorDescripcion) {
       return true; // Ya existe
     }
   }
@@ -903,8 +917,10 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   const descripcion = datos[4] || '';
   const monto = Number(datos[5]) || 0;
 
-  // Validar monto
-  if (!monto || monto <= 0) return;
+  // Validar monto - mínimo 10.000 Gs para evitar auto-creación con valores parciales (v7.10)
+  // Ej: si el usuario está escribiendo 13.837.500 y presiona Enter en "13", no crear transacción
+  const MONTO_MINIMO = 10000;
+  if (!monto || monto < MONTO_MINIMO) return;
 
   // Validar fecha y mostrar alerta si falta
   if (!fecha || !(fecha instanceof Date)) {
@@ -934,7 +950,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
     // → Crear egreso en CARGA_NT: Egreso NT / VARIABLES / Préstamo NT → Familia
     if (esPrestamo) {
       // Verificar duplicado
-      if (existeTransaccionCruzada(cargaNT, fecha, 'Préstamo NT → Familia', monto, 'subcategoria')) {
+      if (existeTransaccionCruzada(cargaNT, fecha, 'Préstamo NT → Familia', monto, 'subcategoria', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
         return;
       }
@@ -958,7 +974,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
     // → Crear ingreso en CARGA_NT: Préstamo Familia
     else if (esPrestamoFamNT) {
       // Verificar duplicado
-      if (existeTransaccionCruzada(cargaNT, fecha, 'Préstamo Familia', monto, 'tipo')) {
+      if (existeTransaccionCruzada(cargaNT, fecha, 'Préstamo Familia', monto, 'tipo', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
         return;
       }
@@ -982,7 +998,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
     // → Crear ingreso en CARGA_NT: Devolución Familia → NT
     else if (esDevolucionFamNT) {
       // Verificar duplicado
-      if (existeTransaccionCruzada(cargaNT, fecha, 'Devolución Familia → NT', monto, 'tipo')) {
+      if (existeTransaccionCruzada(cargaNT, fecha, 'Devolución Familia → NT', monto, 'tipo', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
         return;
       }
@@ -1007,7 +1023,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
     // v7.3: Caso faltante - cuando FAM registra ingreso, auto-crear egreso en NT
     else if (esDevolucionNT) {
       // Verificar duplicado
-      if (existeTransaccionCruzada(cargaNT, fecha, 'Devolución NT → Familia', monto, 'subcategoria')) {
+      if (existeTransaccionCruzada(cargaNT, fecha, 'Devolución NT → Familia', monto, 'subcategoria', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
         return;
       }
@@ -1058,8 +1074,10 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
   const descripcion = datos[4] || '';
   const monto = Number(datos[5]) || 0;
 
-  // Validar monto
-  if (!monto || monto <= 0) return;
+  // Validar monto - mínimo 10.000 Gs para evitar auto-creación con valores parciales (v7.10)
+  // Ej: si el usuario está escribiendo 13.837.500 y presiona Enter en "13", no crear transacción
+  const MONTO_MINIMO = 10000;
+  if (!monto || monto < MONTO_MINIMO) return;
 
   // Validar fecha y mostrar alerta si falta
   if (!fecha || !(fecha instanceof Date)) {
@@ -1089,7 +1107,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
     // → Crear egreso en CARGA_FAMILIA: Egreso Familiar / VARIABLES / Préstamo Familia → NT
     if (esPrestamoFam) {
       // Verificar duplicado
-      if (existeTransaccionCruzada(cargaFam, fecha, 'Préstamo Familia → NT', monto, 'subcategoria')) {
+      if (existeTransaccionCruzada(cargaFam, fecha, 'Préstamo Familia → NT', monto, 'subcategoria', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
         return;
       }
@@ -1113,7 +1131,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
     // → Crear egreso en CARGA_FAMILIA: Egreso Familiar / VARIABLES / Devolución Familia → NT
     else if (esDevolucionFamNT) {
       // Verificar duplicado
-      if (existeTransaccionCruzada(cargaFam, fecha, 'Devolución Familia → NT', monto, 'subcategoria')) {
+      if (existeTransaccionCruzada(cargaFam, fecha, 'Devolución Familia → NT', monto, 'subcategoria', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
         return;
       }
@@ -1137,7 +1155,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
     // → Crear ingreso en CARGA_FAMILIA: Préstamo NeuroTEA
     else if (esPrestamoNTFam) {
       // Verificar duplicado
-      if (existeTransaccionCruzada(cargaFam, fecha, 'Préstamo NeuroTEA', monto, 'tipo')) {
+      if (existeTransaccionCruzada(cargaFam, fecha, 'Préstamo NeuroTEA', monto, 'tipo', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
         return;
       }
@@ -1161,7 +1179,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
     // → Crear ingreso en CARGA_FAMILIA: Devolución NeuroTEA
     else if (esDevolucionNTFam) {
       // Verificar duplicado
-      if (existeTransaccionCruzada(cargaFam, fecha, 'Devolución NeuroTEA', monto, 'tipo')) {
+      if (existeTransaccionCruzada(cargaFam, fecha, 'Devolución NeuroTEA', monto, 'tipo', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
         return;
       }
