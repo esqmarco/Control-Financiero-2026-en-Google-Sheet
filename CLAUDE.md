@@ -136,7 +136,7 @@ gs/
 
 ## Subcategorías Variables
 
-### FAMILIA - VARIABLES (13 items - v7.7)
+### FAMILIA - VARIABLES (16 items - v7.7)
 1. Supermercado
 2. Combustible
 3. **Alimentación** (v7.7)
@@ -150,6 +150,9 @@ gs/
 11. Gastos no identificados
 12. **Devolución Familia → NT** (FAM devuelve préstamo a NT)
 13. **Préstamo Familia → NT** (FAM presta a NT)
+14. Reserva Var. 1
+15. Reserva Var. 2
+16. Reserva Var. 3
 
 ### NEUROTEA - VARIABLES (12 items - v7.7)
 1. Insumos y Papelería

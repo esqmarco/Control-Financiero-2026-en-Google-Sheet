@@ -36,8 +36,8 @@ GASTOS FIJOS, CUOTAS Y PRÉSTAMOS, OBLIGACIONES LEGALES, SUSCRIPCIONES, VARIABLE
 ### Categorías Egreso NT (6) - para referencia
 CLÍNICA, SUELDOS Y HONORARIOS, TELEFONÍA E INTERNET, OBLIGACIONES LEGALES, EVENTOS, VARIABLES
 
-### Subcategorías Variables FAMILIA (13 items - v7.7)
-Incluye "Alimentación", "Gastos Varios", "Devolución Familia → NT" y "Préstamo Familia → NT"
+### Subcategorías Variables FAMILIA (16 items - v7.7)
+Incluye "Alimentación", "Gastos Varios", "Devolución Familia → NT", "Préstamo Familia → NT" y 3 reservas
 
 ### Subcategorías Variables NT (12 items - v7.7)
 Incluye "Horas Extras Aracely", "Horas Extras Fatima", "Préstamo NT → Familia", "Devolución NT → Familia" y 3 reservas

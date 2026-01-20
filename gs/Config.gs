@@ -186,7 +186,10 @@ const VARIABLES_FAMILIA = [
   'Salud y Medicamentos',
   'Gastos no identificados',
   'Devolución Familia → NT',
-  'Préstamo Familia → NT'       // Familia presta a NT
+  'Préstamo Familia → NT',      // Familia presta a NT
+  'Reserva Var. 1',             // v7.7: Agregado al dropdown
+  'Reserva Var. 2',
+  'Reserva Var. 3'
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
