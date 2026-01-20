@@ -2,9 +2,8 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * TABLERO.GS - DASHBOARD PROFESIONAL DE CONTROL FINANCIERO
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 7.9 - FIX CRÍTICO: DISPONIBLE ahora referencia TOTAL DISPONIBLE (suma cuentas)
- *               PATRIMONIO = TOTAL DISPONIBLE + AHORRO + FONDO
- *               GANANCIA NT = TOTAL DISPONIBLE NT (coherencia garantizada)
+ * Versión 7.8 - FIX CRÍTICO: Esperado por cuenta ahora resta gastos fijos correctamente
+ *               usando nueva columna CUENTA (N) en MOVIMIENTO
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -396,11 +395,11 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 8);
   rowFam++;
 
-  // ROW 5: DISPONIBLE - Referencia a TOTAL DISPONIBLE (suma de cuentas)
-  // v7.9 FIX: DISPONIBLE = TOTAL DISPONIBLE (referencia, no cálculo independiente)
-  // Esto garantiza coherencia: el dinero disponible ES la suma de los saldos de todas las cuentas
+  // ROW 5: Balance de distribución - DISPONIBLE para gastar
+  // DISPONIBLE = INGRESOS - GASTOS - AHORRO - FONDO (dinero para más gastos/ahorro)
+  // BUG FIX [2026-01-14]: Formato de número con puntos como separadores de miles
   sheet.getRange(rowFam, 2, 1, 4).merge()
-    .setFormula(`=IFERROR(IF(C${filaTotalCuentasFam}>=0;"💰 DISPONIBLE: Gs. "&SUBSTITUTE(TEXT(C${filaTotalCuentasFam};"#,##0");",";".")&" para gastar";"⚠️ DÉFICIT: Gs. "&SUBSTITUTE(TEXT(ABS(C${filaTotalCuentasFam});"#,##0");",";".")&" (saldo negativo)");"")`)
+    .setFormula(`=IFERROR(LET(diff;B${filaValorIngresosFamInd}-(D${filaValorEgresosFamInd}+B${filaValorAhorroFam}+D${filaValorFondoEmFam});IF(ABS(diff)<1000;"✅ EQUILIBRADO: Ingresos distribuidos correctamente";IF(diff>0;"💰 DISPONIBLE: Gs. "&SUBSTITUTE(TEXT(diff;"#,##0");",";".")&" sin asignar";"⚠️ DÉFICIT: Gs. "&SUBSTITUTE(TEXT(ABS(diff);"#,##0");",";".")&" de más pagado")));"")`)
     .setFontSize(10)
     .setFontWeight('bold')
     .setHorizontalAlignment('center')
@@ -410,11 +409,11 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 28);
   rowFam++;
 
-  // ROW 6: PATRIMONIO FAMILIA = DISPONIBLE + AHORRO + FONDO (total de activos)
-  // v7.9 FIX: PATRIMONIO = TOTAL DISPONIBLE + AHORRO + FONDO EMERGENCIA
-  // El patrimonio incluye tanto lo disponible como lo ahorrado (sigue siendo tuyo)
+  // ROW 6: PATRIMONIO FAMILIA = INGRESOS - GASTOS (incluye ahorros como activos)
+  // Muestra el total de dinero que sigue siendo de FAMILIA (incluyendo lo ahorrado)
+  // BUG FIX [2026-01-14]: Formato de número con puntos como separadores de miles
   sheet.getRange(rowFam, 2, 1, 4).merge()
-    .setFormula(`=IFERROR("🏦 PATRIMONIO FAMILIA: Gs. "&SUBSTITUTE(TEXT(C${filaTotalCuentasFam}+B${filaValorAhorroFam}+D${filaValorFondoEmFam};"#,##0");",";".")&" (incl. ahorros)";"")`)
+    .setFormula(`=IFERROR("🏦 PATRIMONIO FAMILIA: Gs. "&SUBSTITUTE(TEXT(B${filaValorIngresosFamInd}-D${filaValorEgresosFamInd};"#,##0");",";".")&" (incl. ahorros)";"")`)
     .setFontSize(9)
     .setFontColor('#059669')
     .setBackground('#ECFDF5')
@@ -634,10 +633,9 @@ function crearHojaTABLERO() {
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, false, false, UI.PENDIENTE, SpreadsheetApp.BorderStyle.SOLID);
 
-  // Valor Proyección = TOTAL DISPONIBLE NT - Egresos Pendientes
-  // v7.9 FIX: Usa TOTAL DISPONIBLE (suma cuentas) en lugar de cálculo independiente
+  // Valor Proyección = Ingresos - Gastos Pagados - Egresos Pendientes
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(I${filaTotalCuentasNT}-H${rowNT};0)`)
+    .setFormula(`=IFERROR(H${filaIngresosNT}-J${filaIngresosNT}-H${rowNT};0)`)
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -678,11 +676,10 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 22);
   rowNT++;
 
-  // Valor Ganancia = TOTAL DISPONIBLE NT (suma de cuentas)
-  // v7.9 FIX: GANANCIA REAL = TOTAL DISPONIBLE (referencia, no cálculo independiente)
-  // Esto garantiza coherencia: la ganancia real ES la suma de los saldos de las cuentas NT
+  // Valor Ganancia = Ingresos - Egresos Pagados (GANANCIA REAL, no proyectada)
+  // BUG FIX [2026-01-14]: GANANCIA REAL solo considera lo efectivamente pagado, no pendientes
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setFormula(`=IFERROR(I${filaTotalCuentasNT};0)`)
+    .setFormula(`=IFERROR(H${filaIngresosNT}-J${filaIngresosNT};0)`)
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
