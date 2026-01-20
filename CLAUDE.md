@@ -947,5 +947,30 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ---
 
+## Bug Fixes [2026-01-20] - v7.9 (CRÍTICO)
+
+### DISPONIBLE y TOTAL DISPONIBLE no coincidían (BUG CRÍTICO)
+- **Problema**: DISPONIBLE se calculaba independientemente como `INGRESOS - EGRESOS_PAGADOS - AHORRO - FONDO`
+- **Pero**: TOTAL DISPONIBLE (suma de cuentas) se calculaba diferente
+- **Causa raíz**: Las fórmulas usaban fuentes diferentes:
+  - EGRESOS_PAGADOS leía de MOVIMIENTO (por subcategoría)
+  - Esperado restaba egresos de CARGA directamente (por cuenta)
+- **Impacto**: Discrepancia constante entre DISPONIBLE y TOTAL DISPONIBLE
+- **Solución integral**:
+  1. **DISPONIBLE** ahora es una REFERENCIA a TOTAL DISPONIBLE (no cálculo independiente)
+  2. **PATRIMONIO** ahora es `TOTAL DISPONIBLE + AHORRO + FONDO`
+  3. **GANANCIA NT** ahora referencia TOTAL DISPONIBLE NT
+  4. **PROYECCIÓN NT** ahora usa TOTAL DISPONIBLE NT - Pendientes
+- **Lógica correcta** (según usuario):
+  ```
+  CUENTA INDIVIDUAL: Disponible = Ingresos a cuenta - Egresos de cuenta
+  TOTAL DISPONIBLE = Σ(Disponible de cada cuenta)
+  DISPONIBLE = TOTAL DISPONIBLE (referencia, NO cálculo separado)
+  PATRIMONIO = TOTAL DISPONIBLE + AHORRO + FONDO
+  ```
+- **Archivos modificados**: Tablero.gs (fórmulas DISPONIBLE, PATRIMONIO, GANANCIA NT, PROYECCIÓN NT)
+
+---
+
 *Última actualización: 2026-01-20*
-*Versión: 7.8 - FIX CRÍTICO: Esperado por cuenta ahora resta gastos fijos correctamente*
+*Versión: 7.9 - FIX CRÍTICO: DISPONIBLE ahora referencia TOTAL DISPONIBLE (coherencia garantizada)*
