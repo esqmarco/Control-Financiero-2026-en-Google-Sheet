@@ -973,13 +973,17 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const datos = sheet.getRange(row, 1, 1, 9).getValues()[0];
 
-  const fecha = datos[0];
+  let fecha = datos[0];
   const subcategoria = String(datos[3] || '').trim();
   const monto = Number(datos[5]) || 0;
   const linkIdExistente = datos[8] || '';
 
-  // Validaciones básicas
-  if (!fecha || !(fecha instanceof Date)) return;
+  // Convertir fecha si es string (dd/mm/yyyy)
+  if (typeof fecha === 'string' && fecha) {
+    const p = fecha.split('/');
+    if (p.length === 3) fecha = new Date(p[2], p[1] - 1, p[0]);
+  }
+  if (!fecha || !(fecha instanceof Date) || isNaN(fecha.getTime())) return;
   if (!monto || monto < 10000) return;
 
   // Solo procesar préstamos/devoluciones
@@ -1024,13 +1028,17 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const datos = sheet.getRange(row, 1, 1, 9).getValues()[0];
 
-  const fecha = datos[0];
+  let fecha = datos[0];
   const subcategoria = String(datos[3] || '').trim();
   const monto = Number(datos[5]) || 0;
   const linkIdExistente = datos[8] || '';
 
-  // Validaciones básicas
-  if (!fecha || !(fecha instanceof Date)) return;
+  // Convertir fecha si es string (dd/mm/yyyy)
+  if (typeof fecha === 'string' && fecha) {
+    const p = fecha.split('/');
+    if (p.length === 3) fecha = new Date(p[2], p[1] - 1, p[0]);
+  }
+  if (!fecha || !(fecha instanceof Date) || isNaN(fecha.getTime())) return;
   if (!monto || monto < 10000) return;
 
   // Solo procesar préstamos/devoluciones
