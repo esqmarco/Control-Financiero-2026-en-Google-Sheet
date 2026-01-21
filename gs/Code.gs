@@ -52,7 +52,8 @@ function onOpen() {
       .addItem('🔄 Actualizar Validaciones', 'actualizarTodasValidaciones')
       .addItem('📈 Recalcular Tablero', 'recalcularTablero')
       .addItem('🎨 Aplicar Estilos', 'aplicarEstilosGlobales')
-      .addItem('🧹 Limpiar Datos de Prueba', 'limpiarDatosPrueba'))
+      .addItem('🧹 Limpiar Datos de Prueba', 'limpiarDatosPrueba')
+      .addItem('🔓 Desbloquear Auto-Creación', 'limpiarFlagAutoCreacion'))
     .addSeparator()
 
     // Info
@@ -322,25 +323,31 @@ function mostrarAcercaDe() {
 function onEdit(e) {
   if (!e) return;
 
-  const sheet = e.source.getActiveSheet();
-  const nombreHoja = sheet.getName();
-  const row = e.range.getRow();
-  const col = e.range.getColumn();
+  try {
+    const sheet = e.source.getActiveSheet();
+    const nombreHoja = sheet.getName();
+    const row = e.range.getRow();
+    const col = e.range.getColumn();
 
-  // Solo procesar hojas de carga y filas de datos
-  if (row < 4) return;
+    // Solo procesar hojas de carga y filas de datos
+    if (row < 4) return;
 
-  if (nombreHoja === NOMBRES_HOJAS.CARGA_FAMILIA) {
-    procesarEdicionCargaFamilia(sheet, row, col, e.value, e.oldValue);
-  } else if (nombreHoja === NOMBRES_HOJAS.CARGA_NT) {
-    procesarEdicionCargaNT(sheet, row, col, e.value, e.oldValue);
+    if (nombreHoja === NOMBRES_HOJAS.CARGA_FAMILIA) {
+      procesarEdicionCargaFamilia(sheet, row, col, e.value, e.oldValue);
+    } else if (nombreHoja === NOMBRES_HOJAS.CARGA_NT) {
+      procesarEdicionCargaNT(sheet, row, col, e.value, e.oldValue);
+    }
+  } catch (error) {
+    // v7.13: Capturar errores y limpiar flag para evitar bloqueos
+    desactivarModoAutoCreacion();
+    console.error('Error en onEdit: ' + error.message);
   }
 }
 
 function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
   // Columna B = TIPO (columna 2)
   if (col === 2) {
-    const esIngreso = TIPOS_INGRESO_FAMILIA.includes(valor);
+    const esIngreso = TODOS_TIPOS_INGRESO_FAMILIA.includes(valor);
     const esAhorro = (valor === TIPO_AHORRO); // "Ahorro"
 
     if (esIngreso) {
@@ -363,6 +370,8 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     const montoNuevo = Number(valor) || 0;
     const montoAnterior = Number(oldValue) || 0;
 
+    console.log('CARGA_FAMILIA col 6 - montoNuevo:', montoNuevo, 'row:', row);
+
     // v7.12: Si el monto se vació o se puso 0, y antes tenía valor, borrar contraparte
     if (montoNuevo === 0 && montoAnterior > 0) {
       const linkId = obtenerLinkId(sheet, row);
@@ -373,6 +382,7 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     }
     // Si hay monto válido, disparar auto-creación/actualización
     else if (montoNuevo > 0) {
+      console.log('Llamando autoCrearTransaccionCruzadaFamilia...');
       autoCrearTransaccionCruzadaFamilia(sheet, row);
     }
   }
@@ -382,7 +392,7 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     const tipoActual = sheet.getRange(row, 2).getValue();
 
     // Validar que el TIPO no sea un INGRESO
-    if (TIPOS_INGRESO_FAMILIA.includes(tipoActual) && valor !== '-') {
+    if (TODOS_TIPOS_INGRESO_FAMILIA.includes(tipoActual) && valor !== '-') {
       SpreadsheetApp.getUi().alert(
         '⚠️ INCOHERENCIA: TIPO es un INGRESO',
         'El TIPO "' + tipoActual + '" es un INGRESO.\n\n' +
@@ -477,7 +487,7 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
 function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
   // Columna B = TIPO (columna 2)
   if (col === 2) {
-    const esIngreso = TIPOS_INGRESO_NT.includes(valor);
+    const esIngreso = TODOS_TIPOS_INGRESO_NT.includes(valor);
     if (esIngreso) {
       sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
@@ -510,7 +520,7 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
   if (col === 3) {
     // Validar que el TIPO no sea un INGRESO
     const tipoActual = sheet.getRange(row, 2).getValue();
-    if (TIPOS_INGRESO_NT.includes(tipoActual) && valor !== '-') {
+    if (TODOS_TIPOS_INGRESO_NT.includes(tipoActual) && valor !== '-') {
       SpreadsheetApp.getUi().alert(
         '⚠️ INCOHERENCIA: TIPO es un INGRESO',
         'El TIPO "' + tipoActual + '" es un INGRESO.\n\n' +
@@ -594,7 +604,7 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
  */
 function validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipo, subcategoria) {
   // Cualquier TIPO de ingreso no debería tener subcategoría de egreso
-  if (TIPOS_INGRESO_FAMILIA.includes(tipo) &&
+  if (TODOS_TIPOS_INGRESO_FAMILIA.includes(tipo) &&
       (subcategoria === 'Devolución Familia → NT' || subcategoria === 'Préstamo Familia → NT')) {
     SpreadsheetApp.getUi().alert(
       '⚠️ INCOHERENCIA: TIPO es INGRESO pero SUBCATEGORÍA es de EGRESO',
@@ -617,7 +627,7 @@ function validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipo, subcatego
  */
 function validarContradiccionTipoSubcategoriaNT(sheet, row, tipo, subcategoria) {
   // Cualquier TIPO de ingreso no debería tener subcategoría de egreso
-  if (TIPOS_INGRESO_NT.includes(tipo) &&
+  if (TODOS_TIPOS_INGRESO_NT.includes(tipo) &&
       (subcategoria === 'Devolución NT → Familia' || subcategoria === 'Préstamo NT → Familia')) {
     SpreadsheetApp.getUi().alert(
       '⚠️ INCOHERENCIA: TIPO es INGRESO pero SUBCATEGORÍA es de EGRESO',
@@ -785,22 +795,62 @@ function validarPrestamoDevolucionNT(sheet, row, valor) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Bandera para evitar loops infinitos en auto-creación
- * Usa PropertiesService del documento para persistir entre llamadas
+ * v7.13: Sistema anti-loop MEJORADO con TIMEOUT automático
+ * Si el flag queda pegado más de 10 segundos, se auto-limpia
+ * Esto previene bloqueos permanentes por errores o crashes
  */
 function estaEnModoAutoCreacion() {
-  const props = PropertiesService.getDocumentProperties();
-  return props.getProperty('AUTO_CREACION_ACTIVA') === 'true';
+  try {
+    const props = PropertiesService.getDocumentProperties();
+    const flagTime = props.getProperty('AUTO_CREACION_TIME');
+    const ahora = Date.now();
+
+    // Si pasaron más de 10 segundos, limpiar flag automáticamente (anti-bloqueo)
+    if (flagTime && (ahora - parseInt(flagTime)) > 10000) {
+      props.deleteProperty('AUTO_CREACION_ACTIVA');
+      props.deleteProperty('AUTO_CREACION_TIME');
+      return false;
+    }
+
+    return props.getProperty('AUTO_CREACION_ACTIVA') === 'true';
+  } catch (e) {
+    return false; // En caso de error, permitir ejecución
+  }
 }
 
 function activarModoAutoCreacion() {
-  const props = PropertiesService.getDocumentProperties();
-  props.setProperty('AUTO_CREACION_ACTIVA', 'true');
+  try {
+    const props = PropertiesService.getDocumentProperties();
+    props.setProperty('AUTO_CREACION_ACTIVA', 'true');
+    props.setProperty('AUTO_CREACION_TIME', Date.now().toString());
+  } catch (e) {
+    // Ignorar errores - el flag no es crítico para la funcionalidad
+  }
 }
 
 function desactivarModoAutoCreacion() {
-  const props = PropertiesService.getDocumentProperties();
-  props.deleteProperty('AUTO_CREACION_ACTIVA');
+  try {
+    const props = PropertiesService.getDocumentProperties();
+    props.deleteProperty('AUTO_CREACION_ACTIVA');
+    props.deleteProperty('AUTO_CREACION_TIME');
+  } catch (e) {
+    // Ignorar errores - el timeout limpiará el flag si es necesario
+  }
+}
+
+/**
+ * Función de utilidad para limpiar manualmente el flag si queda pegado
+ * Ejecutar desde menú: Control Financiero → Utilidades → Limpiar flag auto-creación
+ */
+function limpiarFlagAutoCreacion() {
+  try {
+    const props = PropertiesService.getDocumentProperties();
+    props.deleteProperty('AUTO_CREACION_ACTIVA');
+    props.deleteProperty('AUTO_CREACION_TIME');
+    SpreadsheetApp.getActiveSpreadsheet().toast('✓ Flag de auto-creación limpiado', '🔧 Utilidad', 3);
+  } catch (e) {
+    SpreadsheetApp.getActiveSpreadsheet().toast('❌ Error: ' + e.message, 'Error', 5);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -989,25 +1039,38 @@ function aplicarFormatoFecha(sheet, fila) {
  * v7.13 - Simplificado: Solo detecta EGRESOS (subcategorías), los INGRESOS se auto-crean
  */
 function autoCrearTransaccionCruzadaFamilia(sheet, row) {
-  // Verificar si ya estamos en modo auto-creación (evitar loop)
-  if (estaEnModoAutoCreacion()) return;
-
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // v7.13: LOG de diagnóstico
+  console.log('autoCrearTransaccionCruzadaFamilia llamada - fila:', row);
+
+  // Verificar si ya estamos en modo auto-creación (evitar loop)
+  if (estaEnModoAutoCreacion()) {
+    console.log('BLOQUEADO: Flag auto-creación activo');
+    return;
+  }
+
   const datos = sheet.getRange(row, 1, 1, 9).getValues()[0];
   // [0]=FECHA, [1]=TIPO, [2]=CATEGORÍA, [3]=SUBCATEGORÍA, [4]=DESCRIPCIÓN, [5]=MONTO, [6]=CUENTA, [7]=NOTAS, [8]=LINK_ID
 
   const fecha = datos[0];
-  const subcategoria = datos[3];
+  const subcategoria = String(datos[3] || '').trim(); // v7.13: Normalizar subcategoría
   const monto = Number(datos[5]) || 0;
   const linkIdExistente = datos[8] || '';
 
+  console.log('Datos leídos - SUBCAT:"' + subcategoria + '" MONTO:' + monto);
+
   // Validar monto - mínimo 10.000 Gs para evitar auto-creación con valores parciales
   const MONTO_MINIMO = 10000;
-  if (!monto || monto < MONTO_MINIMO) return;
+  if (!monto || monto < MONTO_MINIMO) {
+    console.log('RETORNO: Monto insuficiente:', monto);
+    return;
+  }
 
   // Validar fecha y mostrar alerta si falta
   if (!fecha || !(fecha instanceof Date)) {
     ss.toast('⚠️ Falta la FECHA. La transacción cruzada NO se creó.', '❌ Error', 5);
+    console.log('RETORNO: Fecha inválida');
     return;
   }
 
@@ -1015,7 +1078,12 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   const esPrestamoFamNT = subcategoria === 'Préstamo Familia → NT';
   const esDevolucionFamNT = subcategoria === 'Devolución Familia → NT';
 
-  if (!esPrestamoFamNT && !esDevolucionFamNT) return;
+  console.log('Checks - esPrestamoFamNT:', esPrestamoFamNT, 'esDevolucionFamNT:', esDevolucionFamNT);
+
+  if (!esPrestamoFamNT && !esDevolucionFamNT) {
+    console.log('RETORNO: Subcategoría no es préstamo/devolución');
+    return;
+  }
 
   const cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
   if (!cargaNT) return;
@@ -1090,25 +1158,38 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
  * v7.13 - Simplificado: Solo detecta EGRESOS (subcategorías), los INGRESOS se auto-crean
  */
 function autoCrearTransaccionCruzadaNT(sheet, row) {
-  // Verificar si ya estamos en modo auto-creación (evitar loop)
-  if (estaEnModoAutoCreacion()) return;
-
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // v7.13: LOG de diagnóstico
+  console.log('autoCrearTransaccionCruzadaNT llamada - fila:', row);
+
+  // Verificar si ya estamos en modo auto-creación (evitar loop)
+  if (estaEnModoAutoCreacion()) {
+    console.log('BLOQUEADO: Flag auto-creación activo');
+    return;
+  }
+
   const datos = sheet.getRange(row, 1, 1, 9).getValues()[0];
   // [0]=FECHA, [1]=TIPO, [2]=CATEGORÍA, [3]=SUBCATEGORÍA, [4]=DESCRIPCIÓN, [5]=MONTO, [6]=CUENTA, [7]=NOTAS, [8]=LINK_ID
 
   const fecha = datos[0];
-  const subcategoria = datos[3];
+  const subcategoria = String(datos[3] || '').trim(); // v7.13: Normalizar subcategoría
   const monto = Number(datos[5]) || 0;
   const linkIdExistente = datos[8] || '';
 
+  console.log('Datos leídos NT - SUBCAT:"' + subcategoria + '" MONTO:' + monto);
+
   // Validar monto - mínimo 10.000 Gs para evitar auto-creación con valores parciales
   const MONTO_MINIMO = 10000;
-  if (!monto || monto < MONTO_MINIMO) return;
+  if (!monto || monto < MONTO_MINIMO) {
+    console.log('RETORNO: Monto insuficiente:', monto);
+    return;
+  }
 
   // Validar fecha y mostrar alerta si falta
   if (!fecha || !(fecha instanceof Date)) {
     ss.toast('⚠️ Falta la FECHA. La transacción cruzada NO se creó.', '❌ Error', 5);
+    console.log('RETORNO: Fecha inválida');
     return;
   }
 
@@ -1116,7 +1197,12 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
   const esPrestamoNTFam = subcategoria === 'Préstamo NT → Familia';
   const esDevolucionNTFam = subcategoria === 'Devolución NT → Familia';
 
-  if (!esPrestamoNTFam && !esDevolucionNTFam) return;
+  console.log('Checks NT - esPrestamoNTFam:', esPrestamoNTFam, 'esDevolucionNTFam:', esDevolucionNTFam);
+
+  if (!esPrestamoNTFam && !esDevolucionNTFam) {
+    console.log('RETORNO: Subcategoría no es préstamo/devolución');
+    return;
+  }
 
   const cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
   if (!cargaFam) return;

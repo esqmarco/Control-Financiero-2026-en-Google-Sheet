@@ -123,17 +123,32 @@ const TIPOS_INGRESO_FAMILIA = [
   'PL Itaipu Marco',
   'Honorarios Clara NeuroTEA',
   'Préstamo Otros Bancos'
-  // NOTA: 'Préstamo NeuroTEA' y 'Devolución NeuroTEA' se crean automáticamente
-  // cuando NT registra un egreso de préstamo/devolución en CARGA_NT
 ];
 
+// v7.13: Tipos AUTO-CREADOS (no aparecen en dropdown pero son válidos)
+const TIPOS_INGRESO_FAMILIA_AUTOCREADOS = [
+  'Préstamo NeuroTEA',          // NT presta a FAM → auto-creado
+  'Devolución NeuroTEA'         // NT devuelve a FAM → auto-creado
+];
+
+// v7.13: TODOS los tipos de ingreso FAMILIA válidos (para validaciones)
+const TODOS_TIPOS_INGRESO_FAMILIA = [...TIPOS_INGRESO_FAMILIA, ...TIPOS_INGRESO_FAMILIA_AUTOCREADOS];
+
+// Tipos para DROPDOWN (lo que el usuario puede seleccionar manualmente)
 const TIPOS_INGRESO_NT = [
   'Aporte NeuroTEA Terapeutas',
   'Cursos NeuroTEA',
   'Otros'
-  // NOTA: 'Préstamo Familia' y 'Devolución Familia → NT' se crean automáticamente
-  // cuando FAM registra un egreso de préstamo/devolución en CARGA_FAMILIA
 ];
+
+// v7.13: Tipos AUTO-CREADOS (no aparecen en dropdown pero son válidos)
+const TIPOS_INGRESO_NT_AUTOCREADOS = [
+  'Préstamo Familia',           // FAM presta a NT → auto-creado
+  'Devolución Familia → NT'     // FAM devuelve a NT → auto-creado
+];
+
+// v7.13: TODOS los tipos de ingreso NT válidos (para validaciones)
+const TODOS_TIPOS_INGRESO_NT = [...TIPOS_INGRESO_NT, ...TIPOS_INGRESO_NT_AUTOCREADOS];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CATEGORÍAS DE EGRESO

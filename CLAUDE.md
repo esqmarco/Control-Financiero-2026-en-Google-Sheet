@@ -1057,5 +1057,79 @@ Formato: 6 caracteres alfanuméricos (ej: A7K2M1)
 
 ---
 
+## Bug Fixes [2026-01-21] - v7.13 (CRÍTICO)
+
+### Auto-creación no se disparaba correctamente (BUG CRÍTICO)
+- **Problema**: La auto-creación de transacciones cruzadas solo se disparaba al editar MONTO, pero si el usuario llenaba MONTO antes de SUBCATEGORÍA, no funcionaba
+- **Problema adicional**: El flag anti-loop `AUTO_CREACION_ACTIVA` podía quedarse pegado en `true` después de un error, bloqueando permanentemente la auto-creación
+- **Solución**:
+  1. Auto-creación ahora se dispara tanto al editar MONTO como SUBCATEGORÍA
+  2. Sistema anti-loop mejorado con TIMEOUT de 10 segundos (auto-limpieza)
+  3. Try-catch global en `onEdit()` que limpia el flag si hay error
+  4. Nueva función de menú: `🔓 Desbloquear Auto-Creación`
+- **Archivos modificados**: Code.gs (onEdit, procesarEdicion*, autoCrearTransaccion*, funciones anti-loop)
+
+### Tipos auto-creados no reconocidos como INGRESOS
+- **Problema**: Al remover los tipos de préstamo/devolución de los dropdowns (v7.13), las transacciones auto-creadas no eran reconocidas como INGRESOS en las validaciones
+- **Solución**:
+  - Nuevos arrays separados para dropdown vs validación:
+    - `TIPOS_INGRESO_FAMILIA` / `TIPOS_INGRESO_NT` → Para dropdowns
+    - `TIPOS_INGRESO_*_AUTOCREADOS` → Tipos que se crean automáticamente
+    - `TODOS_TIPOS_INGRESO_*` → Unión de ambos, para validaciones
+  - Todas las validaciones `.includes()` ahora usan `TODOS_TIPOS_*`
+- **Archivos modificados**: Config.gs, Code.gs
+
+### Logging de diagnóstico agregado
+- **Propósito**: Facilitar debugging de problemas con auto-creación
+- **Ubicación**: `autoCrearTransaccionCruzadaFamilia()` y `autoCrearTransaccionCruzadaNT()`
+- **Uso**: Ver Extensiones → Apps Script → Ejecuciones para ver logs
+
+### Flujo actualizado de auto-creación (v7.13)
+```
+REGLA ÚNICA: Siempre registrar desde quien ENVÍA el dinero (EGRESO)
+
+┌─────────────────────────────────────────────────────────────────┐
+│ FAMILIA presta a NT:                                            │
+│   1. CARGA_FAMILIA: Egreso → VARIABLES → "Préstamo Familia → NT"│
+│   2. Auto-crea en CARGA_NT: TIPO="Préstamo Familia" (ingreso)   │
+├─────────────────────────────────────────────────────────────────┤
+│ NT devuelve a FAMILIA:                                          │
+│   1. CARGA_NT: Egreso → VARIABLES → "Devolución NT → Familia"   │
+│   2. Auto-crea en CARGA_FAMILIA: TIPO="Devolución NeuroTEA"     │
+├─────────────────────────────────────────────────────────────────┤
+│ NT presta a FAMILIA:                                            │
+│   1. CARGA_NT: Egreso → VARIABLES → "Préstamo NT → Familia"     │
+│   2. Auto-crea en CARGA_FAMILIA: TIPO="Préstamo NeuroTEA"       │
+├─────────────────────────────────────────────────────────────────┤
+│ FAMILIA devuelve a NT:                                          │
+│   1. CARGA_FAMILIA: Egreso → VARIABLES → "Devolución Familia → NT"│
+│   2. Auto-crea en CARGA_NT: TIPO="Devolución Familia → NT"      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Sistema anti-loop mejorado (v7.13)
+```javascript
+// Flag con timeout automático de 10 segundos
+function estaEnModoAutoCreacion() {
+  const flagTime = props.getProperty('AUTO_CREACION_TIME');
+  const ahora = Date.now();
+
+  // Si pasaron más de 10 segundos, limpiar flag automáticamente
+  if (flagTime && (ahora - parseInt(flagTime)) > 10000) {
+    props.deleteProperty('AUTO_CREACION_ACTIVA');
+    return false;
+  }
+
+  return props.getProperty('AUTO_CREACION_ACTIVA') === 'true';
+}
+```
+
+### Opción de menú para desbloquear manualmente
+- **Ubicación**: Control Financiero → 🔧 Utilidades → 🔓 Desbloquear Auto-Creación
+- **Uso**: Si la auto-creación deja de funcionar, ejecutar esta opción
+- **Función**: `limpiarFlagAutoCreacion()`
+
+---
+
 *Última actualización: 2026-01-21*
-*Versión: 7.12 - Sistema UUID para vincular transacciones cruzadas + auto-borrado sincronizado*
+*Versión: 7.13 - Fix auto-creación préstamos, sistema anti-loop con timeout*
