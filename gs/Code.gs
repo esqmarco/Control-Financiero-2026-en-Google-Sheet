@@ -859,14 +859,11 @@ function desactivarModoAutoCreacion() {
 
 /**
  * Genera un ID único para vincular transacciones cruzadas
- * Formato: TXN_YYYYMMDD_XXXXXX (donde X es alfanumérico aleatorio)
- * @returns {string} ID único
+ * Formato: 6 caracteres alfanuméricos (ej: A7K2M1)
+ * @returns {string} ID único breve
  */
 function generarLinkId() {
-  const fecha = new Date();
-  const fechaStr = Utilities.formatDate(fecha, 'America/Asuncion', 'yyyyMMdd');
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return 'TXN_' + fechaStr + '_' + random;
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 /**
@@ -929,7 +926,7 @@ function borrarContraparte(linkId, hojaOrigen) {
  */
 function obtenerLinkId(sheet, row) {
   const valor = sheet.getRange(row, 9).getValue(); // Columna I
-  return (valor && valor !== '' && String(valor).startsWith('TXN_')) ? String(valor) : null;
+  return (valor && valor !== '' && String(valor).length === 6) ? String(valor) : null;
 }
 
 /**
@@ -1078,7 +1075,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   if (!cargaNT) return;
 
   // v7.12: Si ya tiene LINK_ID, actualizar la contraparte en lugar de crear nueva
-  if (linkIdExistente && linkIdExistente.startsWith('TXN_')) {
+  if (linkIdExistente && linkIdExistente.length === 6) {
     const actualizado = actualizarMontoContraparte(linkIdExistente, NOMBRES_HOJAS.CARGA_FAMILIA, monto);
     if (actualizado) return; // Ya se actualizó, no crear nueva
   }
@@ -1102,12 +1099,11 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
       cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Egreso NT', 'VARIABLES', 'Préstamo NT → Familia',
-        descripcion || 'Auto: Préstamo a Familia', monto, 'Atlas NeuroTEA',
-        'Auto-generado desde CARGA_FAMILIA', linkId
+        '', monto, 'Atlas NeuroTEA', '', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado egreso en CARGA_NT: "Préstamo NT → Familia" por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado en CARGA_NT por ' + formatearGuaranies(monto);
     }
 
     // CASO 2: SUBCAT="Préstamo Familia → NT" (FAM presta a NT)
@@ -1119,12 +1115,11 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
       cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Préstamo Familia', '-', '-',
-        descripcion || 'Auto: Préstamo recibido de Familia', monto, 'Atlas NeuroTEA',
-        'Auto-generado desde CARGA_FAMILIA', linkId
+        '', monto, 'Atlas NeuroTEA', '', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado ingreso en CARGA_NT: "Préstamo Familia" por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado en CARGA_NT por ' + formatearGuaranies(monto);
     }
 
     // CASO 3: SUBCAT="Devolución Familia → NT" (FAM devuelve a NT)
@@ -1136,12 +1131,11 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
       cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Devolución Familia → NT', '-', '-',
-        descripcion || 'Auto: Devolución recibida de Familia', monto, 'Atlas NeuroTEA',
-        'Auto-generado desde CARGA_FAMILIA', linkId
+        '', monto, 'Atlas NeuroTEA', '', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado ingreso en CARGA_NT: "Devolución Familia → NT" por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado en CARGA_NT por ' + formatearGuaranies(monto);
     }
 
     // CASO 4: TIPO="Devolución NeuroTEA" (NT devuelve a FAM)
@@ -1153,12 +1147,11 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
       cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Egreso NT', 'VARIABLES', 'Devolución NT → Familia',
-        descripcion || 'Auto: Devolución a Familia', monto, 'Atlas NeuroTEA',
-        'Auto-generado desde CARGA_FAMILIA', linkId
+        '', monto, 'Atlas NeuroTEA', '', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado egreso en CARGA_NT: "Devolución NT → Familia" por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado en CARGA_NT por ' + formatearGuaranies(monto);
     }
 
     // v7.12: Escribir LINK_ID en la fila original de CARGA_FAMILIA
@@ -1219,7 +1212,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
   if (!cargaFam) return;
 
   // v7.12: Si ya tiene LINK_ID, actualizar la contraparte en lugar de crear nueva
-  if (linkIdExistente && linkIdExistente.startsWith('TXN_')) {
+  if (linkIdExistente && linkIdExistente.length === 6) {
     const actualizado = actualizarMontoContraparte(linkIdExistente, NOMBRES_HOJAS.CARGA_NT, monto);
     if (actualizado) return;
   }
@@ -1243,12 +1236,11 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
       cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Egreso Familiar', 'VARIABLES', 'Préstamo Familia → NT',
-        descripcion || 'Auto: Préstamo a NeuroTEA', monto, 'ITAU Marco',
-        'Auto-generado desde CARGA_NT', linkId
+        '', monto, 'ITAU Marco', '', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado egreso en CARGA_FAMILIA: "Préstamo Familia → NT" por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado en CARGA_FAMILIA por ' + formatearGuaranies(monto);
     }
 
     // CASO 2: TIPO="Devolución Familia → NT" (FAM devuelve a NT)
@@ -1260,12 +1252,11 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
       cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Egreso Familiar', 'VARIABLES', 'Devolución Familia → NT',
-        descripcion || 'Auto: Devolución a NeuroTEA', monto, 'ITAU Marco',
-        'Auto-generado desde CARGA_NT', linkId
+        '', monto, 'ITAU Marco', '', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado egreso en CARGA_FAMILIA: "Devolución Familia → NT" por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado en CARGA_FAMILIA por ' + formatearGuaranies(monto);
     }
 
     // CASO 3: SUBCAT="Préstamo NT → Familia" (NT presta a FAM)
@@ -1277,12 +1268,11 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
       cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Préstamo NeuroTEA', '-', '-',
-        descripcion || 'Auto: Préstamo recibido de NeuroTEA', monto, 'ITAU Marco',
-        'Auto-generado desde CARGA_NT', linkId
+        '', monto, 'ITAU Marco', '', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado ingreso en CARGA_FAMILIA: "Préstamo NeuroTEA" por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado en CARGA_FAMILIA por ' + formatearGuaranies(monto);
     }
 
     // CASO 4: SUBCAT="Devolución NT → Familia" (NT devuelve a FAM)
@@ -1294,12 +1284,11 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
       cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Devolución NeuroTEA', '-', '-',
-        descripcion || 'Auto: Devolución recibida de NeuroTEA', monto, 'ITAU Marco',
-        'Auto-generado desde CARGA_NT', linkId
+        '', monto, 'ITAU Marco', '', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado ingreso en CARGA_FAMILIA: "Devolución NeuroTEA" por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado en CARGA_FAMILIA por ' + formatearGuaranies(monto);
     }
 
     // v7.12: Escribir LINK_ID en la fila original de CARGA_NT
