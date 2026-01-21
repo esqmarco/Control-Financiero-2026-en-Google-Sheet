@@ -1099,7 +1099,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
       cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Egreso NT', 'VARIABLES', 'Préstamo NT → Familia',
-        '', monto, 'Atlas NeuroTEA', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
@@ -1115,7 +1115,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
       cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Préstamo Familia', '-', '-',
-        '', monto, 'Atlas NeuroTEA', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
@@ -1131,7 +1131,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
       cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Devolución Familia → NT', '-', '-',
-        '', monto, 'Atlas NeuroTEA', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
@@ -1147,7 +1147,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
       cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Egreso NT', 'VARIABLES', 'Devolución NT → Familia',
-        '', monto, 'Atlas NeuroTEA', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
@@ -1236,7 +1236,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
       cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Egreso Familiar', 'VARIABLES', 'Préstamo Familia → NT',
-        '', monto, 'ITAU Marco', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
@@ -1252,7 +1252,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
       cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Egreso Familiar', 'VARIABLES', 'Devolución Familia → NT',
-        '', monto, 'ITAU Marco', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
@@ -1268,7 +1268,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
       cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Préstamo NeuroTEA', '-', '-',
-        '', monto, 'ITAU Marco', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
@@ -1284,7 +1284,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
       cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Devolución NeuroTEA', '-', '-',
-        '', monto, 'ITAU Marco', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
