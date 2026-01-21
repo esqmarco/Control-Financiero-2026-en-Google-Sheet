@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 7.15 - Fix auto-creación + logging + limpiarMonto para formato paraguayo
+ * Versión 7.16 - Fix limpiarMonto en SUBCATEGORÍA + Toast debug mejorado
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -362,6 +362,9 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     const montoNuevo = limpiarMonto(valor);
     const montoAnterior = limpiarMonto(oldValue);
 
+    // v7.15: Toast visible para debugging
+    SpreadsheetApp.getActiveSpreadsheet().toast('MONTO editado: ' + montoNuevo + ' en fila ' + row, '🔍 Debug', 2);
+
     console.log('EDIT-FAM-MONTO: valor=' + valor + ', montoNuevo=' + montoNuevo + ', row=' + row);
 
     // Si el monto se vació, borrar contraparte
@@ -463,11 +466,18 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     // 3. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionFamilia(sheet, row, valor);
 
-    // 4. v7.13: Si es préstamo/devolución Y ya hay monto, disparar auto-creación
+    // 4. v7.16: Si es préstamo/devolución Y ya hay monto, disparar auto-creación
     const esPrestamoODevolucion = (valor === 'Préstamo Familia → NT' || valor === 'Devolución Familia → NT');
     if (esPrestamoODevolucion) {
-      const montoActual = Number(sheet.getRange(row, 6).getValue()) || 0;
+      const montoActual = limpiarMonto(sheet.getRange(row, 6).getValue());
       const linkIdActual = sheet.getRange(row, 9).getValue();
+
+      // Toast debug para SUBCATEGORÍA
+      SpreadsheetApp.getActiveSpreadsheet().toast(
+        'SUBCAT préstamo: monto=' + montoActual + ', linkId=' + (linkIdActual || 'vacío'),
+        '🔍 Debug SUBCAT', 3
+      );
+
       // Solo si hay monto y no tiene LINK_ID (no fue auto-creada aún)
       if (montoActual >= 10000 && !linkIdActual) {
         autoCrearTransaccionCruzadaFamilia(sheet, row);
@@ -575,11 +585,18 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
     // 4. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionNT(sheet, row, valor);
 
-    // 5. v7.13: Si es préstamo/devolución Y ya hay monto, disparar auto-creación
+    // 5. v7.16: Si es préstamo/devolución Y ya hay monto, disparar auto-creación
     const esPrestamoODevolucion = (valor === 'Préstamo NT → Familia' || valor === 'Devolución NT → Familia');
     if (esPrestamoODevolucion) {
-      const montoActual = Number(sheet.getRange(row, 6).getValue()) || 0;
+      const montoActual = limpiarMonto(sheet.getRange(row, 6).getValue());
       const linkIdActual = sheet.getRange(row, 9).getValue();
+
+      // Toast debug para SUBCATEGORÍA NT
+      SpreadsheetApp.getActiveSpreadsheet().toast(
+        'SUBCAT NT préstamo: monto=' + montoActual + ', linkId=' + (linkIdActual || 'vacío'),
+        '🔍 Debug SUBCAT NT', 3
+      );
+
       // Solo si hay monto y no tiene LINK_ID (no fue auto-creada aún)
       if (montoActual >= 10000 && !linkIdActual) {
         autoCrearTransaccionCruzadaNT(sheet, row);
