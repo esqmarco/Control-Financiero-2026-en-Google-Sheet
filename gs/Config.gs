@@ -122,17 +122,17 @@ const TIPOS_INGRESO_FAMILIA = [
   'Contrato Colectivo Marco',
   'PL Itaipu Marco',
   'Honorarios Clara NeuroTEA',
-  'Préstamo NeuroTEA',
-  'Devolución NeuroTEA',        // NT devuelve préstamo a Familia
   'Préstamo Otros Bancos'
+  // NOTA: 'Préstamo NeuroTEA' y 'Devolución NeuroTEA' se crean automáticamente
+  // cuando NT registra un egreso de préstamo/devolución en CARGA_NT
 ];
 
 const TIPOS_INGRESO_NT = [
   'Aporte NeuroTEA Terapeutas',
   'Cursos NeuroTEA',
-  'Otros',
-  'Devolución Familia → NT',
-  'Préstamo Familia'            // Familia presta a NT
+  'Otros'
+  // NOTA: 'Préstamo Familia' y 'Devolución Familia → NT' se crean automáticamente
+  // cuando FAM registra un egreso de préstamo/devolución en CARGA_FAMILIA
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
