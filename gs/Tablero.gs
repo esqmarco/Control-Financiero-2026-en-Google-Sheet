@@ -942,7 +942,7 @@ function crearHojaTABLERO() {
     .setFontWeight('bold')
     .setBackground(UI.FAM_SUBTOTAL)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setValue('= Σ Cuentas')
+  sheet.getRange(rowFam, 3).setValue('Σ Cuentas')
     .setBackground(UI.FAM_SUBTOTAL)
     .setHorizontalAlignment('center')
     .setFontSize(9)
@@ -1130,7 +1130,7 @@ function crearHojaTABLERO() {
     .setFontWeight('bold')
     .setBackground(UI.NT_SUBTOTAL)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setValue('= Σ Cuentas')
+  sheet.getRange(rowNT, 9).setValue('Σ Cuentas')
     .setBackground(UI.NT_SUBTOTAL)
     .setHorizontalAlignment('center')
     .setFontSize(9)
