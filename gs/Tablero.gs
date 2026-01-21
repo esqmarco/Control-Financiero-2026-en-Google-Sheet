@@ -772,22 +772,21 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Valores de distribución
-  // v7.6: Los % se leen de CONFIG (filas 42-44)
-  // FIX: Usar VALUE() para asegurar conversión numérica
-  sheet.getRange(rowNT, 8).setFormula(`=IFERROR(H${filaGananciaNT}*VALUE(CONFIG!$B$42)/100;0)`)
+  // v7.17: Simplificado - si hay ganancia positiva, dividir entre 3
+  sheet.getRange(rowNT, 8).setFormula(`=IF(H${filaGananciaNT}>0;H${filaGananciaNT}/3;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#F3E8FF')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setFormula(`=IFERROR(H${filaGananciaNT}*VALUE(CONFIG!$B$43)/100;0)`)
+  sheet.getRange(rowNT, 9).setFormula(`=IF(H${filaGananciaNT}>0;H${filaGananciaNT}/3;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#FFEDD5')
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(H${filaGananciaNT}*VALUE(CONFIG!$B$44)/100;0)`)
+    .setFormula(`=IF(H${filaGananciaNT}>0;H${filaGananciaNT}/3;0)`)
     .setNumberFormat('#,##0')
     .setFontWeight('bold')
     .setBackground('#CFFAFE')
