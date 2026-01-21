@@ -567,47 +567,11 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
 
 /**
  * Valida contradicciones entre TIPO y SUBCATEGORÍA en CARGA_FAMILIA
- * Detecta combinaciones imposibles como:
- * - TIPO="Devolución NeuroTEA" (INGRESO) + SUBCAT="Devolución Familia → NT" (EGRESO)
- * - TIPO="Préstamo NeuroTEA" (INGRESO) + SUBCAT="Préstamo Familia → NT" (EGRESO)
+ * v7.13: Simplificado - solo valida que TIPO ingreso no tenga SUBCAT de egreso
  * @returns {boolean} true si hubo contradicción (y se limpió la celda)
  */
 function validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipo, subcategoria) {
-  // Contradicción 1: "Devolución NeuroTEA" es cuando NT devuelve a Familia (INGRESO)
-  // pero "Devolución Familia → NT" es cuando Familia devuelve a NT (EGRESO)
-  if (tipo === 'Devolución NeuroTEA' && subcategoria === 'Devolución Familia → NT') {
-    SpreadsheetApp.getUi().alert(
-      '⚠️ CONTRADICCIÓN DETECTADA',
-      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
-      '• "Devolución NeuroTEA" = NT te devuelve dinero (INGRESO)\n' +
-      '• "Devolución Familia → NT" = Vos devolvés a NT (EGRESO)\n\n' +
-      '¿Qué querés registrar?\n\n' +
-      '→ Si NT te devuelve: Usá TIPO="Devolución NeuroTEA" sin categoría\n' +
-      '→ Si vos devolvés a NT: Usá TIPO="Egreso Familiar" → VARIABLES → "Devolución Familia → NT"',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    sheet.getRange(row, 4).setValue('');
-    return true;
-  }
-
-  // Contradicción 2: "Préstamo NeuroTEA" es cuando NT presta a Familia (INGRESO)
-  // pero "Préstamo Familia → NT" es cuando Familia presta a NT (EGRESO)
-  if (tipo === 'Préstamo NeuroTEA' && subcategoria === 'Préstamo Familia → NT') {
-    SpreadsheetApp.getUi().alert(
-      '⚠️ CONTRADICCIÓN DETECTADA',
-      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
-      '• "Préstamo NeuroTEA" = NT te presta dinero (INGRESO)\n' +
-      '• "Préstamo Familia → NT" = Vos prestás a NT (EGRESO)\n\n' +
-      '¿Qué querés registrar?\n\n' +
-      '→ Si NT te presta: Usá TIPO="Préstamo NeuroTEA" sin categoría\n' +
-      '→ Si vos prestás a NT: Usá TIPO="Egreso Familiar" → VARIABLES → "Préstamo Familia → NT"',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    sheet.getRange(row, 4).setValue('');
-    return true;
-  }
-
-  // Contradicción 3: Cualquier TIPO de ingreso no debería tener subcategoría de egreso
+  // Cualquier TIPO de ingreso no debería tener subcategoría de egreso
   if (TIPOS_INGRESO_FAMILIA.includes(tipo) &&
       (subcategoria === 'Devolución Familia → NT' || subcategoria === 'Préstamo Familia → NT')) {
     SpreadsheetApp.getUi().alert(
@@ -626,47 +590,11 @@ function validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipo, subcatego
 
 /**
  * Valida contradicciones entre TIPO y SUBCATEGORÍA en CARGA_NT
- * Detecta combinaciones imposibles como:
- * - TIPO="Devolución Familia → NT" (INGRESO) + SUBCAT="Devolución NT → Familia" (EGRESO)
- * - TIPO="Préstamo Familia" (INGRESO) + SUBCAT="Préstamo NT → Familia" (EGRESO)
+ * v7.13: Simplificado - solo valida que TIPO ingreso no tenga SUBCAT de egreso
  * @returns {boolean} true si hubo contradicción (y se limpió la celda)
  */
 function validarContradiccionTipoSubcategoriaNT(sheet, row, tipo, subcategoria) {
-  // Contradicción 1: "Devolución Familia → NT" es cuando Familia devuelve a NT (INGRESO para NT)
-  // pero "Devolución NT → Familia" es cuando NT devuelve a Familia (EGRESO para NT)
-  if (tipo === 'Devolución Familia → NT' && subcategoria === 'Devolución NT → Familia') {
-    SpreadsheetApp.getUi().alert(
-      '⚠️ CONTRADICCIÓN DETECTADA',
-      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
-      '• "Devolución Familia → NT" = Familia te devuelve dinero (INGRESO)\n' +
-      '• "Devolución NT → Familia" = Vos devolvés a Familia (EGRESO)\n\n' +
-      '¿Qué querés registrar?\n\n' +
-      '→ Si Familia te devuelve: Usá TIPO="Devolución Familia → NT" sin categoría\n' +
-      '→ Si vos devolvés a Familia: Usá TIPO="Egreso NT" → VARIABLES → "Devolución NT → Familia"',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    sheet.getRange(row, 4).setValue('');
-    return true;
-  }
-
-  // Contradicción 2: "Préstamo Familia" es cuando Familia presta a NT (INGRESO para NT)
-  // pero "Préstamo NT → Familia" es cuando NT presta a Familia (EGRESO para NT)
-  if (tipo === 'Préstamo Familia' && subcategoria === 'Préstamo NT → Familia') {
-    SpreadsheetApp.getUi().alert(
-      '⚠️ CONTRADICCIÓN DETECTADA',
-      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
-      '• "Préstamo Familia" = Familia te presta dinero (INGRESO)\n' +
-      '• "Préstamo NT → Familia" = Vos prestás a Familia (EGRESO)\n\n' +
-      '¿Qué querés registrar?\n\n' +
-      '→ Si Familia te presta: Usá TIPO="Préstamo Familia" sin categoría\n' +
-      '→ Si vos prestás a Familia: Usá TIPO="Egreso NT" → VARIABLES → "Préstamo NT → Familia"',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    sheet.getRange(row, 4).setValue('');
-    return true;
-  }
-
-  // Contradicción 3: Cualquier TIPO de ingreso no debería tener subcategoría de egreso
+  // Cualquier TIPO de ingreso no debería tener subcategoría de egreso
   if (TIPOS_INGRESO_NT.includes(tipo) &&
       (subcategoria === 'Devolución NT → Familia' || subcategoria === 'Préstamo NT → Familia')) {
     SpreadsheetApp.getUi().alert(
@@ -1036,7 +964,7 @@ function aplicarFormatoFecha(sheet, fila) {
 /**
  * Auto-crea transacción cruzada cuando se completa una fila en CARGA_FAMILIA
  * Se llama después de que el usuario ingresa el MONTO (columna F)
- * v7.12 - Mejorado: Sistema UUID para vincular transacciones + actualización en lugar de duplicado
+ * v7.13 - Simplificado: Solo detecta EGRESOS (subcategorías), los INGRESOS se auto-crean
  */
 function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   // Verificar si ya estamos en modo auto-creación (evitar loop)
@@ -1047,9 +975,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   // [0]=FECHA, [1]=TIPO, [2]=CATEGORÍA, [3]=SUBCATEGORÍA, [4]=DESCRIPCIÓN, [5]=MONTO, [6]=CUENTA, [7]=NOTAS, [8]=LINK_ID
 
   const fecha = datos[0];
-  const tipo = datos[1];
   const subcategoria = datos[3];
-  const descripcion = datos[4] || '';
   const monto = Number(datos[5]) || 0;
   const linkIdExistente = datos[8] || '';
 
@@ -1063,13 +989,11 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
     return;
   }
 
-  // Verificar si es una transacción que requiere auto-creación
-  const esPrestamo = tipo === 'Préstamo NeuroTEA';
-  const esDevolucionNT = tipo === 'Devolución NeuroTEA';
+  // v7.13: Solo detectar subcategorías de EGRESO (préstamo/devolución desde FAM)
   const esPrestamoFamNT = subcategoria === 'Préstamo Familia → NT';
   const esDevolucionFamNT = subcategoria === 'Devolución Familia → NT';
 
-  if (!esPrestamo && !esDevolucionNT && !esPrestamoFamNT && !esDevolucionFamNT) return;
+  if (!esPrestamoFamNT && !esDevolucionFamNT) return;
 
   const cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
   if (!cargaNT) return;
@@ -1090,68 +1014,36 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   try {
     activarModoAutoCreacion();
 
-    // CASO 1: TIPO="Préstamo NeuroTEA" (NT presta a FAM)
-    if (esPrestamo) {
-      if (existeTransaccionCruzada(cargaNT, fecha, 'Préstamo NT → Familia', monto, 'subcategoria', descripcion)) {
-        ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
-        return;
-      }
-      filaDestino = encontrarPrimeraFilaVacia(cargaNT);
-      cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
-        fecha, 'Egreso NT', 'VARIABLES', 'Préstamo NT → Familia',
-        '', monto, 'Atlas NeuroTEA', '', linkId
-      ]]);
-      aplicarFormatoFecha(cargaNT, filaDestino);
-      transaccionCreada = true;
-      mensajeToast = '✓ Creado en CARGA_NT por ' + formatearGuaranies(monto);
-    }
-
-    // CASO 2: SUBCAT="Préstamo Familia → NT" (FAM presta a NT)
-    else if (esPrestamoFamNT) {
-      if (existeTransaccionCruzada(cargaNT, fecha, 'Préstamo Familia', monto, 'tipo', descripcion)) {
+    // CASO 1: SUBCAT="Préstamo Familia → NT" (FAM presta a NT) → Crea INGRESO en NT
+    if (esPrestamoFamNT) {
+      if (existeTransaccionCruzada(cargaNT, fecha, 'Préstamo Familia', monto, 'tipo', '')) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
       cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Préstamo Familia', '-', '-',
-        '', monto, 'Atlas NeuroTEA', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado en CARGA_NT por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado INGRESO en CARGA_NT por ' + formatearGuaranies(monto);
     }
 
-    // CASO 3: SUBCAT="Devolución Familia → NT" (FAM devuelve a NT)
+    // CASO 2: SUBCAT="Devolución Familia → NT" (FAM devuelve a NT) → Crea INGRESO en NT
     else if (esDevolucionFamNT) {
-      if (existeTransaccionCruzada(cargaNT, fecha, 'Devolución Familia → NT', monto, 'tipo', descripcion)) {
+      if (existeTransaccionCruzada(cargaNT, fecha, 'Devolución Familia → NT', monto, 'tipo', '')) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
       cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Devolución Familia → NT', '-', '-',
-        '', monto, 'Atlas NeuroTEA', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado en CARGA_NT por ' + formatearGuaranies(monto);
-    }
-
-    // CASO 4: TIPO="Devolución NeuroTEA" (NT devuelve a FAM)
-    else if (esDevolucionNT) {
-      if (existeTransaccionCruzada(cargaNT, fecha, 'Devolución NT → Familia', monto, 'subcategoria', descripcion)) {
-        ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
-        return;
-      }
-      filaDestino = encontrarPrimeraFilaVacia(cargaNT);
-      cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
-        fecha, 'Egreso NT', 'VARIABLES', 'Devolución NT → Familia',
-        '', monto, 'Atlas NeuroTEA', '', linkId
-      ]]);
-      aplicarFormatoFecha(cargaNT, filaDestino);
-      transaccionCreada = true;
-      mensajeToast = '✓ Creado en CARGA_NT por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado INGRESO en CARGA_NT por ' + formatearGuaranies(monto);
     }
 
     // v7.12: Escribir LINK_ID en la fila original de CARGA_FAMILIA
@@ -1173,7 +1065,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
 /**
  * Auto-crea transacción cruzada cuando se completa una fila en CARGA_NT
  * Se llama después de que el usuario ingresa el MONTO (columna F)
- * v7.12 - Mejorado: Sistema UUID para vincular transacciones + actualización en lugar de duplicado
+ * v7.13 - Simplificado: Solo detecta EGRESOS (subcategorías), los INGRESOS se auto-crean
  */
 function autoCrearTransaccionCruzadaNT(sheet, row) {
   // Verificar si ya estamos en modo auto-creación (evitar loop)
@@ -1184,9 +1076,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
   // [0]=FECHA, [1]=TIPO, [2]=CATEGORÍA, [3]=SUBCATEGORÍA, [4]=DESCRIPCIÓN, [5]=MONTO, [6]=CUENTA, [7]=NOTAS, [8]=LINK_ID
 
   const fecha = datos[0];
-  const tipo = datos[1];
   const subcategoria = datos[3];
-  const descripcion = datos[4] || '';
   const monto = Number(datos[5]) || 0;
   const linkIdExistente = datos[8] || '';
 
@@ -1200,13 +1090,11 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
     return;
   }
 
-  // Verificar si es una transacción que requiere auto-creación
-  const esPrestamoFam = tipo === 'Préstamo Familia';
-  const esDevolucionFamNT = tipo === 'Devolución Familia → NT';
+  // v7.13: Solo detectar subcategorías de EGRESO (préstamo/devolución desde NT)
   const esPrestamoNTFam = subcategoria === 'Préstamo NT → Familia';
   const esDevolucionNTFam = subcategoria === 'Devolución NT → Familia';
 
-  if (!esPrestamoFam && !esDevolucionFamNT && !esPrestamoNTFam && !esDevolucionNTFam) return;
+  if (!esPrestamoNTFam && !esDevolucionNTFam) return;
 
   const cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
   if (!cargaFam) return;
@@ -1227,68 +1115,36 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
   try {
     activarModoAutoCreacion();
 
-    // CASO 1: TIPO="Préstamo Familia" (FAM presta a NT)
-    if (esPrestamoFam) {
-      if (existeTransaccionCruzada(cargaFam, fecha, 'Préstamo Familia → NT', monto, 'subcategoria', descripcion)) {
-        ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
-        return;
-      }
-      filaDestino = encontrarPrimeraFilaVacia(cargaFam);
-      cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
-        fecha, 'Egreso Familiar', 'VARIABLES', 'Préstamo Familia → NT',
-        '', monto, 'ITAU Marco', '', linkId
-      ]]);
-      aplicarFormatoFecha(cargaFam, filaDestino);
-      transaccionCreada = true;
-      mensajeToast = '✓ Creado en CARGA_FAMILIA por ' + formatearGuaranies(monto);
-    }
-
-    // CASO 2: TIPO="Devolución Familia → NT" (FAM devuelve a NT)
-    else if (esDevolucionFamNT) {
-      if (existeTransaccionCruzada(cargaFam, fecha, 'Devolución Familia → NT', monto, 'subcategoria', descripcion)) {
-        ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
-        return;
-      }
-      filaDestino = encontrarPrimeraFilaVacia(cargaFam);
-      cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
-        fecha, 'Egreso Familiar', 'VARIABLES', 'Devolución Familia → NT',
-        '', monto, 'ITAU Marco', '', linkId
-      ]]);
-      aplicarFormatoFecha(cargaFam, filaDestino);
-      transaccionCreada = true;
-      mensajeToast = '✓ Creado en CARGA_FAMILIA por ' + formatearGuaranies(monto);
-    }
-
-    // CASO 3: SUBCAT="Préstamo NT → Familia" (NT presta a FAM)
-    else if (esPrestamoNTFam) {
-      if (existeTransaccionCruzada(cargaFam, fecha, 'Préstamo NeuroTEA', monto, 'tipo', descripcion)) {
+    // CASO 1: SUBCAT="Préstamo NT → Familia" (NT presta a FAM) → Crea INGRESO en FAM
+    if (esPrestamoNTFam) {
+      if (existeTransaccionCruzada(cargaFam, fecha, 'Préstamo NeuroTEA', monto, 'tipo', '')) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
       cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Préstamo NeuroTEA', '-', '-',
-        '', monto, 'ITAU Marco', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado en CARGA_FAMILIA por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado INGRESO en CARGA_FAMILIA por ' + formatearGuaranies(monto);
     }
 
-    // CASO 4: SUBCAT="Devolución NT → Familia" (NT devuelve a FAM)
+    // CASO 2: SUBCAT="Devolución NT → Familia" (NT devuelve a FAM) → Crea INGRESO en FAM
     else if (esDevolucionNTFam) {
-      if (existeTransaccionCruzada(cargaFam, fecha, 'Devolución NeuroTEA', monto, 'tipo', descripcion)) {
+      if (existeTransaccionCruzada(cargaFam, fecha, 'Devolución NeuroTEA', monto, 'tipo', '')) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
       cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
         fecha, 'Devolución NeuroTEA', '-', '-',
-        '', monto, 'ITAU Marco', '', linkId
+        '', monto, '', '', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
-      mensajeToast = '✓ Creado en CARGA_FAMILIA por ' + formatearGuaranies(monto);
+      mensajeToast = '✓ Creado INGRESO en CARGA_FAMILIA por ' + formatearGuaranies(monto);
     }
 
     // v7.12: Escribir LINK_ID en la fila original de CARGA_NT
