@@ -1001,7 +1001,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
 
   // Determinar tipo de ingreso y descripción
   const tipoIngreso = esPrestamoFamNT ? 'Préstamo Familia' : 'Devolución Familia → NT';
-  const descripcion = esPrestamoFamNT ? 'Auto: Recibido de FAMILIA' : 'Auto: Devolución de FAMILIA';
+  const descripcion = esPrestamoFamNT ? 'Auto: "Recibido de FAMILIA"' : 'Auto: "Devolución de FAMILIA"';
 
   // Verificar si ya existe
   if (existeTransaccionCruzada(cargaNT, fecha, tipoIngreso, monto, 'tipo', '')) return;
@@ -1057,7 +1057,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
 
   // Determinar tipo de ingreso y descripción
   const tipoIngreso = esPrestamoNTFam ? 'Préstamo NeuroTEA' : 'Devolución NeuroTEA';
-  const descripcion = esPrestamoNTFam ? 'Auto: Recibido de NEUROTEA' : 'Auto: Devolución de NEUROTEA';
+  const descripcion = esPrestamoNTFam ? 'Auto: "Recibido de NEUROTEA"' : 'Auto: "Devolución de NEUROTEA"';
 
   // Verificar si ya existe
   if (existeTransaccionCruzada(cargaFam, fecha, tipoIngreso, monto, 'tipo', '')) return;
