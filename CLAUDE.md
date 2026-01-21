@@ -1030,10 +1030,9 @@ AHORA (correcto):
 |---------|---------------|----------|
 | I       | LINK_ID       | LINK_ID  |
 
-Formato: TXN_20260121_A7B3X2
-- TXN_: Prefijo fijo
-- 20260121: Fecha YYYYMMDD
-- A7B3X2: 6 caracteres alfanuméricos aleatorios
+Formato: 6 caracteres alfanuméricos (ej: A7K2M1)
+- No incluye prefijos ni fechas
+- Identificador breve y único
 ```
 
 ### Flujo completo de transacciones cruzadas (v7.12)
@@ -1041,11 +1040,12 @@ Formato: TXN_20260121_A7B3X2
 1. Usuario registra préstamo en CARGA_NT:
    - TIPO="Préstamo Familia", MONTO=1.000.000
 
-2. Sistema auto-genera LINK_ID: TXN_20260121_X9K2M1
+2. Sistema auto-genera LINK_ID: X9K2M1 (6 caracteres)
 
 3. Sistema auto-crea contraparte en CARGA_FAMILIA:
    - TIPO="Egreso Familiar", CAT="VARIABLES", SUBCAT="Préstamo Familia → NT"
-   - LINK_ID=TXN_20260121_X9K2M1 (mismo ID)
+   - DESCRIPCIÓN y NOTAS vacíos
+   - LINK_ID=X9K2M1 (mismo ID)
 
 4. Si usuario edita MONTO a 1.500.000:
    - Sistema actualiza monto en contraparte (no crea duplicado)
