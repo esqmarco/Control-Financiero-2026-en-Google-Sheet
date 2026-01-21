@@ -460,6 +460,17 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
 
     // 3. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionFamilia(sheet, row, valor);
+
+    // 4. v7.13: Si es préstamo/devolución Y ya hay monto, disparar auto-creación
+    const esPrestamoODevolucion = (valor === 'Préstamo Familia → NT' || valor === 'Devolución Familia → NT');
+    if (esPrestamoODevolucion) {
+      const montoActual = Number(sheet.getRange(row, 6).getValue()) || 0;
+      const linkIdActual = sheet.getRange(row, 9).getValue();
+      // Solo si hay monto y no tiene LINK_ID (no fue auto-creada aún)
+      if (montoActual >= 10000 && !linkIdActual) {
+        autoCrearTransaccionCruzadaFamilia(sheet, row);
+      }
+    }
   }
 }
 
@@ -558,6 +569,17 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
 
     // 4. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionNT(sheet, row, valor);
+
+    // 5. v7.13: Si es préstamo/devolución Y ya hay monto, disparar auto-creación
+    const esPrestamoODevolucion = (valor === 'Préstamo NT → Familia' || valor === 'Devolución NT → Familia');
+    if (esPrestamoODevolucion) {
+      const montoActual = Number(sheet.getRange(row, 6).getValue()) || 0;
+      const linkIdActual = sheet.getRange(row, 9).getValue();
+      // Solo si hay monto y no tiene LINK_ID (no fue auto-creada aún)
+      if (montoActual >= 10000 && !linkIdActual) {
+        autoCrearTransaccionCruzadaNT(sheet, row);
+      }
+    }
   }
 }
 
