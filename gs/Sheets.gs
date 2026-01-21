@@ -1058,44 +1058,45 @@ function crearHojaMOVIMIENTO() {
     .setHorizontalAlignment('center');
   row++;
 
+  // v7.14: Textos únicos para que TABLERO use INDEX/MATCH
   // TOTAL INGRESOS FAMILIA
-  sheet.getRange(row, 1).setValue('📥 TOTAL INGRESOS');
+  sheet.getRange(row, 1).setValue('📥 TOTAL INGRESOS FAMILIA');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIF(B${filaInicioFam}:B${filaFinFam};"Ingreso";F${filaInicioFam}:F${filaFinFam});0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.VERDE_FONDO);
   const filaTotalIngresosFam = row;
   row++;
 
-  // TOTAL EGRESOS PAGADOS (solo gastos reales, sin AHORRO)
-  sheet.getRange(row, 1).setValue('📤 TOTAL EGRESOS PAGADOS');
+  // TOTAL EGRESOS PAGADOS FAMILIA (solo gastos reales, sin AHORRO)
+  sheet.getRange(row, 1).setValue('📤 TOTAL EGRESOS PAGADOS FAMILIA');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioFam}:F${filaFinFam};B${filaInicioFam}:B${filaFinFam};"Egreso";J${filaInicioFam}:J${filaFinFam};"Pagado");0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.ROJO_FONDO);
   const filaTotalEgresosPagadosFam = row;
   row++;
 
-  // TOTAL AHORRO (suma de TIPO="Ahorro" con EST.PAGO="Ahorrado")
-  sheet.getRange(row, 1).setValue('💰 TOTAL AHORRO');
+  // TOTAL AHORRO FAMILIA (suma de TIPO="Ahorro" con EST.PAGO="Ahorrado")
+  sheet.getRange(row, 1).setValue('💰 TOTAL AHORRO FAMILIA');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIF(B${filaInicioFam}:B${filaFinFam};"Ahorro";F${filaInicioFam}:F${filaFinFam});0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.VERDE_FONDO);
   const filaTotalAhorroFam = row;
   row++;
 
-  // TOTAL EGRESOS PENDIENTES
-  sheet.getRange(row, 1).setValue('⏳ TOTAL EGRESOS PENDIENTES');
+  // TOTAL EGRESOS PENDIENTES FAMILIA
+  sheet.getRange(row, 1).setValue('⏳ TOTAL EGRESOS PENDIENTES FAMILIA');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioFam}:F${filaFinFam};B${filaInicioFam}:B${filaFinFam};"Egreso";J${filaInicioFam}:J${filaFinFam};"Pendiente");0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.AMARILLO_FONDO);
   const filaTotalEgresosPendientesFam = row;
   row++;
 
-  // SALDO DISPONIBLE (Ingresos - Gastos - Ahorro)
-  sheet.getRange(row, 1).setValue('💵 SALDO DISPONIBLE').setFontWeight('bold');
+  // SALDO DISPONIBLE FAMILIA (Ingresos - Gastos - Ahorro)
+  sheet.getRange(row, 1).setValue('💵 SALDO DISPONIBLE FAMILIA').setFontWeight('bold');
   sheet.getRange(row, 6).setFormula(`=F${filaTotalIngresosFam}-F${filaTotalEgresosPagadosFam}-F${filaTotalAhorroFam}`).setFontWeight('bold');
   sheet.getRange(row, 9).setFormula(`=IF(F${row}>=0;"✓ OK";"⚠ DÉFICIT")`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.GANANCIA_FONDO);
   const filaSaldoDisponibleFam = row;
   row++;
 
-  // SALDO FIN DE MES (Disponible - Pendientes)
-  sheet.getRange(row, 1).setValue('📉 SALDO FIN DE MES').setFontWeight('bold').setFontStyle('italic');
+  // SALDO FIN DE MES FAMILIA (Disponible - Pendientes)
+  sheet.getRange(row, 1).setValue('📉 SALDO FIN DE MES FAMILIA').setFontWeight('bold').setFontStyle('italic');
   sheet.getRange(row, 6).setFormula(`=F${filaSaldoDisponibleFam}-F${filaTotalEgresosPendientesFam}`).setFontWeight('bold').setFontStyle('italic');
   sheet.getRange(row, 9).setFormula(`=IF(F${row}>=0;"✓ OK";"⚠ DÉFICIT")`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.BALANCE_FONDO);
@@ -1140,22 +1141,23 @@ function crearHojaMOVIMIENTO() {
     .setHorizontalAlignment('center');
   row++;
 
+  // v7.14: Textos únicos para que TABLERO use INDEX/MATCH
   // TOTAL INGRESOS NT
-  sheet.getRange(row, 1).setValue('📥 TOTAL INGRESOS');
+  sheet.getRange(row, 1).setValue('📥 TOTAL INGRESOS NT');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIF(B${filaInicioNT}:B${filaFinNT};"Ingreso";F${filaInicioNT}:F${filaFinNT});0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.VERDE_FONDO);
   const filaTotalIngresosNT = row;
   row++;
 
   // TOTAL EGRESOS PAGADOS NT
-  sheet.getRange(row, 1).setValue('📤 TOTAL EGRESOS PAGADOS');
+  sheet.getRange(row, 1).setValue('📤 TOTAL EGRESOS PAGADOS NT');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioNT}:F${filaFinNT};B${filaInicioNT}:B${filaFinNT};"Egreso";J${filaInicioNT}:J${filaFinNT};"Pagado");0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.ROJO_FONDO);
   const filaTotalEgresosPagadosNT = row;
   row++;
 
   // TOTAL EGRESOS PENDIENTES NT
-  sheet.getRange(row, 1).setValue('⏳ TOTAL EGRESOS PENDIENTES');
+  sheet.getRange(row, 1).setValue('⏳ TOTAL EGRESOS PENDIENTES NT');
   sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioNT}:F${filaFinNT};B${filaInicioNT}:B${filaFinNT};"Egreso";J${filaInicioNT}:J${filaFinNT};"Pendiente");0)`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.AMARILLO_FONDO);
   const filaTotalEgresosPendientesNT = row;
@@ -1190,7 +1192,7 @@ function crearHojaMOVIMIENTO() {
   row++;
 
   // SALDO DISPONIBLE NT
-  sheet.getRange(row, 1).setValue('💵 SALDO DISPONIBLE').setFontWeight('bold');
+  sheet.getRange(row, 1).setValue('💵 SALDO DISPONIBLE NT').setFontWeight('bold');
   sheet.getRange(row, 6).setFormula(`=F${filaTotalIngresosNT}-F${filaTotalEgresosPagadosNT}`).setFontWeight('bold');
   sheet.getRange(row, 9).setFormula(`=IF(F${row}>=0;"✓ OK";"⚠ DÉFICIT")`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.GANANCIA_FONDO);
@@ -1198,7 +1200,7 @@ function crearHojaMOVIMIENTO() {
   row++;
 
   // SALDO PROYECTADO NT
-  sheet.getRange(row, 1).setValue('📉 SALDO PROYECTADO').setFontWeight('bold').setFontStyle('italic');
+  sheet.getRange(row, 1).setValue('📉 SALDO PROYECTADO NT').setFontWeight('bold').setFontStyle('italic');
   sheet.getRange(row, 6).setFormula(`=F${filaSaldoDisponibleNT}-F${filaTotalEgresosPendientesNT}`).setFontWeight('bold').setFontStyle('italic');
   sheet.getRange(row, 9).setFormula(`=IF(F${row}>=0;"✓ OK";"⚠ DÉFICIT")`);
   sheet.getRange(row, 1, 1, 11).setBackground(C.BALANCE_FONDO);

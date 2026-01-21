@@ -108,8 +108,10 @@ const CUENTAS_NT = [
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS DE INGRESO
+// v7.14: Separados en DROPDOWN (para usuario) y AUTOCREADOS (sistema)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// FAMILIA - Tipos para dropdown (lo que el usuario puede seleccionar)
 const TIPOS_INGRESO_FAMILIA = [
   'Salario Marco',
   'Salario Marco NeuroTEA',
@@ -122,18 +124,35 @@ const TIPOS_INGRESO_FAMILIA = [
   'Contrato Colectivo Marco',
   'PL Itaipu Marco',
   'Honorarios Clara NeuroTEA',
-  'Préstamo NeuroTEA',           // NT presta a FAM
-  'Devolución NeuroTEA',         // NT devuelve a FAM
   'Préstamo Otros Bancos'
+  // v7.14: Quitados 'Préstamo NeuroTEA' y 'Devolución NeuroTEA' - ahora son auto-creados
 ];
 
+// FAMILIA - Tipos que el sistema auto-crea (no aparecen en dropdown)
+const TIPOS_INGRESO_FAMILIA_AUTOCREADOS = [
+  'Préstamo NeuroTEA',           // Auto-creado cuando NT registra egreso "Préstamo NT → Familia"
+  'Devolución NeuroTEA'          // Auto-creado cuando NT registra egreso "Devolución NT → Familia"
+];
+
+// FAMILIA - Todos los tipos válidos (para validaciones en Code.gs)
+const TODOS_TIPOS_INGRESO_FAMILIA = [...TIPOS_INGRESO_FAMILIA, ...TIPOS_INGRESO_FAMILIA_AUTOCREADOS];
+
+// NEUROTEA - Tipos para dropdown (lo que el usuario puede seleccionar)
 const TIPOS_INGRESO_NT = [
   'Aporte NeuroTEA Terapeutas',
   'Cursos NeuroTEA',
-  'Otros',
-  'Préstamo Familia',            // FAM presta a NT
-  'Devolución Familia → NT'      // FAM devuelve a NT
+  'Otros'
+  // v7.14: Quitados 'Préstamo Familia' y 'Devolución Familia → NT' - ahora son auto-creados
 ];
+
+// NEUROTEA - Tipos que el sistema auto-crea (no aparecen en dropdown)
+const TIPOS_INGRESO_NT_AUTOCREADOS = [
+  'Préstamo Familia',            // Auto-creado cuando FAM registra egreso "Préstamo Familia → NT"
+  'Devolución Familia → NT'      // Auto-creado cuando FAM registra egreso "Devolución Familia → NT"
+];
+
+// NEUROTEA - Todos los tipos válidos (para validaciones en Code.gs)
+const TODOS_TIPOS_INGRESO_NT = [...TIPOS_INGRESO_NT, ...TIPOS_INGRESO_NT_AUTOCREADOS];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CATEGORÍAS DE EGRESO
