@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '7.13';
+const VERSION = '7.15';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -111,7 +111,7 @@ const CUENTAS_NT = [
 // v7.14: Separados en DROPDOWN (para usuario) y AUTOCREADOS (sistema)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// FAMILIA - Tipos para dropdown (lo que el usuario puede seleccionar)
+// FAMILIA - Tipos para DROPDOWN (lo que el usuario ve y puede seleccionar)
 const TIPOS_INGRESO_FAMILIA = [
   'Salario Marco',
   'Salario Marco NeuroTEA',
@@ -125,33 +125,33 @@ const TIPOS_INGRESO_FAMILIA = [
   'PL Itaipu Marco',
   'Honorarios Clara NeuroTEA',
   'Préstamo Otros Bancos'
-  // v7.14: Quitados 'Préstamo NeuroTEA' y 'Devolución NeuroTEA' - ahora son auto-creados
+  // v7.15: SIN préstamos/devoluciones - el usuario registra como EGRESO
 ];
 
-// FAMILIA - Tipos que el sistema auto-crea (no aparecen en dropdown)
+// FAMILIA - Tipos que el sistema auto-crea (NO aparecen en dropdown)
 const TIPOS_INGRESO_FAMILIA_AUTOCREADOS = [
-  'Préstamo NeuroTEA',           // Auto-creado cuando NT registra egreso "Préstamo NT → Familia"
-  'Devolución NeuroTEA'          // Auto-creado cuando NT registra egreso "Devolución NT → Familia"
+  'Préstamo NeuroTEA',
+  'Devolución NeuroTEA'
 ];
 
-// FAMILIA - Todos los tipos válidos (para validaciones en Code.gs)
+// TODOS los tipos válidos (para validaciones en Code.gs)
 const TODOS_TIPOS_INGRESO_FAMILIA = [...TIPOS_INGRESO_FAMILIA, ...TIPOS_INGRESO_FAMILIA_AUTOCREADOS];
 
-// NEUROTEA - Tipos para dropdown (lo que el usuario puede seleccionar)
+// NEUROTEA - Tipos para DROPDOWN (lo que el usuario ve y puede seleccionar)
 const TIPOS_INGRESO_NT = [
   'Aporte NeuroTEA Terapeutas',
   'Cursos NeuroTEA',
   'Otros'
-  // v7.14: Quitados 'Préstamo Familia' y 'Devolución Familia → NT' - ahora son auto-creados
+  // v7.15: SIN préstamos/devoluciones - el usuario registra como EGRESO
 ];
 
-// NEUROTEA - Tipos que el sistema auto-crea (no aparecen en dropdown)
+// NEUROTEA - Tipos que el sistema auto-crea (NO aparecen en dropdown)
 const TIPOS_INGRESO_NT_AUTOCREADOS = [
-  'Préstamo Familia',            // Auto-creado cuando FAM registra egreso "Préstamo Familia → NT"
-  'Devolución Familia → NT'      // Auto-creado cuando FAM registra egreso "Devolución Familia → NT"
+  'Préstamo Familia',
+  'Devolución Familia → NT'
 ];
 
-// NEUROTEA - Todos los tipos válidos (para validaciones en Code.gs)
+// TODOS los tipos válidos (para validaciones en Code.gs)
 const TODOS_TIPOS_INGRESO_NT = [...TIPOS_INGRESO_NT, ...TIPOS_INGRESO_NT_AUTOCREADOS];
 
 // ═══════════════════════════════════════════════════════════════════════════════
