@@ -111,7 +111,7 @@ const CUENTAS_NT = [
 // v7.14: Separados en DROPDOWN (para usuario) y AUTOCREADOS (sistema)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// FAMILIA - Tipos para dropdown (lo que el usuario puede seleccionar)
+// FAMILIA - Tipos para DROPDOWN (lo que el usuario ve y puede seleccionar)
 const TIPOS_INGRESO_FAMILIA = [
   'Salario Marco',
   'Salario Marco NeuroTEA',
@@ -124,25 +124,35 @@ const TIPOS_INGRESO_FAMILIA = [
   'Contrato Colectivo Marco',
   'PL Itaipu Marco',
   'Honorarios Clara NeuroTEA',
-  'Préstamo NeuroTEA',      // v7.15: Restaurado para auto-creación
-  'Devolución NeuroTEA',    // v7.15: Restaurado para auto-creación
   'Préstamo Otros Bancos'
+  // v7.15: SIN préstamos/devoluciones - el usuario registra como EGRESO
 ];
 
-// v7.15: Ya no separamos arrays - todos los tipos están en el dropdown principal
-const TODOS_TIPOS_INGRESO_FAMILIA = TIPOS_INGRESO_FAMILIA;
+// FAMILIA - Tipos que el sistema auto-crea (NO aparecen en dropdown)
+const TIPOS_INGRESO_FAMILIA_AUTOCREADOS = [
+  'Préstamo NeuroTEA',
+  'Devolución NeuroTEA'
+];
 
-// NEUROTEA - Tipos para dropdown (lo que el usuario puede seleccionar)
+// TODOS los tipos válidos (para validaciones en Code.gs)
+const TODOS_TIPOS_INGRESO_FAMILIA = [...TIPOS_INGRESO_FAMILIA, ...TIPOS_INGRESO_FAMILIA_AUTOCREADOS];
+
+// NEUROTEA - Tipos para DROPDOWN (lo que el usuario ve y puede seleccionar)
 const TIPOS_INGRESO_NT = [
   'Aporte NeuroTEA Terapeutas',
   'Cursos NeuroTEA',
-  'Otros',
-  'Préstamo Familia',            // v7.15: Restaurado para auto-creación
-  'Devolución Familia → NT'      // v7.15: Restaurado para auto-creación
+  'Otros'
+  // v7.15: SIN préstamos/devoluciones - el usuario registra como EGRESO
 ];
 
-// v7.15: Ya no separamos arrays - todos los tipos están en el dropdown principal
-const TODOS_TIPOS_INGRESO_NT = TIPOS_INGRESO_NT;
+// NEUROTEA - Tipos que el sistema auto-crea (NO aparecen en dropdown)
+const TIPOS_INGRESO_NT_AUTOCREADOS = [
+  'Préstamo Familia',
+  'Devolución Familia → NT'
+];
+
+// TODOS los tipos válidos (para validaciones en Code.gs)
+const TODOS_TIPOS_INGRESO_NT = [...TIPOS_INGRESO_NT, ...TIPOS_INGRESO_NT_AUTOCREADOS];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CATEGORÍAS DE EGRESO

@@ -833,11 +833,11 @@ function aplicarValidacionesCargaFamilia(sheet) {
   // TIPO: Ingresos + Egreso Familiar + Ahorro (separado)
   const tipos = [...TIPOS_INGRESO_FAMILIA, 'Egreso Familiar', TIPO_AHORRO];
 
-  // TIPO (columna B)
+  // TIPO (columna B) - v7.15: setAllowInvalid(true) permite auto-creación de préstamos
   sheet.getRange('B4:B500').setDataValidation(
     SpreadsheetApp.newDataValidation()
       .requireValueInList(tipos, true)
-      .setAllowInvalid(false)
+      .setAllowInvalid(true)  // Permite valores no en lista (para auto-creación)
       .build()
   );
 
@@ -928,11 +928,11 @@ function crearHojaCARGA_NT() {
 function aplicarValidacionesCargaNT(sheet) {
   const tipos = [...TIPOS_INGRESO_NT, 'Egreso NT'];
 
-  // TIPO (columna B)
+  // TIPO (columna B) - v7.15: setAllowInvalid(true) permite auto-creación de préstamos
   sheet.getRange('B4:B500').setDataValidation(
     SpreadsheetApp.newDataValidation()
       .requireValueInList(tipos, true)
-      .setAllowInvalid(false)
+      .setAllowInvalid(true)  // Permite valores no en lista (para auto-creación)
       .build()
   );
 
