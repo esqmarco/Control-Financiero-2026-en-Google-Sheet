@@ -206,83 +206,113 @@ function calcularGananciaNT(mesIndex) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Calcula el balance cruzado entre NT y Familia
+ * Calcula el balance cruzado entre NT y Familia (v7.12 - Bidireccional completo)
+ * FLUJO 1: NT → FAM (NT presta a Familia)
+ * FLUJO 2: FAM → NT (Familia presta a NT)
  */
 function calcularBalanceCruzado(mesIndex) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // Obtener préstamos NT → Familia
   const cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
   const cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
 
-  let prestamosNTaFamMes = 0;
-  let prestamosNTaFamAcum = 0;
-  let devolucionesFamaNTMes = 0;
-  let devolucionesFamaNTAcum = 0;
+  // FLUJO 1: NT → FAM
+  let prestamosNTaFamMes = 0, prestamosNTaFamAcum = 0;
+  let devolucionesFamaNTMes = 0, devolucionesFamaNTAcum = 0;
 
-  // Buscar en CARGA_NT los préstamos a familia
+  // FLUJO 2: FAM → NT (NUEVO)
+  let prestamosFamaNTMes = 0, prestamosFamaNTAcum = 0;
+  let devolucionesNTaFamMes = 0, devolucionesNTaFamAcum = 0;
+
+  // Buscar en CARGA_NT
   if (cargaNT) {
     const datos = cargaNT.getDataRange().getValues();
     datos.forEach((fila, i) => {
       if (i < 3) return;
       const fecha = fila[0];
       const subcat = fila[3];
-      const monto = fila[5];
+      const monto = Number(fila[5]) || 0;
+      if (monto <= 0) return;
 
-      if (subcat === 'Préstamo NT → Familia' && monto > 0) {
+      const fechaObj = new Date(fecha);
+      const esDelMes = fechaObj.getMonth() === mesIndex && fechaObj.getFullYear() === AÑO;
+
+      // FLUJO 1: NT presta a FAM
+      if (subcat === 'Préstamo NT → Familia') {
         prestamosNTaFamAcum += monto;
-        const fechaObj = new Date(fecha);
-        if (fechaObj.getMonth() === mesIndex && fechaObj.getFullYear() === AÑO) {
-          prestamosNTaFamMes += monto;
-        }
+        if (esDelMes) prestamosNTaFamMes += monto;
+      }
+      // FLUJO 2: NT devuelve a FAM
+      if (subcat === 'Devolución NT → Familia') {
+        devolucionesNTaFamAcum += monto;
+        if (esDelMes) devolucionesNTaFamMes += monto;
       }
     });
   }
 
-  // Buscar en CARGA_FAMILIA las devoluciones
+  // Buscar en CARGA_FAMILIA
   if (cargaFam) {
     const datos = cargaFam.getDataRange().getValues();
     datos.forEach((fila, i) => {
       if (i < 3) return;
       const fecha = fila[0];
       const subcat = fila[3];
-      const monto = fila[5];
+      const monto = Number(fila[5]) || 0;
+      if (monto <= 0) return;
 
-      if (subcat === 'Devolución Familia → NT' && monto > 0) {
+      const fechaObj = new Date(fecha);
+      const esDelMes = fechaObj.getMonth() === mesIndex && fechaObj.getFullYear() === AÑO;
+
+      // FLUJO 1: FAM devuelve a NT
+      if (subcat === 'Devolución Familia → NT') {
         devolucionesFamaNTAcum += monto;
-        const fechaObj = new Date(fecha);
-        if (fechaObj.getMonth() === mesIndex && fechaObj.getFullYear() === AÑO) {
-          devolucionesFamaNTMes += monto;
-        }
+        if (esDelMes) devolucionesFamaNTMes += monto;
+      }
+      // FLUJO 2: FAM presta a NT
+      if (subcat === 'Préstamo Familia → NT') {
+        prestamosFamaNTAcum += monto;
+        if (esDelMes) prestamosFamaNTMes += monto;
       }
     });
   }
 
-  const saldoNetoMes = prestamosNTaFamMes - devolucionesFamaNTMes;
-  const saldoNetoAcum = prestamosNTaFamAcum - devolucionesFamaNTAcum;
+  // Calcular deudas netas
+  const deudaFamANT_Mes = prestamosNTaFamMes - devolucionesFamaNTMes;
+  const deudaFamANT_Acum = prestamosNTaFamAcum - devolucionesFamaNTAcum;
+  const deudaNTaFam_Mes = prestamosFamaNTMes - devolucionesNTaFamMes;
+  const deudaNTaFam_Acum = prestamosFamaNTAcum - devolucionesNTaFamAcum;
+
+  // Balance neto: positivo = FAM debe a NT, negativo = NT debe a FAM
+  const balanceNetoMes = deudaFamANT_Mes - deudaNTaFam_Mes;
+  const balanceNetoAcum = deudaFamANT_Acum - deudaNTaFam_Acum;
 
   let estado;
-  if (saldoNetoAcum > 0) {
-    estado = 'NT SUBSIDIA A FAMILIA';
-  } else if (saldoNetoAcum < 0) {
-    estado = 'FAMILIA SUBSIDIA A NT';
+  if (balanceNetoAcum > 0) {
+    estado = 'FAMILIA DEBE A NT';
+  } else if (balanceNetoAcum < 0) {
+    estado = 'NT DEBE A FAMILIA';
   } else {
-    estado = 'FINANZAS EQUILIBRADAS';
+    estado = 'EQUILIBRADO';
   }
 
   return {
-    prestamos: {
-      mes: prestamosNTaFamMes,
-      acumulado: prestamosNTaFamAcum
-    },
-    devoluciones: {
-      mes: devolucionesFamaNTMes,
-      acumulado: devolucionesFamaNTAcum
-    },
-    saldoNeto: {
-      mes: saldoNetoMes,
-      acumulado: saldoNetoAcum
-    },
+    // FLUJO 1: NT → FAM
+    prestamoNTMes: prestamosNTaFamMes,
+    prestamoNTAcum: prestamosNTaFamAcum,
+    devFamMes: devolucionesFamaNTMes,
+    devFamAcum: devolucionesFamaNTAcum,
+    deudaFamANT_Mes,
+    deudaFamANT_Acum,
+    // FLUJO 2: FAM → NT
+    prestamoFamMes: prestamosFamaNTMes,
+    prestamoFamAcum: prestamosFamaNTAcum,
+    devNTMes: devolucionesNTaFamMes,
+    devNTAcum: devolucionesNTaFamAcum,
+    deudaNTaFam_Mes,
+    deudaNTaFam_Acum,
+    // Balance neto
+    balanceNetoMes,
+    balanceNetoAcum,
     estado
   };
 }

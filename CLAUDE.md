@@ -977,5 +977,85 @@ AHORA (correcto):
 
 ---
 
-*Última actualización: 2026-01-20*
-*Versión: 7.11 - FIX CRÍTICO: DISPONIBLE ahora referencia TOTAL DISPONIBLE*
+## Mejoras [2026-01-21] - v7.12 (SISTEMA UUID + AUTO-BORRADO)
+
+### Sistema UUID para vincular transacciones cruzadas
+- **Problema**: Las transacciones cruzadas (préstamos/devoluciones NT↔FAM) no tenían vínculo explícito
+- **Impacto**: Imposible saber cuál transacción en una hoja corresponde a cuál en la otra
+- **Solución**:
+  - Nueva columna I (`LINK_ID`) en CARGA_FAMILIA y CARGA_NT
+  - Formato: `TXN_YYYYMMDD_XXXXXX` (ID único alfanumérico)
+  - Ambas transacciones del par tienen el mismo LINK_ID
+- **Archivos**: Code.gs (función `generarLinkId()`), Sheets.gs (headers actualizados)
+
+### Auto-borrado sincronizado de transacciones cruzadas
+- **Problema**: Al borrar una transacción, la contraparte quedaba huérfana
+- **Solución**:
+  - `onEdit` detecta cuando se vacía el MONTO (columna F)
+  - Busca la contraparte por LINK_ID y la borra automáticamente
+  - Toast de confirmación: "✓ Borrada contraparte en CARGA_XX"
+- **Archivos**: Code.gs (funciones `borrarContraparte()`, `obtenerLinkId()`)
+
+### Actualización automática de monto en contraparte
+- **Problema**: Al editar el monto, se creaba duplicado en vez de actualizar
+- **Solución**:
+  - Si la transacción ya tiene LINK_ID, busca la contraparte y actualiza su monto
+  - No crea nueva transacción si ya existe vínculo
+- **Archivos**: Code.gs (función `actualizarMontoContraparte()`)
+
+### Corrección de rangos en WebApp.gs
+- **Problema**: Leía rangos incorrectos de MOVIMIENTO
+  - FAMILIA: `A9:J70` (faltaban filas 71-113)
+  - NEUROTEA: `A73:J150` (inicio y fin incorrectos)
+- **Solución**:
+  - FAMILIA: `A9:J113`
+  - NEUROTEA: `A119:J200`
+- **Impacto**: Ahora captura todos los datos de AHORRO y EGRESOS PENDIENTES
+- **Archivos**: WebApp.gs (líneas 603, 629)
+
+### Utils.gs `calcularBalanceCruzado()` bidireccional completo
+- **Problema**: Solo calculaba FLUJO 1 (NT→FAM), ignoraba FLUJO 2 (FAM→NT)
+- **Solución**: Ahora calcula ambos flujos y retorna objeto completo con:
+  - `prestamoNTMes/Acum`: Préstamos NT → Familia
+  - `devFamMes/Acum`: Devoluciones Familia → NT
+  - `prestamoFamMes/Acum`: Préstamos Familia → NT
+  - `devNTMes/Acum`: Devoluciones NT → Familia
+  - `balanceNetoMes/Acum`: Balance neto consolidado
+  - `estado`: "FAMILIA DEBE A NT" / "NT DEBE A FAMILIA" / "EQUILIBRADO"
+- **Archivos**: Utils.gs
+
+### Estructura columna LINK_ID en hojas CARGA
+```
+| Columna | CARGA_FAMILIA | CARGA_NT |
+|---------|---------------|----------|
+| I       | LINK_ID       | LINK_ID  |
+
+Formato: TXN_20260121_A7B3X2
+- TXN_: Prefijo fijo
+- 20260121: Fecha YYYYMMDD
+- A7B3X2: 6 caracteres alfanuméricos aleatorios
+```
+
+### Flujo completo de transacciones cruzadas (v7.12)
+```
+1. Usuario registra préstamo en CARGA_NT:
+   - TIPO="Préstamo Familia", MONTO=1.000.000
+
+2. Sistema auto-genera LINK_ID: TXN_20260121_X9K2M1
+
+3. Sistema auto-crea contraparte en CARGA_FAMILIA:
+   - TIPO="Egreso Familiar", CAT="VARIABLES", SUBCAT="Préstamo Familia → NT"
+   - LINK_ID=TXN_20260121_X9K2M1 (mismo ID)
+
+4. Si usuario edita MONTO a 1.500.000:
+   - Sistema actualiza monto en contraparte (no crea duplicado)
+
+5. Si usuario vacía MONTO (borra):
+   - Sistema busca contraparte por LINK_ID
+   - Sistema borra la fila contraparte automáticamente
+```
+
+---
+
+*Última actualización: 2026-01-21*
+*Versión: 7.12 - Sistema UUID para vincular transacciones cruzadas + auto-borrado sincronizado*

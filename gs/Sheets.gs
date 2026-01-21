@@ -791,7 +791,8 @@ function crearHojaCARGA_FAMILIA() {
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
 
   // ─── HEADERS DE COLUMNAS ───
-  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCATEGORÍA', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'NOTAS', '#'];
+  // v7.12: Columna I = LINK_ID para vincular transacciones cruzadas (préstamos/devoluciones)
+  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCATEGORÍA', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'NOTAS', 'LINK_ID'];
 
   headers.forEach((h, i) => {
     sheet.getRange(3, i + 1)
@@ -818,7 +819,7 @@ function crearHojaCARGA_FAMILIA() {
   sheet.setColumnWidth(6, 110);  // MONTO
   sheet.setColumnWidth(7, 130);  // CUENTA
   sheet.setColumnWidth(8, 150);  // NOTAS
-  sheet.setColumnWidth(9, 40);   // #
+  sheet.setColumnWidth(9, 140);  // LINK_ID (v7.12)
 
   sheet.setFrozenRows(3);
 
@@ -886,7 +887,8 @@ function crearHojaCARGA_NT() {
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
 
   // ─── HEADERS DE COLUMNAS ───
-  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCAT/EVENTO', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'NOTAS', '#'];
+  // v7.12: Columna I = LINK_ID para vincular transacciones cruzadas (préstamos/devoluciones)
+  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCAT/EVENTO', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'NOTAS', 'LINK_ID'];
 
   headers.forEach((h, i) => {
     sheet.getRange(3, i + 1)
@@ -913,7 +915,7 @@ function crearHojaCARGA_NT() {
   sheet.setColumnWidth(6, 110);  // MONTO
   sheet.setColumnWidth(7, 130);  // CUENTA
   sheet.setColumnWidth(8, 150);  // NOTAS
-  sheet.setColumnWidth(9, 40);   // #
+  sheet.setColumnWidth(9, 140);  // LINK_ID (v7.12)
 
   sheet.setFrozenRows(3);
 
