@@ -1131,5 +1131,56 @@ function estaEnModoAutoCreacion() {
 
 ---
 
+## Mejoras [2026-01-21] - v7.14
+
+### Dropdowns TIPO simplificados (préstamos/devoluciones removidos)
+- **Problema**: Los tipos "Préstamo NeuroTEA", "Devolución NeuroTEA" (FAMILIA) y "Préstamo Familia", "Devolución Familia → NT" (NT) aparecían en dropdowns pero ya no deberían usarse manualmente
+- **Decisión**: Estos tipos ahora son solo AUTO-CREADOS por el sistema
+- **Cambio en Config.gs**:
+  - `TIPOS_INGRESO_FAMILIA`: Sin préstamos/devoluciones (para dropdowns)
+  - `TIPOS_INGRESO_FAMILIA_AUTOCREADOS`: ['Préstamo NeuroTEA', 'Devolución NeuroTEA']
+  - `TODOS_TIPOS_INGRESO_FAMILIA`: Unión de ambos (para validaciones)
+  - Ídem para NT
+- **Cambio en Code.gs**: Todas las validaciones `.includes()` ahora usan `TODOS_TIPOS_*`
+
+### TABLERO simplificado - Referencias directas a MOVIMIENTO
+- **Problema**: TABLERO tenía fórmulas SUMPRODUCT/SUMIFS complejas que duplicaban lógica ya calculada en MOVIMIENTO
+- **Solución**: TABLERO ahora usa INDEX/MATCH para leer directamente del RESUMEN de MOVIMIENTO
+- **Fórmulas simplificadas**:
+  ```
+  ANTES: =IFERROR(SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500<>"Egreso")...);0)
+  AHORA: =IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("📥 TOTAL INGRESOS FAMILIA";MOVIMIENTO!A:A;0));0)
+  ```
+- **Beneficios**:
+  1. Rendimiento: Fórmulas más simples = cálculo más rápido
+  2. Coherencia: Una sola fuente de verdad (MOVIMIENTO)
+  3. Mantenibilidad: Cambios en lógica solo en MOVIMIENTO
+  4. Debugging: Más fácil encontrar errores
+
+### RESUMEN de MOVIMIENTO con textos únicos
+- **Problema**: Los textos del RESUMEN eran genéricos ("TOTAL INGRESOS") y se repetían en FAMILIA y NT
+- **Solución**: Textos ahora son únicos para permitir INDEX/MATCH
+- **Textos FAMILIA**:
+  - "📥 TOTAL INGRESOS FAMILIA"
+  - "📤 TOTAL EGRESOS PAGADOS FAMILIA"
+  - "💰 TOTAL AHORRO FAMILIA"
+  - "⏳ TOTAL EGRESOS PENDIENTES FAMILIA"
+  - "💵 SALDO DISPONIBLE FAMILIA"
+  - "📉 SALDO FIN DE MES FAMILIA"
+- **Textos NT**:
+  - "📥 TOTAL INGRESOS NT"
+  - "📤 TOTAL EGRESOS PAGADOS NT"
+  - "⏳ TOTAL EGRESOS PENDIENTES NT"
+  - "💵 SALDO DISPONIBLE NT"
+  - "📉 SALDO PROYECTADO NT"
+
+### Archivos modificados
+- **Config.gs**: Arrays separados para dropdowns vs auto-creados
+- **Code.gs**: Validaciones usan `TODOS_TIPOS_INGRESO_*`
+- **Sheets.gs**: Textos únicos en RESUMEN de MOVIMIENTO
+- **Tablero.gs**: Fórmulas INDEX/MATCH en lugar de SUMPRODUCT/SUMIFS
+
+---
+
 *Última actualización: 2026-01-21*
-*Versión: 7.13 - Fix auto-creación préstamos, sistema anti-loop con timeout*
+*Versión: 7.14 - Simplificación dropdowns y fórmulas TABLERO*

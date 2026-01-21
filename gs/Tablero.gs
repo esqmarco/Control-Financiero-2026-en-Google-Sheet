@@ -308,10 +308,9 @@ function crearHojaTABLERO() {
   rowFam++;
 
   // ROW 2: Valores Ingresos y Gastos Operativos
-  // Ingresos FAMILIA (suma de CARGA_FAMILIA donde TIPO no es "Egreso Familiar" ni "Ahorro")
-  // v6.9: AHORRO es un TIPO separado, no cuenta como ingreso
+  // v7.14: SIMPLIFICADO - Lee directamente del RESUMEN de MOVIMIENTO
   sheet.getRange(rowFam, 2, 1, 2).merge()
-    .setFormula('=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500<>"Egreso Familiar")*(CARGA_FAMILIA!$B$4:$B$500<>"Ahorro")*(MONTH(CARGA_FAMILIA!$A$4:$A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!$A$4:$A$500)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
+    .setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("📥 TOTAL INGRESOS FAMILIA";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -322,11 +321,9 @@ function crearHojaTABLERO() {
     .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
   const filaValorIngresosFamInd = rowFam;
 
-  // Gastos Operativos FAMILIA (filtrado por TIPO="Egreso" y EST.PAGO="Pagado" en MOVIMIENTO)
-  // v6.9: AHORRO ahora tiene TIPO="Ahorro", no suma aquí
-  // Solo TIPO="Egreso" cuenta como gasto operativo
+  // v7.14: SIMPLIFICADO - Lee directamente del RESUMEN de MOVIMIENTO
   sheet.getRange(rowFam, 4, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F113;MOVIMIENTO!B9:B113;"Egreso";MOVIMIENTO!J9:J113;"Pagado");0)')
+    .setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("📤 TOTAL EGRESOS PAGADOS FAMILIA";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -567,10 +564,9 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 22);
   rowNT++;
 
-  // Valor Ingresos NEUROTEA (rango específico: filas 119-200)
-  // ACTUALIZADO: F=REAL en MOVIMIENTO v5.1 - CORREGIDO: rango real de NT
+  // v7.14: SIMPLIFICADO - Lee directamente del RESUMEN de MOVIMIENTO
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIF(MOVIMIENTO!B119:B200;"Ingreso";MOVIMIENTO!F119:F200);0)')
+    .setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("📥 TOTAL INGRESOS NT";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -580,10 +576,9 @@ function crearHojaTABLERO() {
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, false, false, UI.INGRESO, SpreadsheetApp.BorderStyle.SOLID);
 
-  // Valor Gastos NEUROTEA (rango específico: filas 119-200)
-  // ACTUALIZADO: Solo egresos PAGADOS (columna J = EST.PAGO) - CORREGIDO: rango real de NT
+  // v7.14: SIMPLIFICADO - Lee directamente del RESUMEN de MOVIMIENTO
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F119:F200;MOVIMIENTO!B119:B200;"Egreso";MOVIMIENTO!J119:J200;"Pagado");0)')
+    .setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("📤 TOTAL EGRESOS PAGADOS NT";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -623,9 +618,9 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 22);
   rowNT++;
 
-  // Valor Egresos Pendientes - CORREGIDO: rango real de NT (119-200)
+  // v7.14: SIMPLIFICADO - Lee directamente del RESUMEN de MOVIMIENTO
   sheet.getRange(rowNT, 8, 1, 2).merge()
-    .setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F119:F200;MOVIMIENTO!B119:B200;"Egreso";MOVIMIENTO!J119:J200;"Pendiente");0)')
+    .setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("⏳ TOTAL EGRESOS PENDIENTES NT";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
