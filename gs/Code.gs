@@ -999,8 +999,9 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
     if (actualizarMontoContraparte(linkIdExistente, NOMBRES_HOJAS.CARGA_FAMILIA, monto)) return;
   }
 
-  // Determinar tipo de ingreso a crear
+  // Determinar tipo de ingreso y descripción
   const tipoIngreso = esPrestamoFamNT ? 'Préstamo Familia' : 'Devolución Familia → NT';
+  const descripcion = esPrestamoFamNT ? 'Auto: Recibido de FAMILIA' : 'Auto: Devolución de FAMILIA';
 
   // Verificar si ya existe
   if (existeTransaccionCruzada(cargaNT, fecha, tipoIngreso, monto, 'tipo', '')) return;
@@ -1010,7 +1011,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   const filaDestino = encontrarPrimeraFilaVacia(cargaNT);
 
   cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
-    fecha, tipoIngreso, '-', '-', '', monto, 'Atlas NeuroTEA', '', linkId
+    fecha, tipoIngreso, '-', '-', descripcion, monto, 'Atlas NeuroTEA', '', linkId
   ]]);
   aplicarFormatoFecha(cargaNT, filaDestino);
 
@@ -1054,8 +1055,9 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
     if (actualizarMontoContraparte(linkIdExistente, NOMBRES_HOJAS.CARGA_NT, monto)) return;
   }
 
-  // Determinar tipo de ingreso a crear
+  // Determinar tipo de ingreso y descripción
   const tipoIngreso = esPrestamoNTFam ? 'Préstamo NeuroTEA' : 'Devolución NeuroTEA';
+  const descripcion = esPrestamoNTFam ? 'Auto: Recibido de NEUROTEA' : 'Auto: Devolución de NEUROTEA';
 
   // Verificar si ya existe
   if (existeTransaccionCruzada(cargaFam, fecha, tipoIngreso, monto, 'tipo', '')) return;
@@ -1065,7 +1067,7 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
   const filaDestino = encontrarPrimeraFilaVacia(cargaFam);
 
   cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
-    fecha, tipoIngreso, '-', '-', '', monto, 'ITAU Marco', '', linkId
+    fecha, tipoIngreso, '-', '-', descripcion, monto, 'ITAU Marco', '', linkId
   ]]);
   aplicarFormatoFecha(cargaFam, filaDestino);
 
