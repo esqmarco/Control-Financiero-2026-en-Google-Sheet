@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 7.0 - Auto-creación de transacciones cruzadas (préstamos/devoluciones)
+ * Versión 7.12 - Sistema UUID para vincular transacciones cruzadas + auto-borrado
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -331,13 +331,13 @@ function onEdit(e) {
   if (row < 4) return;
 
   if (nombreHoja === NOMBRES_HOJAS.CARGA_FAMILIA) {
-    procesarEdicionCargaFamilia(sheet, row, col, e.value);
+    procesarEdicionCargaFamilia(sheet, row, col, e.value, e.oldValue);
   } else if (nombreHoja === NOMBRES_HOJAS.CARGA_NT) {
-    procesarEdicionCargaNT(sheet, row, col, e.value);
+    procesarEdicionCargaNT(sheet, row, col, e.value, e.oldValue);
   }
 }
 
-function procesarEdicionCargaFamilia(sheet, row, col, valor) {
+function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
   // Columna B = TIPO (columna 2)
   if (col === 2) {
     const esIngreso = TIPOS_INGRESO_FAMILIA.includes(valor);
@@ -358,9 +358,23 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
     }
   }
 
-  // Columna F = MONTO (columna 6) - Disparar auto-creación de transacciones cruzadas
-  if (col === 6 && valor && Number(valor) > 0) {
-    autoCrearTransaccionCruzadaFamilia(sheet, row);
+  // Columna F = MONTO (columna 6)
+  if (col === 6) {
+    const montoNuevo = Number(valor) || 0;
+    const montoAnterior = Number(oldValue) || 0;
+
+    // v7.12: Si el monto se vació o se puso 0, y antes tenía valor, borrar contraparte
+    if (montoNuevo === 0 && montoAnterior > 0) {
+      const linkId = obtenerLinkId(sheet, row);
+      if (linkId) {
+        borrarContraparte(linkId, NOMBRES_HOJAS.CARGA_FAMILIA);
+        sheet.getRange(row, 9).setValue(''); // Limpiar LINK_ID
+      }
+    }
+    // Si hay monto válido, disparar auto-creación/actualización
+    else if (montoNuevo > 0) {
+      autoCrearTransaccionCruzadaFamilia(sheet, row);
+    }
   }
 
   // Columna C = CATEGORÍA (columna 3)
@@ -449,7 +463,7 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor) {
   }
 }
 
-function procesarEdicionCargaNT(sheet, row, col, valor) {
+function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
   // Columna B = TIPO (columna 2)
   if (col === 2) {
     const esIngreso = TIPOS_INGRESO_NT.includes(valor);
@@ -462,9 +476,23 @@ function procesarEdicionCargaNT(sheet, row, col, valor) {
     }
   }
 
-  // Columna F = MONTO (columna 6) - Disparar auto-creación de transacciones cruzadas
-  if (col === 6 && valor && Number(valor) > 0) {
-    autoCrearTransaccionCruzadaNT(sheet, row);
+  // Columna F = MONTO (columna 6)
+  if (col === 6) {
+    const montoNuevo = Number(valor) || 0;
+    const montoAnterior = Number(oldValue) || 0;
+
+    // v7.12: Si el monto se vació o se puso 0, y antes tenía valor, borrar contraparte
+    if (montoNuevo === 0 && montoAnterior > 0) {
+      const linkId = obtenerLinkId(sheet, row);
+      if (linkId) {
+        borrarContraparte(linkId, NOMBRES_HOJAS.CARGA_NT);
+        sheet.getRange(row, 9).setValue(''); // Limpiar LINK_ID
+      }
+    }
+    // Si hay monto válido, disparar auto-creación/actualización
+    else if (montoNuevo > 0) {
+      autoCrearTransaccionCruzadaNT(sheet, row);
+    }
   }
 
   // Columna C = CATEGORÍA (columna 3)
@@ -825,6 +853,116 @@ function desactivarModoAutoCreacion() {
   props.deleteProperty('AUTO_CREACION_ACTIVA');
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SISTEMA UUID - VINCULACIÓN DE TRANSACCIONES CRUZADAS (v7.12)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Genera un ID único para vincular transacciones cruzadas
+ * Formato: TXN_YYYYMMDD_XXXXXX (donde X es alfanumérico aleatorio)
+ * @returns {string} ID único
+ */
+function generarLinkId() {
+  const fecha = new Date();
+  const fechaStr = Utilities.formatDate(fecha, 'America/Asuncion', 'yyyyMMdd');
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return 'TXN_' + fechaStr + '_' + random;
+}
+
+/**
+ * Busca la transacción contraparte por LINK_ID
+ * @param {Sheet} sheet - Hoja donde buscar
+ * @param {string} linkId - ID de vinculación a buscar
+ * @returns {number|null} Número de fila donde está, o null si no existe
+ */
+function buscarContraparte(sheet, linkId) {
+  if (!linkId || linkId === '') return null;
+
+  const datos = sheet.getDataRange().getValues();
+  // Columna I (índice 8) = LINK_ID
+  for (let i = 3; i < datos.length; i++) {
+    if (datos[i][8] === linkId) {
+      return i + 1; // Retornar número de fila (1-indexed)
+    }
+  }
+  return null;
+}
+
+/**
+ * Borra la transacción contraparte vinculada por LINK_ID
+ * @param {string} linkId - ID de vinculación
+ * @param {string} hojaOrigen - Nombre de la hoja donde se originó el borrado
+ * @returns {boolean} true si se borró correctamente
+ */
+function borrarContraparte(linkId, hojaOrigen) {
+  if (!linkId || linkId === '') return false;
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Determinar hoja destino (la contraria)
+  const nombreHojaDestino = hojaOrigen === NOMBRES_HOJAS.CARGA_FAMILIA
+    ? NOMBRES_HOJAS.CARGA_NT
+    : NOMBRES_HOJAS.CARGA_FAMILIA;
+
+  const hojaDestino = ss.getSheetByName(nombreHojaDestino);
+  if (!hojaDestino) return false;
+
+  const filaContraparte = buscarContraparte(hojaDestino, linkId);
+  if (!filaContraparte) return false;
+
+  try {
+    // Borrar la fila completa de la contraparte
+    hojaDestino.deleteRow(filaContraparte);
+    ss.toast('✓ Borrada contraparte en ' + nombreHojaDestino, '🔄 Auto-borrado', 3);
+    return true;
+  } catch (error) {
+    ss.toast('❌ Error al borrar contraparte: ' + error.message, 'Error', 5);
+    return false;
+  }
+}
+
+/**
+ * Verifica si una transacción tiene LINK_ID (es parte de par cruzado)
+ * @param {Sheet} sheet - Hoja
+ * @param {number} row - Fila a verificar
+ * @returns {string|null} LINK_ID si existe, null si no
+ */
+function obtenerLinkId(sheet, row) {
+  const valor = sheet.getRange(row, 9).getValue(); // Columna I
+  return (valor && valor !== '' && String(valor).startsWith('TXN_')) ? String(valor) : null;
+}
+
+/**
+ * Actualiza el monto de la transacción contraparte
+ * @param {string} linkId - ID de vinculación
+ * @param {string} hojaOrigen - Nombre de la hoja origen
+ * @param {number} nuevoMonto - Nuevo monto a actualizar
+ * @returns {boolean} true si se actualizó correctamente
+ */
+function actualizarMontoContraparte(linkId, hojaOrigen, nuevoMonto) {
+  if (!linkId || linkId === '') return false;
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const nombreHojaDestino = hojaOrigen === NOMBRES_HOJAS.CARGA_FAMILIA
+    ? NOMBRES_HOJAS.CARGA_NT
+    : NOMBRES_HOJAS.CARGA_FAMILIA;
+
+  const hojaDestino = ss.getSheetByName(nombreHojaDestino);
+  if (!hojaDestino) return false;
+
+  const filaContraparte = buscarContraparte(hojaDestino, linkId);
+  if (!filaContraparte) return false;
+
+  try {
+    hojaDestino.getRange(filaContraparte, 6).setValue(nuevoMonto); // Columna F = MONTO
+    ss.toast('✓ Actualizado monto en ' + nombreHojaDestino, '🔄 Sincronizado', 3);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 /**
  * Encuentra la primera fila vacía en una hoja (desde fila 4)
  */
@@ -901,24 +1039,24 @@ function aplicarFormatoFecha(sheet, fila) {
 /**
  * Auto-crea transacción cruzada cuando se completa una fila en CARGA_FAMILIA
  * Se llama después de que el usuario ingresa el MONTO (columna F)
- * v7.1 - Corregido: formato fecha, verificación duplicados, alertas
+ * v7.12 - Mejorado: Sistema UUID para vincular transacciones + actualización en lugar de duplicado
  */
 function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   // Verificar si ya estamos en modo auto-creación (evitar loop)
   if (estaEnModoAutoCreacion()) return;
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const datos = sheet.getRange(row, 1, 1, 7).getValues()[0];
-  // [0]=FECHA, [1]=TIPO, [2]=CATEGORÍA, [3]=SUBCATEGORÍA, [4]=DESCRIPCIÓN, [5]=MONTO, [6]=CUENTA
+  const datos = sheet.getRange(row, 1, 1, 9).getValues()[0];
+  // [0]=FECHA, [1]=TIPO, [2]=CATEGORÍA, [3]=SUBCATEGORÍA, [4]=DESCRIPCIÓN, [5]=MONTO, [6]=CUENTA, [7]=NOTAS, [8]=LINK_ID
 
   const fecha = datos[0];
   const tipo = datos[1];
   const subcategoria = datos[3];
   const descripcion = datos[4] || '';
   const monto = Number(datos[5]) || 0;
+  const linkIdExistente = datos[8] || '';
 
-  // Validar monto - mínimo 10.000 Gs para evitar auto-creación con valores parciales (v7.10)
-  // Ej: si el usuario está escribiendo 13.837.500 y presiona Enter en "13", no crear transacción
+  // Validar monto - mínimo 10.000 Gs para evitar auto-creación con valores parciales
   const MONTO_MINIMO = 10000;
   if (!monto || monto < MONTO_MINIMO) return;
 
@@ -930,7 +1068,7 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
 
   // Verificar si es una transacción que requiere auto-creación
   const esPrestamo = tipo === 'Préstamo NeuroTEA';
-  const esDevolucionNT = tipo === 'Devolución NeuroTEA';  // v7.3: Caso faltante
+  const esDevolucionNT = tipo === 'Devolución NeuroTEA';
   const esPrestamoFamNT = subcategoria === 'Préstamo Familia → NT';
   const esDevolucionFamNT = subcategoria === 'Devolución Familia → NT';
 
@@ -939,31 +1077,33 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   const cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
   if (!cargaNT) return;
 
+  // v7.12: Si ya tiene LINK_ID, actualizar la contraparte en lugar de crear nueva
+  if (linkIdExistente && linkIdExistente.startsWith('TXN_')) {
+    const actualizado = actualizarMontoContraparte(linkIdExistente, NOMBRES_HOJAS.CARGA_FAMILIA, monto);
+    if (actualizado) return; // Ya se actualizó, no crear nueva
+  }
+
   let transaccionCreada = false;
   let mensajeToast = '';
   let filaDestino = 0;
+
+  // Generar LINK_ID único para vincular ambas transacciones
+  const linkId = generarLinkId();
 
   try {
     activarModoAutoCreacion();
 
     // CASO 1: TIPO="Préstamo NeuroTEA" (NT presta a FAM)
-    // → Crear egreso en CARGA_NT: Egreso NT / VARIABLES / Préstamo NT → Familia
     if (esPrestamo) {
-      // Verificar duplicado
       if (existeTransaccionCruzada(cargaNT, fecha, 'Préstamo NT → Familia', monto, 'subcategoria', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
-      cargaNT.getRange(filaDestino, 1, 1, 8).setValues([[
-        fecha,                        // A: FECHA
-        'Egreso NT',                  // B: TIPO
-        'VARIABLES',                  // C: CATEGORÍA
-        'Préstamo NT → Familia',      // D: SUBCATEGORÍA
-        descripcion || 'Auto: Préstamo a Familia',  // E: DESCRIPCIÓN
-        monto,                        // F: MONTO
-        'Atlas NeuroTEA',             // G: CUENTA (cuenta principal NT)
-        'Auto-generado desde CARGA_FAMILIA'  // H: NOTAS
+      cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
+        fecha, 'Egreso NT', 'VARIABLES', 'Préstamo NT → Familia',
+        descripcion || 'Auto: Préstamo a Familia', monto, 'Atlas NeuroTEA',
+        'Auto-generado desde CARGA_FAMILIA', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
@@ -971,23 +1111,16 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
     }
 
     // CASO 2: SUBCAT="Préstamo Familia → NT" (FAM presta a NT)
-    // → Crear ingreso en CARGA_NT: Préstamo Familia
     else if (esPrestamoFamNT) {
-      // Verificar duplicado
       if (existeTransaccionCruzada(cargaNT, fecha, 'Préstamo Familia', monto, 'tipo', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
-      cargaNT.getRange(filaDestino, 1, 1, 8).setValues([[
-        fecha,                        // A: FECHA
-        'Préstamo Familia',           // B: TIPO (ingreso para NT)
-        '-',                          // C: CATEGORÍA (bloqueada para ingresos)
-        '-',                          // D: SUBCATEGORÍA (bloqueada para ingresos)
-        descripcion || 'Auto: Préstamo recibido de Familia',  // E: DESCRIPCIÓN
-        monto,                        // F: MONTO
-        'Atlas NeuroTEA',             // G: CUENTA
-        'Auto-generado desde CARGA_FAMILIA'  // H: NOTAS
+      cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
+        fecha, 'Préstamo Familia', '-', '-',
+        descripcion || 'Auto: Préstamo recibido de Familia', monto, 'Atlas NeuroTEA',
+        'Auto-generado desde CARGA_FAMILIA', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
@@ -995,52 +1128,42 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
     }
 
     // CASO 3: SUBCAT="Devolución Familia → NT" (FAM devuelve a NT)
-    // → Crear ingreso en CARGA_NT: Devolución Familia → NT
     else if (esDevolucionFamNT) {
-      // Verificar duplicado
       if (existeTransaccionCruzada(cargaNT, fecha, 'Devolución Familia → NT', monto, 'tipo', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
-      cargaNT.getRange(filaDestino, 1, 1, 8).setValues([[
-        fecha,                        // A: FECHA
-        'Devolución Familia → NT',    // B: TIPO (ingreso para NT)
-        '-',                          // C: CATEGORÍA (bloqueada para ingresos)
-        '-',                          // D: SUBCATEGORÍA (bloqueada para ingresos)
-        descripcion || 'Auto: Devolución recibida de Familia',  // E: DESCRIPCIÓN
-        monto,                        // F: MONTO
-        'Atlas NeuroTEA',             // G: CUENTA
-        'Auto-generado desde CARGA_FAMILIA'  // H: NOTAS
+      cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
+        fecha, 'Devolución Familia → NT', '-', '-',
+        descripcion || 'Auto: Devolución recibida de Familia', monto, 'Atlas NeuroTEA',
+        'Auto-generado desde CARGA_FAMILIA', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
       mensajeToast = '✓ Creado ingreso en CARGA_NT: "Devolución Familia → NT" por ' + formatearGuaranies(monto);
     }
 
-    // CASO 4: TIPO="Devolución NeuroTEA" (NT devuelve a FAM - ingreso para FAM)
-    // → Crear egreso en CARGA_NT: Egreso NT / VARIABLES / Devolución NT → Familia
-    // v7.3: Caso faltante - cuando FAM registra ingreso, auto-crear egreso en NT
+    // CASO 4: TIPO="Devolución NeuroTEA" (NT devuelve a FAM)
     else if (esDevolucionNT) {
-      // Verificar duplicado
       if (existeTransaccionCruzada(cargaNT, fecha, 'Devolución NT → Familia', monto, 'subcategoria', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_NT', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaNT);
-      cargaNT.getRange(filaDestino, 1, 1, 8).setValues([[
-        fecha,                        // A: FECHA
-        'Egreso NT',                  // B: TIPO
-        'VARIABLES',                  // C: CATEGORÍA
-        'Devolución NT → Familia',    // D: SUBCATEGORÍA
-        descripcion || 'Auto: Devolución a Familia',  // E: DESCRIPCIÓN
-        monto,                        // F: MONTO
-        'Atlas NeuroTEA',             // G: CUENTA
-        'Auto-generado desde CARGA_FAMILIA'  // H: NOTAS
+      cargaNT.getRange(filaDestino, 1, 1, 9).setValues([[
+        fecha, 'Egreso NT', 'VARIABLES', 'Devolución NT → Familia',
+        descripcion || 'Auto: Devolución a Familia', monto, 'Atlas NeuroTEA',
+        'Auto-generado desde CARGA_FAMILIA', linkId
       ]]);
       aplicarFormatoFecha(cargaNT, filaDestino);
       transaccionCreada = true;
       mensajeToast = '✓ Creado egreso en CARGA_NT: "Devolución NT → Familia" por ' + formatearGuaranies(monto);
+    }
+
+    // v7.12: Escribir LINK_ID en la fila original de CARGA_FAMILIA
+    if (transaccionCreada) {
+      sheet.getRange(row, 9).setValue(linkId); // Columna I = LINK_ID
     }
 
   } catch (error) {
@@ -1049,7 +1172,6 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
     desactivarModoAutoCreacion();
   }
 
-  // Mostrar Toast de confirmación
   if (transaccionCreada) {
     ss.toast(mensajeToast, '🔄 Auto-creación', 5);
   }
@@ -1058,24 +1180,24 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
 /**
  * Auto-crea transacción cruzada cuando se completa una fila en CARGA_NT
  * Se llama después de que el usuario ingresa el MONTO (columna F)
- * v7.1 - Corregido: formato fecha, verificación duplicados, alertas
+ * v7.12 - Mejorado: Sistema UUID para vincular transacciones + actualización en lugar de duplicado
  */
 function autoCrearTransaccionCruzadaNT(sheet, row) {
   // Verificar si ya estamos en modo auto-creación (evitar loop)
   if (estaEnModoAutoCreacion()) return;
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const datos = sheet.getRange(row, 1, 1, 7).getValues()[0];
-  // [0]=FECHA, [1]=TIPO, [2]=CATEGORÍA, [3]=SUBCATEGORÍA, [4]=DESCRIPCIÓN, [5]=MONTO, [6]=CUENTA
+  const datos = sheet.getRange(row, 1, 1, 9).getValues()[0];
+  // [0]=FECHA, [1]=TIPO, [2]=CATEGORÍA, [3]=SUBCATEGORÍA, [4]=DESCRIPCIÓN, [5]=MONTO, [6]=CUENTA, [7]=NOTAS, [8]=LINK_ID
 
   const fecha = datos[0];
   const tipo = datos[1];
   const subcategoria = datos[3];
   const descripcion = datos[4] || '';
   const monto = Number(datos[5]) || 0;
+  const linkIdExistente = datos[8] || '';
 
-  // Validar monto - mínimo 10.000 Gs para evitar auto-creación con valores parciales (v7.10)
-  // Ej: si el usuario está escribiendo 13.837.500 y presiona Enter en "13", no crear transacción
+  // Validar monto - mínimo 10.000 Gs para evitar auto-creación con valores parciales
   const MONTO_MINIMO = 10000;
   if (!monto || monto < MONTO_MINIMO) return;
 
@@ -1096,55 +1218,50 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
   const cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
   if (!cargaFam) return;
 
+  // v7.12: Si ya tiene LINK_ID, actualizar la contraparte en lugar de crear nueva
+  if (linkIdExistente && linkIdExistente.startsWith('TXN_')) {
+    const actualizado = actualizarMontoContraparte(linkIdExistente, NOMBRES_HOJAS.CARGA_NT, monto);
+    if (actualizado) return;
+  }
+
   let transaccionCreada = false;
   let mensajeToast = '';
   let filaDestino = 0;
+
+  // Generar LINK_ID único para vincular ambas transacciones
+  const linkId = generarLinkId();
 
   try {
     activarModoAutoCreacion();
 
     // CASO 1: TIPO="Préstamo Familia" (FAM presta a NT)
-    // → Crear egreso en CARGA_FAMILIA: Egreso Familiar / VARIABLES / Préstamo Familia → NT
     if (esPrestamoFam) {
-      // Verificar duplicado
       if (existeTransaccionCruzada(cargaFam, fecha, 'Préstamo Familia → NT', monto, 'subcategoria', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
-      cargaFam.getRange(filaDestino, 1, 1, 8).setValues([[
-        fecha,                        // A: FECHA
-        'Egreso Familiar',            // B: TIPO
-        'VARIABLES',                  // C: CATEGORÍA
-        'Préstamo Familia → NT',      // D: SUBCATEGORÍA
-        descripcion || 'Auto: Préstamo a NeuroTEA',  // E: DESCRIPCIÓN
-        monto,                        // F: MONTO
-        'ITAU Marco',                 // G: CUENTA (cuenta principal FAM)
-        'Auto-generado desde CARGA_NT'  // H: NOTAS
+      cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
+        fecha, 'Egreso Familiar', 'VARIABLES', 'Préstamo Familia → NT',
+        descripcion || 'Auto: Préstamo a NeuroTEA', monto, 'ITAU Marco',
+        'Auto-generado desde CARGA_NT', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
       mensajeToast = '✓ Creado egreso en CARGA_FAMILIA: "Préstamo Familia → NT" por ' + formatearGuaranies(monto);
     }
 
-    // CASO 2: TIPO="Devolución Familia → NT" (FAM devuelve a NT - ingreso para NT)
-    // → Crear egreso en CARGA_FAMILIA: Egreso Familiar / VARIABLES / Devolución Familia → NT
+    // CASO 2: TIPO="Devolución Familia → NT" (FAM devuelve a NT)
     else if (esDevolucionFamNT) {
-      // Verificar duplicado
       if (existeTransaccionCruzada(cargaFam, fecha, 'Devolución Familia → NT', monto, 'subcategoria', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
-      cargaFam.getRange(filaDestino, 1, 1, 8).setValues([[
-        fecha,                        // A: FECHA
-        'Egreso Familiar',            // B: TIPO
-        'VARIABLES',                  // C: CATEGORÍA
-        'Devolución Familia → NT',    // D: SUBCATEGORÍA
-        descripcion || 'Auto: Devolución a NeuroTEA',  // E: DESCRIPCIÓN
-        monto,                        // F: MONTO
-        'ITAU Marco',                 // G: CUENTA
-        'Auto-generado desde CARGA_NT'  // H: NOTAS
+      cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
+        fecha, 'Egreso Familiar', 'VARIABLES', 'Devolución Familia → NT',
+        descripcion || 'Auto: Devolución a NeuroTEA', monto, 'ITAU Marco',
+        'Auto-generado desde CARGA_NT', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
@@ -1152,23 +1269,16 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
     }
 
     // CASO 3: SUBCAT="Préstamo NT → Familia" (NT presta a FAM)
-    // → Crear ingreso en CARGA_FAMILIA: Préstamo NeuroTEA
     else if (esPrestamoNTFam) {
-      // Verificar duplicado
       if (existeTransaccionCruzada(cargaFam, fecha, 'Préstamo NeuroTEA', monto, 'tipo', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
-      cargaFam.getRange(filaDestino, 1, 1, 8).setValues([[
-        fecha,                        // A: FECHA
-        'Préstamo NeuroTEA',          // B: TIPO (ingreso para FAM)
-        '-',                          // C: CATEGORÍA (bloqueada para ingresos)
-        '-',                          // D: SUBCATEGORÍA (bloqueada para ingresos)
-        descripcion || 'Auto: Préstamo recibido de NeuroTEA',  // E: DESCRIPCIÓN
-        monto,                        // F: MONTO
-        'ITAU Marco',                 // G: CUENTA
-        'Auto-generado desde CARGA_NT'  // H: NOTAS
+      cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
+        fecha, 'Préstamo NeuroTEA', '-', '-',
+        descripcion || 'Auto: Préstamo recibido de NeuroTEA', monto, 'ITAU Marco',
+        'Auto-generado desde CARGA_NT', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
@@ -1176,27 +1286,25 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
     }
 
     // CASO 4: SUBCAT="Devolución NT → Familia" (NT devuelve a FAM)
-    // → Crear ingreso en CARGA_FAMILIA: Devolución NeuroTEA
     else if (esDevolucionNTFam) {
-      // Verificar duplicado
       if (existeTransaccionCruzada(cargaFam, fecha, 'Devolución NeuroTEA', monto, 'tipo', descripcion)) {
         ss.toast('ℹ️ Ya existe esta transacción en CARGA_FAMILIA', '⏭️ Omitido', 3);
         return;
       }
       filaDestino = encontrarPrimeraFilaVacia(cargaFam);
-      cargaFam.getRange(filaDestino, 1, 1, 8).setValues([[
-        fecha,                        // A: FECHA
-        'Devolución NeuroTEA',        // B: TIPO (ingreso para FAM)
-        '-',                          // C: CATEGORÍA (bloqueada para ingresos)
-        '-',                          // D: SUBCATEGORÍA (bloqueada para ingresos)
-        descripcion || 'Auto: Devolución recibida de NeuroTEA',  // E: DESCRIPCIÓN
-        monto,                        // F: MONTO
-        'ITAU Marco',                 // G: CUENTA
-        'Auto-generado desde CARGA_NT'  // H: NOTAS
+      cargaFam.getRange(filaDestino, 1, 1, 9).setValues([[
+        fecha, 'Devolución NeuroTEA', '-', '-',
+        descripcion || 'Auto: Devolución recibida de NeuroTEA', monto, 'ITAU Marco',
+        'Auto-generado desde CARGA_NT', linkId
       ]]);
       aplicarFormatoFecha(cargaFam, filaDestino);
       transaccionCreada = true;
       mensajeToast = '✓ Creado ingreso en CARGA_FAMILIA: "Devolución NeuroTEA" por ' + formatearGuaranies(monto);
+    }
+
+    // v7.12: Escribir LINK_ID en la fila original de CARGA_NT
+    if (transaccionCreada) {
+      sheet.getRange(row, 9).setValue(linkId); // Columna I = LINK_ID
     }
 
   } catch (error) {
@@ -1205,7 +1313,6 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
     desactivarModoAutoCreacion();
   }
 
-  // Mostrar Toast de confirmación
   if (transaccionCreada) {
     ss.toast(mensajeToast, '🔄 Auto-creación', 5);
   }
