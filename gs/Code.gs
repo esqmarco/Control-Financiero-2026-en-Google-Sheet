@@ -339,7 +339,7 @@ function onEdit(e) {
 function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
   // Columna B = TIPO (columna 2)
   if (col === 2) {
-    const esIngreso = TODOS_TIPOS_INGRESO_FAMILIA.includes(valor);
+    const esIngreso = TIPOS_INGRESO_FAMILIA.includes(valor);
     const esAhorro = (valor === TIPO_AHORRO); // "Ahorro"
 
     if (esIngreso) {
@@ -381,7 +381,7 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     const tipoActual = sheet.getRange(row, 2).getValue();
 
     // Validar que el TIPO no sea un INGRESO
-    if (TODOS_TIPOS_INGRESO_FAMILIA.includes(tipoActual) && valor !== '-') {
+    if (TIPOS_INGRESO_FAMILIA.includes(tipoActual) && valor !== '-') {
       SpreadsheetApp.getUi().alert(
         '⚠️ INCOHERENCIA: TIPO es un INGRESO',
         'El TIPO "' + tipoActual + '" es un INGRESO.\n\n' +
@@ -476,7 +476,7 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
 function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
   // Columna B = TIPO (columna 2)
   if (col === 2) {
-    const esIngreso = TODOS_TIPOS_INGRESO_NT.includes(valor);
+    const esIngreso = TIPOS_INGRESO_NT.includes(valor);
     if (esIngreso) {
       sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
@@ -509,7 +509,7 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
   if (col === 3) {
     // Validar que el TIPO no sea un INGRESO
     const tipoActual = sheet.getRange(row, 2).getValue();
-    if (TODOS_TIPOS_INGRESO_NT.includes(tipoActual) && valor !== '-') {
+    if (TIPOS_INGRESO_NT.includes(tipoActual) && valor !== '-') {
       SpreadsheetApp.getUi().alert(
         '⚠️ INCOHERENCIA: TIPO es un INGRESO',
         'El TIPO "' + tipoActual + '" es un INGRESO.\n\n' +
@@ -593,7 +593,7 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
  */
 function validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipo, subcategoria) {
   // Cualquier TIPO de ingreso no debería tener subcategoría de egreso
-  if (TODOS_TIPOS_INGRESO_FAMILIA.includes(tipo) &&
+  if (TIPOS_INGRESO_FAMILIA.includes(tipo) &&
       (subcategoria === 'Devolución Familia → NT' || subcategoria === 'Préstamo Familia → NT')) {
     SpreadsheetApp.getUi().alert(
       '⚠️ INCOHERENCIA: TIPO es INGRESO pero SUBCATEGORÍA es de EGRESO',
@@ -616,7 +616,7 @@ function validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipo, subcatego
  */
 function validarContradiccionTipoSubcategoriaNT(sheet, row, tipo, subcategoria) {
   // Cualquier TIPO de ingreso no debería tener subcategoría de egreso
-  if (TODOS_TIPOS_INGRESO_NT.includes(tipo) &&
+  if (TIPOS_INGRESO_NT.includes(tipo) &&
       (subcategoria === 'Devolución NT → Familia' || subcategoria === 'Préstamo NT → Familia')) {
     SpreadsheetApp.getUi().alert(
       '⚠️ INCOHERENCIA: TIPO es INGRESO pero SUBCATEGORÍA es de EGRESO',
@@ -973,13 +973,17 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const datos = sheet.getRange(row, 1, 1, 9).getValues()[0];
 
-  const fecha = datos[0];
+  let fecha = datos[0];
   const subcategoria = String(datos[3] || '').trim();
   const monto = Number(datos[5]) || 0;
   const linkIdExistente = datos[8] || '';
 
-  // Validaciones básicas
-  if (!fecha || !(fecha instanceof Date)) return;
+  // Convertir fecha si es string (dd/mm/yyyy)
+  if (typeof fecha === 'string' && fecha) {
+    const p = fecha.split('/');
+    if (p.length === 3) fecha = new Date(p[2], p[1] - 1, p[0]);
+  }
+  if (!fecha || !(fecha instanceof Date) || isNaN(fecha.getTime())) return;
   if (!monto || monto < 10000) return;
 
   // Solo procesar préstamos/devoluciones
@@ -1024,13 +1028,17 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const datos = sheet.getRange(row, 1, 1, 9).getValues()[0];
 
-  const fecha = datos[0];
+  let fecha = datos[0];
   const subcategoria = String(datos[3] || '').trim();
   const monto = Number(datos[5]) || 0;
   const linkIdExistente = datos[8] || '';
 
-  // Validaciones básicas
-  if (!fecha || !(fecha instanceof Date)) return;
+  // Convertir fecha si es string (dd/mm/yyyy)
+  if (typeof fecha === 'string' && fecha) {
+    const p = fecha.split('/');
+    if (p.length === 3) fecha = new Date(p[2], p[1] - 1, p[0]);
+  }
+  if (!fecha || !(fecha instanceof Date) || isNaN(fecha.getTime())) return;
   if (!monto || monto < 10000) return;
 
   // Solo procesar préstamos/devoluciones
