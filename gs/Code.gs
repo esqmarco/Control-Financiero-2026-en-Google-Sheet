@@ -567,47 +567,11 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
 
 /**
  * Valida contradicciones entre TIPO y SUBCATEGORÍA en CARGA_FAMILIA
- * Detecta combinaciones imposibles como:
- * - TIPO="Devolución NeuroTEA" (INGRESO) + SUBCAT="Devolución Familia → NT" (EGRESO)
- * - TIPO="Préstamo NeuroTEA" (INGRESO) + SUBCAT="Préstamo Familia → NT" (EGRESO)
+ * v7.13: Simplificado - solo valida que TIPO ingreso no tenga SUBCAT de egreso
  * @returns {boolean} true si hubo contradicción (y se limpió la celda)
  */
 function validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipo, subcategoria) {
-  // Contradicción 1: "Devolución NeuroTEA" es cuando NT devuelve a Familia (INGRESO)
-  // pero "Devolución Familia → NT" es cuando Familia devuelve a NT (EGRESO)
-  if (tipo === 'Devolución NeuroTEA' && subcategoria === 'Devolución Familia → NT') {
-    SpreadsheetApp.getUi().alert(
-      '⚠️ CONTRADICCIÓN DETECTADA',
-      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
-      '• "Devolución NeuroTEA" = NT te devuelve dinero (INGRESO)\n' +
-      '• "Devolución Familia → NT" = Vos devolvés a NT (EGRESO)\n\n' +
-      '¿Qué querés registrar?\n\n' +
-      '→ Si NT te devuelve: Usá TIPO="Devolución NeuroTEA" sin categoría\n' +
-      '→ Si vos devolvés a NT: Usá TIPO="Egreso Familiar" → VARIABLES → "Devolución Familia → NT"',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    sheet.getRange(row, 4).setValue('');
-    return true;
-  }
-
-  // Contradicción 2: "Préstamo NeuroTEA" es cuando NT presta a Familia (INGRESO)
-  // pero "Préstamo Familia → NT" es cuando Familia presta a NT (EGRESO)
-  if (tipo === 'Préstamo NeuroTEA' && subcategoria === 'Préstamo Familia → NT') {
-    SpreadsheetApp.getUi().alert(
-      '⚠️ CONTRADICCIÓN DETECTADA',
-      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
-      '• "Préstamo NeuroTEA" = NT te presta dinero (INGRESO)\n' +
-      '• "Préstamo Familia → NT" = Vos prestás a NT (EGRESO)\n\n' +
-      '¿Qué querés registrar?\n\n' +
-      '→ Si NT te presta: Usá TIPO="Préstamo NeuroTEA" sin categoría\n' +
-      '→ Si vos prestás a NT: Usá TIPO="Egreso Familiar" → VARIABLES → "Préstamo Familia → NT"',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    sheet.getRange(row, 4).setValue('');
-    return true;
-  }
-
-  // Contradicción 3: Cualquier TIPO de ingreso no debería tener subcategoría de egreso
+  // Cualquier TIPO de ingreso no debería tener subcategoría de egreso
   if (TIPOS_INGRESO_FAMILIA.includes(tipo) &&
       (subcategoria === 'Devolución Familia → NT' || subcategoria === 'Préstamo Familia → NT')) {
     SpreadsheetApp.getUi().alert(
@@ -626,47 +590,11 @@ function validarContradiccionTipoSubcategoriaFamilia(sheet, row, tipo, subcatego
 
 /**
  * Valida contradicciones entre TIPO y SUBCATEGORÍA en CARGA_NT
- * Detecta combinaciones imposibles como:
- * - TIPO="Devolución Familia → NT" (INGRESO) + SUBCAT="Devolución NT → Familia" (EGRESO)
- * - TIPO="Préstamo Familia" (INGRESO) + SUBCAT="Préstamo NT → Familia" (EGRESO)
+ * v7.13: Simplificado - solo valida que TIPO ingreso no tenga SUBCAT de egreso
  * @returns {boolean} true si hubo contradicción (y se limpió la celda)
  */
 function validarContradiccionTipoSubcategoriaNT(sheet, row, tipo, subcategoria) {
-  // Contradicción 1: "Devolución Familia → NT" es cuando Familia devuelve a NT (INGRESO para NT)
-  // pero "Devolución NT → Familia" es cuando NT devuelve a Familia (EGRESO para NT)
-  if (tipo === 'Devolución Familia → NT' && subcategoria === 'Devolución NT → Familia') {
-    SpreadsheetApp.getUi().alert(
-      '⚠️ CONTRADICCIÓN DETECTADA',
-      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
-      '• "Devolución Familia → NT" = Familia te devuelve dinero (INGRESO)\n' +
-      '• "Devolución NT → Familia" = Vos devolvés a Familia (EGRESO)\n\n' +
-      '¿Qué querés registrar?\n\n' +
-      '→ Si Familia te devuelve: Usá TIPO="Devolución Familia → NT" sin categoría\n' +
-      '→ Si vos devolvés a Familia: Usá TIPO="Egreso NT" → VARIABLES → "Devolución NT → Familia"',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    sheet.getRange(row, 4).setValue('');
-    return true;
-  }
-
-  // Contradicción 2: "Préstamo Familia" es cuando Familia presta a NT (INGRESO para NT)
-  // pero "Préstamo NT → Familia" es cuando NT presta a Familia (EGRESO para NT)
-  if (tipo === 'Préstamo Familia' && subcategoria === 'Préstamo NT → Familia') {
-    SpreadsheetApp.getUi().alert(
-      '⚠️ CONTRADICCIÓN DETECTADA',
-      'Estás mezclando dos operaciones OPUESTAS:\n\n' +
-      '• "Préstamo Familia" = Familia te presta dinero (INGRESO)\n' +
-      '• "Préstamo NT → Familia" = Vos prestás a Familia (EGRESO)\n\n' +
-      '¿Qué querés registrar?\n\n' +
-      '→ Si Familia te presta: Usá TIPO="Préstamo Familia" sin categoría\n' +
-      '→ Si vos prestás a Familia: Usá TIPO="Egreso NT" → VARIABLES → "Préstamo NT → Familia"',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    sheet.getRange(row, 4).setValue('');
-    return true;
-  }
-
-  // Contradicción 3: Cualquier TIPO de ingreso no debería tener subcategoría de egreso
+  // Cualquier TIPO de ingreso no debería tener subcategoría de egreso
   if (TIPOS_INGRESO_NT.includes(tipo) &&
       (subcategoria === 'Devolución NT → Familia' || subcategoria === 'Préstamo NT → Familia')) {
     SpreadsheetApp.getUi().alert(
