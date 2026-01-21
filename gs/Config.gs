@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '7.13';
+const VERSION = '7.15';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -124,35 +124,25 @@ const TIPOS_INGRESO_FAMILIA = [
   'Contrato Colectivo Marco',
   'PL Itaipu Marco',
   'Honorarios Clara NeuroTEA',
+  'Préstamo NeuroTEA',      // v7.15: Restaurado para auto-creación
+  'Devolución NeuroTEA',    // v7.15: Restaurado para auto-creación
   'Préstamo Otros Bancos'
-  // v7.14: Quitados 'Préstamo NeuroTEA' y 'Devolución NeuroTEA' - ahora son auto-creados
 ];
 
-// FAMILIA - Tipos que el sistema auto-crea (no aparecen en dropdown)
-const TIPOS_INGRESO_FAMILIA_AUTOCREADOS = [
-  'Préstamo NeuroTEA',           // Auto-creado cuando NT registra egreso "Préstamo NT → Familia"
-  'Devolución NeuroTEA'          // Auto-creado cuando NT registra egreso "Devolución NT → Familia"
-];
-
-// FAMILIA - Todos los tipos válidos (para validaciones en Code.gs)
-const TODOS_TIPOS_INGRESO_FAMILIA = [...TIPOS_INGRESO_FAMILIA, ...TIPOS_INGRESO_FAMILIA_AUTOCREADOS];
+// v7.15: Ya no separamos arrays - todos los tipos están en el dropdown principal
+const TODOS_TIPOS_INGRESO_FAMILIA = TIPOS_INGRESO_FAMILIA;
 
 // NEUROTEA - Tipos para dropdown (lo que el usuario puede seleccionar)
 const TIPOS_INGRESO_NT = [
   'Aporte NeuroTEA Terapeutas',
   'Cursos NeuroTEA',
-  'Otros'
-  // v7.14: Quitados 'Préstamo Familia' y 'Devolución Familia → NT' - ahora son auto-creados
+  'Otros',
+  'Préstamo Familia',            // v7.15: Restaurado para auto-creación
+  'Devolución Familia → NT'      // v7.15: Restaurado para auto-creación
 ];
 
-// NEUROTEA - Tipos que el sistema auto-crea (no aparecen en dropdown)
-const TIPOS_INGRESO_NT_AUTOCREADOS = [
-  'Préstamo Familia',            // Auto-creado cuando FAM registra egreso "Préstamo Familia → NT"
-  'Devolución Familia → NT'      // Auto-creado cuando FAM registra egreso "Devolución Familia → NT"
-];
-
-// NEUROTEA - Todos los tipos válidos (para validaciones en Code.gs)
-const TODOS_TIPOS_INGRESO_NT = [...TIPOS_INGRESO_NT, ...TIPOS_INGRESO_NT_AUTOCREADOS];
+// v7.15: Ya no separamos arrays - todos los tipos están en el dropdown principal
+const TODOS_TIPOS_INGRESO_NT = TIPOS_INGRESO_NT;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CATEGORÍAS DE EGRESO
