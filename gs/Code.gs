@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 7.16 - Fix limpiarMonto en SUBCATEGORÍA + Toast debug mejorado
+ * Versión 7.18 - Auto-creación solo cuando TODOS los campos estén completos
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -362,11 +362,6 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     const montoNuevo = limpiarMonto(valor);
     const montoAnterior = limpiarMonto(oldValue);
 
-    // v7.15: Toast visible para debugging
-    SpreadsheetApp.getActiveSpreadsheet().toast('MONTO editado: ' + montoNuevo + ' en fila ' + row, '🔍 Debug', 2);
-
-    console.log('EDIT-FAM-MONTO: valor=' + valor + ', montoNuevo=' + montoNuevo + ', row=' + row);
-
     // Si el monto se vació, borrar contraparte
     if (montoNuevo === 0 && montoAnterior > 0) {
       const linkId = obtenerLinkId(sheet, row);
@@ -375,11 +370,15 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
         sheet.getRange(row, 9).setValue('');
       }
     }
-    // Si hay monto válido, disparar auto-creación
-    else if (montoNuevo > 0) {
-      console.log('EDIT-FAM-MONTO: Disparando autoCrearTransaccionCruzadaFamilia');
-      autoCrearTransaccionCruzadaFamilia(sheet, row);
+    // v7.18: Solo disparar si TODOS los campos requeridos están completos
+    else if (montoNuevo >= 10000) {
+      intentarAutoCreacionFamilia(sheet, row);
     }
+  }
+
+  // Columna G = CUENTA (columna 7) - v7.18: También puede completar los campos
+  if (col === 7 && valor && valor !== '-') {
+    intentarAutoCreacionFamilia(sheet, row);
   }
 
   // Columna C = CATEGORÍA (columna 3)
@@ -466,22 +465,10 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     // 3. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionFamilia(sheet, row, valor);
 
-    // 4. v7.16: Si es préstamo/devolución Y ya hay monto, disparar auto-creación
+    // 4. v7.18: Si es préstamo/devolución, intentar auto-creación (verifica todos los campos)
     const esPrestamoODevolucion = (valor === 'Préstamo Familia → NT' || valor === 'Devolución Familia → NT');
     if (esPrestamoODevolucion) {
-      const montoActual = limpiarMonto(sheet.getRange(row, 6).getValue());
-      const linkIdActual = sheet.getRange(row, 9).getValue();
-
-      // Toast debug para SUBCATEGORÍA
-      SpreadsheetApp.getActiveSpreadsheet().toast(
-        'SUBCAT préstamo: monto=' + montoActual + ', linkId=' + (linkIdActual || 'vacío'),
-        '🔍 Debug SUBCAT', 3
-      );
-
-      // Solo si hay monto y no tiene LINK_ID (no fue auto-creada aún)
-      if (montoActual >= 10000 && !linkIdActual) {
-        autoCrearTransaccionCruzadaFamilia(sheet, row);
-      }
+      intentarAutoCreacionFamilia(sheet, row);
     }
   }
 }
@@ -504,21 +491,23 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
     const montoNuevo = limpiarMonto(valor);
     const montoAnterior = limpiarMonto(oldValue);
 
-    console.log('EDIT-NT-MONTO: valor=' + valor + ', montoNuevo=' + montoNuevo + ', row=' + row);
-
-    // v7.12: Si el monto se vació o se puso 0, y antes tenía valor, borrar contraparte
+    // Si el monto se vació, borrar contraparte
     if (montoNuevo === 0 && montoAnterior > 0) {
       const linkId = obtenerLinkId(sheet, row);
       if (linkId) {
         borrarContraparte(linkId, NOMBRES_HOJAS.CARGA_NT);
-        sheet.getRange(row, 9).setValue(''); // Limpiar LINK_ID
+        sheet.getRange(row, 9).setValue('');
       }
     }
-    // Si hay monto válido, disparar auto-creación/actualización
-    else if (montoNuevo > 0) {
-      console.log('EDIT-NT-MONTO: Disparando autoCrearTransaccionCruzadaNT');
-      autoCrearTransaccionCruzadaNT(sheet, row);
+    // v7.18: Solo disparar si TODOS los campos requeridos están completos
+    else if (montoNuevo >= 10000) {
+      intentarAutoCreacionNT(sheet, row);
     }
+  }
+
+  // Columna G = CUENTA (columna 7) - v7.18: También puede completar los campos
+  if (col === 7 && valor && valor !== '-') {
+    intentarAutoCreacionNT(sheet, row);
   }
 
   // Columna C = CATEGORÍA (columna 3)
@@ -585,22 +574,10 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
     // 4. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionNT(sheet, row, valor);
 
-    // 5. v7.16: Si es préstamo/devolución Y ya hay monto, disparar auto-creación
+    // 5. v7.18: Si es préstamo/devolución, intentar auto-creación (verifica todos los campos)
     const esPrestamoODevolucion = (valor === 'Préstamo NT → Familia' || valor === 'Devolución NT → Familia');
     if (esPrestamoODevolucion) {
-      const montoActual = limpiarMonto(sheet.getRange(row, 6).getValue());
-      const linkIdActual = sheet.getRange(row, 9).getValue();
-
-      // Toast debug para SUBCATEGORÍA NT
-      SpreadsheetApp.getActiveSpreadsheet().toast(
-        'SUBCAT NT préstamo: monto=' + montoActual + ', linkId=' + (linkIdActual || 'vacío'),
-        '🔍 Debug SUBCAT NT', 3
-      );
-
-      // Solo si hay monto y no tiene LINK_ID (no fue auto-creada aún)
-      if (montoActual >= 10000 && !linkIdActual) {
-        autoCrearTransaccionCruzadaNT(sheet, row);
-      }
+      intentarAutoCreacionNT(sheet, row);
     }
   }
 }
@@ -999,6 +976,86 @@ function limpiarMonto(valor) {
   // Remover puntos (separador de miles) y reemplazar coma por punto (decimal)
   const limpio = String(valor).replace(/\./g, '').replace(',', '.');
   return Number(limpio) || 0;
+}
+
+/**
+ * v7.18: Verifica que TODOS los campos requeridos estén completos antes de auto-crear
+ * Campos requeridos: FECHA, TIPO, CATEGORÍA, SUBCATEGORÍA, MONTO, CUENTA
+ * Campos opcionales: DESCRIPCIÓN, NOTAS
+ */
+function intentarAutoCreacionFamilia(sheet, row) {
+  const datos = sheet.getRange(row, 1, 1, 9).getValues()[0];
+
+  // Leer todos los campos
+  const fecha = datos[0];
+  const tipo = String(datos[1] || '').trim();
+  const categoria = String(datos[2] || '').trim();
+  const subcategoria = String(datos[3] || '').trim();
+  const monto = limpiarMonto(datos[5]);
+  const cuenta = String(datos[6] || '').trim();
+  const linkId = String(datos[8] || '').trim();
+
+  // Si ya tiene LINK_ID, no hacer nada (ya fue auto-creada)
+  if (linkId && linkId.length === 6) return;
+
+  // Verificar que sea un préstamo/devolución
+  const esPrestamoFamNT = subcategoria === 'Préstamo Familia → NT';
+  const esDevolucionFamNT = subcategoria === 'Devolución Familia → NT';
+  if (!esPrestamoFamNT && !esDevolucionFamNT) return;
+
+  // Verificar TODOS los campos requeridos
+  const fechaValida = fecha && (fecha instanceof Date || (typeof fecha === 'string' && fecha.includes('/')));
+  const tipoValido = tipo === 'Egreso Familiar';
+  const categoriaValida = categoria === 'VARIABLES';
+  const montoValido = monto >= 10000;
+  const cuentaValida = cuenta && cuenta !== '-' && cuenta !== '';
+
+  // Si falta algún campo, no hacer nada (esperar a que complete)
+  if (!fechaValida || !tipoValido || !categoriaValida || !montoValido || !cuentaValida) {
+    return;
+  }
+
+  // ¡Todos los campos completos! Disparar auto-creación
+  autoCrearTransaccionCruzadaFamilia(sheet, row);
+}
+
+/**
+ * v7.18: Verifica que TODOS los campos requeridos estén completos antes de auto-crear (NT)
+ */
+function intentarAutoCreacionNT(sheet, row) {
+  const datos = sheet.getRange(row, 1, 1, 9).getValues()[0];
+
+  // Leer todos los campos
+  const fecha = datos[0];
+  const tipo = String(datos[1] || '').trim();
+  const categoria = String(datos[2] || '').trim();
+  const subcategoria = String(datos[3] || '').trim();
+  const monto = limpiarMonto(datos[5]);
+  const cuenta = String(datos[6] || '').trim();
+  const linkId = String(datos[8] || '').trim();
+
+  // Si ya tiene LINK_ID, no hacer nada (ya fue auto-creada)
+  if (linkId && linkId.length === 6) return;
+
+  // Verificar que sea un préstamo/devolución
+  const esPrestamoNTFam = subcategoria === 'Préstamo NT → Familia';
+  const esDevolucionNTFam = subcategoria === 'Devolución NT → Familia';
+  if (!esPrestamoNTFam && !esDevolucionNTFam) return;
+
+  // Verificar TODOS los campos requeridos
+  const fechaValida = fecha && (fecha instanceof Date || (typeof fecha === 'string' && fecha.includes('/')));
+  const tipoValido = tipo === 'Egreso NT';
+  const categoriaValida = categoria === 'VARIABLES';
+  const montoValido = monto >= 10000;
+  const cuentaValida = cuenta && cuenta !== '-' && cuenta !== '';
+
+  // Si falta algún campo, no hacer nada (esperar a que complete)
+  if (!fechaValida || !tipoValido || !categoriaValida || !montoValido || !cuentaValida) {
+    return;
+  }
+
+  // ¡Todos los campos completos! Disparar auto-creación
+  autoCrearTransaccionCruzadaNT(sheet, row);
 }
 
 /**
