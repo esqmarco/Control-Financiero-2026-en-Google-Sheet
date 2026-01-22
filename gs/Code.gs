@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 7.18 - Auto-creación solo cuando TODOS los campos estén completos
+ * Versión 7.19 - Sincronización dinámica de contrapartes (FECHA, MONTO, CUENTA, SUBCAT)
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -337,21 +337,26 @@ function onEdit(e) {
 }
 
 function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
+  const linkId = obtenerLinkId(sheet, row);
+  const tieneContraparte = linkId && linkId.length === 6;
+
+  // Columna A = FECHA (columna 1) - v7.19: Sincronizar si ya tiene contraparte
+  if (col === 1 && tieneContraparte && valor) {
+    sincronizarContraparte(linkId, NOMBRES_HOJAS.CARGA_FAMILIA, 1, valor);
+  }
+
   // Columna B = TIPO (columna 2)
   if (col === 2) {
-    const esIngreso = TODOS_TIPOS_INGRESO_FAMILIA.includes(valor); // v7.14: Incluye tipos auto-creados
-    const esAhorro = (valor === TIPO_AHORRO); // "Ahorro"
+    const esIngreso = TODOS_TIPOS_INGRESO_FAMILIA.includes(valor);
+    const esAhorro = (valor === TIPO_AHORRO);
 
     if (esIngreso) {
-      // Deshabilitar CATEGORÍA y SUBCATEGORÍA para ingresos
       sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
     } else if (esAhorro) {
-      // AHORRO: Habilitar CATEGORÍA (con opciones de ahorro), bloquear SUBCATEGORÍA
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
     } else {
-      // Egresos: Habilitar CATEGORÍA y SUBCATEGORÍA
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
     }
@@ -364,21 +369,31 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
 
     // Si el monto se vació, borrar contraparte
     if (montoNuevo === 0 && montoAnterior > 0) {
-      const linkId = obtenerLinkId(sheet, row);
-      if (linkId) {
+      if (tieneContraparte) {
         borrarContraparte(linkId, NOMBRES_HOJAS.CARGA_FAMILIA);
         sheet.getRange(row, 9).setValue('');
       }
     }
-    // v7.18: Solo disparar si TODOS los campos requeridos están completos
-    else if (montoNuevo >= 10000) {
+    // v7.19: Si ya tiene contraparte, sincronizar monto
+    else if (tieneContraparte && montoNuevo >= 10000) {
+      sincronizarContraparte(linkId, NOMBRES_HOJAS.CARGA_FAMILIA, 6, montoNuevo);
+    }
+    // v7.18: Si no tiene contraparte, intentar crear
+    else if (!tieneContraparte && montoNuevo >= 10000) {
       intentarAutoCreacionFamilia(sheet, row);
     }
   }
 
-  // Columna G = CUENTA (columna 7) - v7.18: También puede completar los campos
+  // Columna G = CUENTA (columna 7)
   if (col === 7 && valor && valor !== '-') {
-    intentarAutoCreacionFamilia(sheet, row);
+    // v7.19: Si ya tiene contraparte, sincronizar cuenta
+    if (tieneContraparte) {
+      sincronizarContraparte(linkId, NOMBRES_HOJAS.CARGA_FAMILIA, 7, valor);
+    }
+    // Si no tiene contraparte, intentar crear
+    else {
+      intentarAutoCreacionFamilia(sheet, row);
+    }
   }
 
   // Columna C = CATEGORÍA (columna 3)
@@ -465,18 +480,41 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     // 3. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionFamilia(sheet, row, valor);
 
-    // 4. v7.18: Si es préstamo/devolución, intentar auto-creación (verifica todos los campos)
+    // 4. v7.19: Manejar préstamos/devoluciones
     const esPrestamoODevolucion = (valor === 'Préstamo Familia → NT' || valor === 'Devolución Familia → NT');
+    const eraPrestamoODevolucion = (oldValue === 'Préstamo Familia → NT' || oldValue === 'Devolución Familia → NT');
+
     if (esPrestamoODevolucion) {
-      intentarAutoCreacionFamilia(sheet, row);
+      // Si ya tenía contraparte y cambió el tipo (préstamo↔devolución), recrear
+      if (tieneContraparte && eraPrestamoODevolucion && valor !== oldValue) {
+        recrearContraparte(sheet, row, NOMBRES_HOJAS.CARGA_FAMILIA);
+      }
+      // Si no tiene contraparte, intentar crear
+      else if (!tieneContraparte) {
+        intentarAutoCreacionFamilia(sheet, row);
+      }
+    }
+    // Si cambió DE préstamo/devolución A otra cosa, borrar contraparte
+    else if (eraPrestamoODevolucion && tieneContraparte) {
+      borrarContraparte(linkId, NOMBRES_HOJAS.CARGA_FAMILIA);
+      sheet.getRange(row, 9).setValue('');
+      SpreadsheetApp.getActiveSpreadsheet().toast('✓ Contraparte eliminada', '🗑️ Auto', 2);
     }
   }
 }
 
 function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
+  const linkId = obtenerLinkId(sheet, row);
+  const tieneContraparte = linkId && linkId.length === 6;
+
+  // Columna A = FECHA (columna 1) - v7.19: Sincronizar si ya tiene contraparte
+  if (col === 1 && tieneContraparte && valor) {
+    sincronizarContraparte(linkId, NOMBRES_HOJAS.CARGA_NT, 1, valor);
+  }
+
   // Columna B = TIPO (columna 2)
   if (col === 2) {
-    const esIngreso = TODOS_TIPOS_INGRESO_NT.includes(valor); // v7.14: Incluye tipos auto-creados
+    const esIngreso = TODOS_TIPOS_INGRESO_NT.includes(valor);
     if (esIngreso) {
       sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
@@ -493,21 +531,31 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
 
     // Si el monto se vació, borrar contraparte
     if (montoNuevo === 0 && montoAnterior > 0) {
-      const linkId = obtenerLinkId(sheet, row);
-      if (linkId) {
+      if (tieneContraparte) {
         borrarContraparte(linkId, NOMBRES_HOJAS.CARGA_NT);
         sheet.getRange(row, 9).setValue('');
       }
     }
-    // v7.18: Solo disparar si TODOS los campos requeridos están completos
-    else if (montoNuevo >= 10000) {
+    // v7.19: Si ya tiene contraparte, sincronizar monto
+    else if (tieneContraparte && montoNuevo >= 10000) {
+      sincronizarContraparte(linkId, NOMBRES_HOJAS.CARGA_NT, 6, montoNuevo);
+    }
+    // v7.18: Si no tiene contraparte, intentar crear
+    else if (!tieneContraparte && montoNuevo >= 10000) {
       intentarAutoCreacionNT(sheet, row);
     }
   }
 
-  // Columna G = CUENTA (columna 7) - v7.18: También puede completar los campos
+  // Columna G = CUENTA (columna 7)
   if (col === 7 && valor && valor !== '-') {
-    intentarAutoCreacionNT(sheet, row);
+    // v7.19: Si ya tiene contraparte, sincronizar cuenta
+    if (tieneContraparte) {
+      sincronizarContraparte(linkId, NOMBRES_HOJAS.CARGA_NT, 7, valor);
+    }
+    // Si no tiene contraparte, intentar crear
+    else {
+      intentarAutoCreacionNT(sheet, row);
+    }
   }
 
   // Columna C = CATEGORÍA (columna 3)
@@ -574,10 +622,25 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
     // 4. Validar préstamos/devoluciones (balance cruzado)
     validarPrestamoDevolucionNT(sheet, row, valor);
 
-    // 5. v7.18: Si es préstamo/devolución, intentar auto-creación (verifica todos los campos)
+    // 5. v7.19: Manejar préstamos/devoluciones
     const esPrestamoODevolucion = (valor === 'Préstamo NT → Familia' || valor === 'Devolución NT → Familia');
+    const eraPrestamoODevolucion = (oldValue === 'Préstamo NT → Familia' || oldValue === 'Devolución NT → Familia');
+
     if (esPrestamoODevolucion) {
-      intentarAutoCreacionNT(sheet, row);
+      // Si ya tenía contraparte y cambió el tipo (préstamo↔devolución), recrear
+      if (tieneContraparte && eraPrestamoODevolucion && valor !== oldValue) {
+        recrearContraparte(sheet, row, NOMBRES_HOJAS.CARGA_NT);
+      }
+      // Si no tiene contraparte, intentar crear
+      else if (!tieneContraparte) {
+        intentarAutoCreacionNT(sheet, row);
+      }
+    }
+    // Si cambió DE préstamo/devolución A otra cosa, borrar contraparte
+    else if (eraPrestamoODevolucion && tieneContraparte) {
+      borrarContraparte(linkId, NOMBRES_HOJAS.CARGA_NT);
+      sheet.getRange(row, 9).setValue('');
+      SpreadsheetApp.getActiveSpreadsheet().toast('✓ Contraparte eliminada', '🗑️ Auto', 2);
     }
   }
 }
@@ -862,13 +925,15 @@ function obtenerLinkId(sheet, row) {
 }
 
 /**
- * Actualiza el monto de la transacción contraparte
+ * v7.19: Sincroniza cambios en la transacción contraparte
+ * Puede actualizar: FECHA (col 1), MONTO (col 6), CUENTA (col 7)
  * @param {string} linkId - ID de vinculación
  * @param {string} hojaOrigen - Nombre de la hoja origen
- * @param {number} nuevoMonto - Nuevo monto a actualizar
+ * @param {number} columna - Columna a actualizar (1=FECHA, 6=MONTO, 7=CUENTA)
+ * @param {any} nuevoValor - Nuevo valor
  * @returns {boolean} true si se actualizó correctamente
  */
-function actualizarMontoContraparte(linkId, hojaOrigen, nuevoMonto) {
+function sincronizarContraparte(linkId, hojaOrigen, columna, nuevoValor) {
   if (!linkId || linkId === '') return false;
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -884,12 +949,45 @@ function actualizarMontoContraparte(linkId, hojaOrigen, nuevoMonto) {
   if (!filaContraparte) return false;
 
   try {
-    hojaDestino.getRange(filaContraparte, 6).setValue(nuevoMonto); // Columna F = MONTO
-    ss.toast('✓ Actualizado monto en ' + nombreHojaDestino, '🔄 Sincronizado', 3);
+    hojaDestino.getRange(filaContraparte, columna).setValue(nuevoValor);
+
+    // Aplicar formato de fecha si es columna A
+    if (columna === 1) {
+      hojaDestino.getRange(filaContraparte, 1).setNumberFormat('dd/mm/yyyy');
+    }
+
+    const nombreCampo = columna === 1 ? 'fecha' : (columna === 6 ? 'monto' : 'cuenta');
+    ss.toast('✓ Sincronizado ' + nombreCampo + ' en ' + nombreHojaDestino, '🔄 Auto', 2);
     return true;
   } catch (error) {
     return false;
   }
+}
+
+/**
+ * v7.19: Borra contraparte y recrea cuando cambia el tipo de transacción
+ * (ej: de Préstamo a Devolución)
+ */
+function recrearContraparte(sheet, row, hojaOrigen) {
+  const linkId = obtenerLinkId(sheet, row);
+  if (linkId) {
+    // Borrar la contraparte vieja
+    borrarContraparte(linkId, hojaOrigen);
+    // Limpiar el LINK_ID de la fila original
+    sheet.getRange(row, 9).setValue('');
+  }
+
+  // Crear nueva contraparte
+  if (hojaOrigen === NOMBRES_HOJAS.CARGA_FAMILIA) {
+    intentarAutoCreacionFamilia(sheet, row);
+  } else {
+    intentarAutoCreacionNT(sheet, row);
+  }
+}
+
+// Mantener compatibilidad con código existente
+function actualizarMontoContraparte(linkId, hojaOrigen, nuevoMonto) {
+  return sincronizarContraparte(linkId, hojaOrigen, 6, nuevoMonto);
 }
 
 /**
