@@ -1182,5 +1182,38 @@ function estaEnModoAutoCreacion() {
 
 ---
 
-*Última actualización: 2026-01-21*
-*Versión: 7.14 - Simplificación dropdowns y fórmulas TABLERO*
+## LECCIONES APRENDIDAS (NO IGNORAR)
+
+> Ver también: `.claude/rules/errores-historicos.md` para lista completa de bugs resueltos.
+
+### Formato Paraguayo (CRÍTICO)
+- Separador de miles: **PUNTO** (5.000.000)
+- Separador decimal: **COMA** (5,5)
+- Separador de argumentos en fórmulas: **PUNTO Y COMA** (;)
+- **SIEMPRE** usar `limpiarMonto()` para parsear montos del usuario
+
+### Auto-creación de Préstamos/Devoluciones
+- Solo disparar cuando **TODOS** los campos estén completos (FECHA, TIPO, CATEGORÍA, SUBCATEGORÍA, MONTO, CUENTA)
+- Usar LINK_ID (6 caracteres) para vincular contrapartes
+- Sincronizar cambios automáticamente (FECHA, MONTO, CUENTA)
+- Si cambia SUBCATEGORÍA (préstamo↔devolución) → borrar y recrear
+
+### Fórmulas
+- **NUNCA** usar SUMIFS con MONTH()/YEAR() → usar SUMPRODUCT
+- **NUNCA** calcular DISPONIBLE independientemente → referenciar TOTAL DISPONIBLE
+- Distribución ganancia NT: simple `=SI(H>0;H/3;0)` - no complicar
+
+### Rangos en MOVIMIENTO
+- FAMILIA: filas **9-113** (NO 9-70)
+- NEUROTEA: filas **119-200** (NO 73-150)
+
+### Workflow Anti-Errores
+1. Después de cambios en gs/ → ejecutar `/verificar`
+2. Copiar código a Apps Script → Guardar → Reinicializar
+3. Probar caso específico en spreadsheet real
+4. Reportar resultado: "Funciona" o "No funciona, pasa X"
+
+---
+
+*Última actualización: 2026-01-22*
+*Versión: 7.19 - Sincronización dinámica de contrapartes*
