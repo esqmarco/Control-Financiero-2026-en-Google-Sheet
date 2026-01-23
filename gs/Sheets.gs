@@ -851,9 +851,11 @@ function aplicarValidacionesCargaFamilia(sheet) {
   );
 
   // SUBCATEGORÍA (columna D) - solo VARIABLES (AHORRO usa CATEGORÍA)
+  // v7.20: Lee desde CONFIG dinámicamente para aceptar reservas renombradas
+  const variablesFamConfig = obtenerVariablesDesdeConfig('FAMILIA');
   sheet.getRange('D4:D500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['-', ...VARIABLES_FAMILIA], true)
+      .requireValueInList(['-', ...variablesFamConfig], true)
       .setAllowInvalid(false)
       .build()
   );
@@ -947,9 +949,11 @@ function aplicarValidacionesCargaNT(sheet) {
 
   // SUBCATEGORÍA (columna D) - solo VARIABLES_NT (EVENTOS se eliminaron - van en GASTOS_FIJOS)
   // v7.7: EVENTOS ya no aparece aquí
+  // v7.20: Lee desde CONFIG dinámicamente para aceptar reservas renombradas
+  const variablesNTConfig = obtenerVariablesDesdeConfig('NT');
   sheet.getRange('D4:D500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['-', ...VARIABLES_NT], true)
+      .requireValueInList(['-', ...variablesNTConfig], true)
       .setAllowInvalid(false)
       .build()
   );
