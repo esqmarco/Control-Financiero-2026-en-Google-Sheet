@@ -558,7 +558,13 @@ function escribirSeccionPresupuesto(sheet, row, titulo, items, tipo, colorFondo,
 
   // Items
   items.forEach(item => {
-    sheet.getRange(row, 1).setValue(item.concepto);
+    // v7.20: Reservas usan fórmula referenciando fuente de verdad
+    const refReserva = obtenerReferenciaReserva(item.concepto);
+    if (refReserva) {
+      sheet.getRange(row, 1).setFormula(refReserva);
+    } else {
+      sheet.getRange(row, 1).setValue(item.concepto);
+    }
     sheet.getRange(row, 2).setValue(tipo);
     sheet.getRange(row, 3).setValue(item.frecuencia);
 
@@ -607,7 +613,13 @@ function escribirSeccionEventos(sheet, row, colorFondo, colorSubtotal) {
   const filaInicio = row;
 
   EVENTOS_NT.forEach(evento => {
-    sheet.getRange(row, 1).setValue(evento.nombre);
+    // v7.20: Reservas de eventos referencian CONFIG dinámicamente
+    const refReserva = obtenerReferenciaReserva(evento.nombre);
+    if (refReserva) {
+      sheet.getRange(row, 1).setFormula(refReserva);
+    } else {
+      sheet.getRange(row, 1).setValue(evento.nombre);
+    }
     sheet.getRange(row, 2).setValue('Egreso');
     sheet.getRange(row, 3).setValue(evento.mes);
     sheet.getRange(row, 16).setFormula(`=SUM(D${row}:O${row})`);
@@ -729,7 +741,19 @@ function crearHojaGASTOS_FIJOS() {
   ];
 
   todosGastosNT.forEach(gasto => {
-    sheet.getRange(row, 1).setValue(gasto.concepto);
+    // v7.20: EVENTOS reserves referencian CONFIG (fuente de verdad)
+    // Otros reserves (Clínica, Sueldos, etc.) quedan como texto (GF es la fuente)
+    if (gasto.concepto.includes('Reserva Evento')) {
+      const eventosNombres = EVENTOS_NT.map(e => e.nombre);
+      const idxEvt = eventosNombres.indexOf(gasto.concepto);
+      if (idxEvt >= 0) {
+        sheet.getRange(row, 1).setFormula(`=CONFIG!$I$${21 + idxEvt}`);
+      } else {
+        sheet.getRange(row, 1).setValue(gasto.concepto);
+      }
+    } else {
+      sheet.getRange(row, 1).setValue(gasto.concepto);
+    }
     sheet.getRange(row, 2).setValue('NEUROTEA');
     sheet.getRange(row, 3).setValue(gasto.categoria);
     sheet.getRange(row, 4).setValue(gasto.frecuencia);
@@ -1255,12 +1279,13 @@ function escribirSeccionMovimientoIngresos(sheet, row, titulo, items, entidad, c
     sheet.getRange(row, 3).setValue(item.frecuencia || 'Variable');
     sheet.getRange(row, 4).setValue(0).setHorizontalAlignment('center'); // DÍA (ingresos no tienen)
 
+    // v7.20: Fórmulas usan A{row} para consistencia con sistema dinámico
     // PRESUPUESTO (col E): Busca en hoja PRESUPUESTO según mes seleccionado
-    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH("${item.concepto}";PRESUPUESTO!$A:$A;0);$N$3);0)`;
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH(A${row};PRESUPUESTO!$A:$A;0);$N$3);0)`;
     sheet.getRange(row, 5).setFormula(formulaPresup);
 
     // REAL (col F): SUMPRODUCT desde CARGA según tipo y mes
-    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$B$4:$B$500="${item.concepto}")*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$B$4:$B$500=A${row})*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
     sheet.getRange(row, 6).setFormula(formulaReal);
 
     // DIFERENCIA (col G)
@@ -1302,6 +1327,51 @@ function escribirSeccionMovimientoIngresos(sheet, row, titulo, items, entidad, c
   return row;
 }
 
+// ─── HELPER: Referencia dinámica para reservas (v7.20) ───
+// Permite renombrar reservas en CONFIG o GASTOS_FIJOS y que MOVIMIENTO/PRESUPUESTO se actualicen
+
+/**
+ * Obtiene la fórmula de referencia para el nombre de una reserva.
+ *
+ * Fuentes de verdad:
+ *   - VARIABLES FAM/NT → CONFIG (cols C/G, filas 21+)
+ *   - EVENTOS NT → CONFIG (col I, filas 21+)
+ *   - Otros GASTOS_FIJOS → GASTOS_FIJOS!A (usuario renombra ahí)
+ *
+ * @param {string} concepto - Nombre original del concepto
+ * @returns {string|null} Fórmula (ej: "=CONFIG!$G$30") o null si no es reserva
+ */
+function obtenerReferenciaReserva(concepto) {
+  if (!concepto.includes('Reserva')) return null;
+
+  // ─── VARIABLES FAMILIA (CONFIG col C, items rows 21+) ───
+  const idxVarFam = VARIABLES_FAMILIA.indexOf(concepto);
+  if (idxVarFam >= 0) return `=CONFIG!$C$${21 + idxVarFam}`;
+
+  // ─── VARIABLES NT (CONFIG col G, items rows 21+) ───
+  const idxVarNT = VARIABLES_NT.indexOf(concepto);
+  if (idxVarNT >= 0) return `=CONFIG!$G$${21 + idxVarNT}`;
+
+  // ─── EVENTOS NT (CONFIG col I, items rows 21+) ───
+  const eventosNombres = EVENTOS_NT.map(e => e.nombre);
+  const idxEvt = eventosNombres.indexOf(concepto);
+  if (idxEvt >= 0) return `=CONFIG!$I$${21 + idxEvt}`;
+
+  // ─── GASTOS_FIJOS FAMILIA (GASTOS_FIJOS!A, items rows 8+) ───
+  const FILA_INICIO_GF_FAM = 8;
+  const gastosFam = [...GASTOS_FIJOS_FAM, ...CUOTAS_FAM, ...OBLIGACIONES_FAM, ...SUSCRIPCIONES_FAM];
+  const idxGFFam = gastosFam.findIndex(g => g.concepto === concepto);
+  if (idxGFFam >= 0) return `=GASTOS_FIJOS!$A$${FILA_INICIO_GF_FAM + idxGFFam}`;
+
+  // ─── GASTOS_FIJOS NEUROTEA (GASTOS_FIJOS!A, after FAMILIA + 4 rows gap) ───
+  const FILA_INICIO_GF_NT = FILA_INICIO_GF_FAM + gastosFam.length + 4;
+  const gastosNT = [...CLINICA_NT, ...SUELDOS_NT, ...TELEFONIA_NT, ...OBLIGACIONES_NT, ...EVENTOS_GASTOS_NT];
+  const idxGFNT = gastosNT.findIndex(g => g.concepto === concepto);
+  if (idxGFNT >= 0) return `=GASTOS_FIJOS!$A$${FILA_INICIO_GF_NT + idxGFNT}`;
+
+  return null; // No es reserva conocida
+}
+
 // ─── SECCIÓN EGRESOS FIJOS (vienen de GASTOS_FIJOS) ───
 // Nueva estructura: A=CONCEPTO, B=TIPO, C=FREC, D=DÍA, E=PRESUP, F=REAL, G=DIF, H=%, I=ESTADO, J=EST.PAGO, K=🚦, L=CATEGORÍA
 // GASTOS_FIJOS simplificado: A=Concepto, B=Entidad, C=Categoría, D=Frecuencia, E=Día, F=Cuenta, G-R=Meses (sin BASE)
@@ -1318,21 +1388,29 @@ function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, co
   const filaInicio = row;
 
   items.forEach(item => {
-    sheet.getRange(row, 1).setValue(item.concepto);
+    // v7.20: Reservas usan fórmula referenciando fuente de verdad (CONFIG o GASTOS_FIJOS)
+    const refReserva = obtenerReferenciaReserva(item.concepto);
+    if (refReserva) {
+      sheet.getRange(row, 1).setFormula(refReserva);
+    } else {
+      sheet.getRange(row, 1).setValue(item.concepto);
+    }
     sheet.getRange(row, 2).setValue('Egreso');
     sheet.getRange(row, 3).setValue(item.frecuencia);
 
+    // v7.20: Todas las fórmulas usan A{row} (referencia indirecta) en lugar de texto literal
+    // Así, al renombrar la reserva, las fórmulas siguen funcionando
+
     // DÍA (col D): Trae de GASTOS_FIJOS columna E
-    const formulaDia = `=IFERROR(INDEX(GASTOS_FIJOS!$E:$E;MATCH("${item.concepto}";GASTOS_FIJOS!$A:$A;0));0)`;
+    const formulaDia = `=IFERROR(INDEX(GASTOS_FIJOS!$E:$E;MATCH(A${row};GASTOS_FIJOS!$A:$A;0));0)`;
     sheet.getRange(row, 4).setFormula(formulaDia).setHorizontalAlignment('center');
 
     // PRESUPUESTO (col E): Busca en hoja PRESUPUESTO según mes seleccionado
-    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH("${item.concepto}";PRESUPUESTO!$A:$A;0);$N$3);0)`;
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH(A${row};PRESUPUESTO!$A:$A;0);$N$3);0)`;
     sheet.getRange(row, 5).setFormula(formulaPresup);
 
     // REAL (col F): Busca en GASTOS_FIJOS directamente (G-R son ENE-DIC, sin BASE)
-    // Estructura simplificada: columnas G a R son los meses
-    const formulaReal = `=IFERROR(INDEX(GASTOS_FIJOS!$G:$R;MATCH("${item.concepto}";GASTOS_FIJOS!$A:$A;0);$N$3);0)`;
+    const formulaReal = `=IFERROR(INDEX(GASTOS_FIJOS!$G:$R;MATCH(A${row};GASTOS_FIJOS!$A:$A;0);$N$3);0)`;
     sheet.getRange(row, 6).setFormula(formulaReal);
 
     // DIFERENCIA (col G)
@@ -1358,8 +1436,7 @@ function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, co
     sheet.getRange(row, 13).setValue(entidad);
 
     // CUENTA (col N) - para cálculos de Esperado en TABLERO (v7.8)
-    // Busca la cuenta asignada en GASTOS_FIJOS columna F
-    const formulaCuenta = `=IFERROR(INDEX(GASTOS_FIJOS!$F:$F;MATCH("${item.concepto}";GASTOS_FIJOS!$A:$A;0));"")`;
+    const formulaCuenta = `=IFERROR(INDEX(GASTOS_FIJOS!$F:$F;MATCH(A${row};GASTOS_FIJOS!$A:$A;0));"")`;
     sheet.getRange(row, 14).setFormula(formulaCuenta);
 
     row++;
@@ -1394,17 +1471,25 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
   const hojaCarga = entidad === 'FAMILIA' ? 'CARGA_FAMILIA' : 'CARGA_NT';
 
   items.forEach(item => {
-    sheet.getRange(row, 1).setValue(item.concepto);
+    // v7.20: Reservas usan fórmula referenciando CONFIG (fuente de verdad para VARIABLES)
+    const refReserva = obtenerReferenciaReserva(item.concepto);
+    if (refReserva) {
+      sheet.getRange(row, 1).setFormula(refReserva);
+    } else {
+      sheet.getRange(row, 1).setValue(item.concepto);
+    }
     sheet.getRange(row, 2).setValue('Egreso');
     sheet.getRange(row, 3).setValue('Variable');
     sheet.getRange(row, 4).setValue(0).setHorizontalAlignment('center'); // DÍA (variables no tienen)
 
+    // v7.20: Fórmulas usan A{row} (referencia indirecta) para soportar renombrado dinámico
+
     // PRESUPUESTO (col E): Busca en hoja PRESUPUESTO según mes seleccionado
-    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH("${item.concepto}";PRESUPUESTO!$A:$A;0);$N$3);0)`;
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH(A${row};PRESUPUESTO!$A:$A;0);$N$3);0)`;
     sheet.getRange(row, 5).setFormula(formulaPresup);
 
     // REAL (col F): SUMPRODUCT desde CARGA según subcategoría y mes
-    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$D$4:$D$500="${item.concepto}")*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$D$4:$D$500=A${row})*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
     sheet.getRange(row, 6).setFormula(formulaReal);
 
     // DIFERENCIA (col G)
@@ -1471,13 +1556,13 @@ function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, col
     sheet.getRange(row, 3).setValue(item.frecuencia || 'Variable/Mensual');
     sheet.getRange(row, 4).setValue(0).setHorizontalAlignment('center'); // DÍA (ahorro no tiene)
 
+    // v7.20: Fórmulas usan A{row} para consistencia con sistema dinámico
     // PRESUPUESTO (col E): Busca en hoja PRESUPUESTO según mes seleccionado
-    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH("${item.concepto}";PRESUPUESTO!$A:$A;0);$N$3);0)`;
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH(A${row};PRESUPUESTO!$A:$A;0);$N$3);0)`;
     sheet.getRange(row, 5).setFormula(formulaPresup);
 
     // REAL (col F): SUMPRODUCT desde CARGA donde TIPO="Ahorro" y CATEGORÍA=item.concepto
-    // Nueva estructura: B=TIPO, C=CATEGORÍA (que contiene "Ahorro Clara", etc.)
-    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$B$4:$B$500="Ahorro")*(${hojaCarga}!$C$4:$C$500="${item.concepto}")*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$B$4:$B$500="Ahorro")*(${hojaCarga}!$C$4:$C$500=A${row})*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
     sheet.getRange(row, 6).setFormula(formulaReal);
 
     // DIFERENCIA (col G)
@@ -1535,21 +1620,28 @@ function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal)
 
   // v7.7: Incluimos TODOS los eventos (incluyendo reservas)
   EVENTOS_NT.forEach(evento => {
-    sheet.getRange(row, 1).setValue(evento.nombre);
+    // v7.20: Reservas de eventos referencian CONFIG dinámicamente
+    const refReserva = obtenerReferenciaReserva(evento.nombre);
+    if (refReserva) {
+      sheet.getRange(row, 1).setFormula(refReserva);
+    } else {
+      sheet.getRange(row, 1).setValue(evento.nombre);
+    }
     sheet.getRange(row, 2).setValue('Egreso');
     sheet.getRange(row, 3).setValue('Variable/Anual');
 
+    // v7.20: Fórmulas usan A{row} para soportar renombrado dinámico
+
     // DÍA (col D): Lee de GASTOS_FIJOS
-    const formulaDia = `=IFERROR(INDEX(GASTOS_FIJOS!$E:$E;MATCH("${evento.nombre}";GASTOS_FIJOS!$A:$A;0));0)`;
+    const formulaDia = `=IFERROR(INDEX(GASTOS_FIJOS!$E:$E;MATCH(A${row};GASTOS_FIJOS!$A:$A;0));0)`;
     sheet.getRange(row, 4).setFormula(formulaDia).setHorizontalAlignment('center');
 
     // PRESUPUESTO (col E): Busca en hoja PRESUPUESTO
-    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH("${evento.nombre}";PRESUPUESTO!$A:$A;0);$N$3);0)`;
+    const formulaPresup = `=IFERROR(INDEX(PRESUPUESTO!$D:$O;MATCH(A${row};PRESUPUESTO!$A:$A;0);$N$3);0)`;
     sheet.getRange(row, 5).setFormula(formulaPresup);
 
     // REAL (col F): Lee de GASTOS_FIJOS (columnas G-R = meses, $N$3 = mes seleccionado)
-    // v7.7: Cambiado de CARGA_NT a GASTOS_FIJOS
-    const formulaReal = `=IFERROR(INDEX(GASTOS_FIJOS!$G:$R;MATCH("${evento.nombre}";GASTOS_FIJOS!$A:$A;0);$N$3);0)`;
+    const formulaReal = `=IFERROR(INDEX(GASTOS_FIJOS!$G:$R;MATCH(A${row};GASTOS_FIJOS!$A:$A;0);$N$3);0)`;
     sheet.getRange(row, 6).setFormula(formulaReal);
 
     // DIFERENCIA (col G)
@@ -1577,8 +1669,7 @@ function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal)
     sheet.getRange(row, 13).setValue('NEUROTEA');
 
     // CUENTA (col N) - para cálculos de Esperado en TABLERO (v7.8)
-    // Busca la cuenta asignada en GASTOS_FIJOS columna F
-    const formulaCuenta = `=IFERROR(INDEX(GASTOS_FIJOS!$F:$F;MATCH("${evento.nombre}";GASTOS_FIJOS!$A:$A;0));"")`;
+    const formulaCuenta = `=IFERROR(INDEX(GASTOS_FIJOS!$F:$F;MATCH(A${row};GASTOS_FIJOS!$A:$A;0));"")`;
     sheet.getRange(row, 14).setFormula(formulaCuenta);
 
     row++;
