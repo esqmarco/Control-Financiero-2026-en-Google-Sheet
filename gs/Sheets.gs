@@ -875,12 +875,14 @@ function aplicarValidacionesCargaFamilia(sheet) {
   );
 
   // SUBCATEGORÍA (columna D) - solo VARIABLES (AHORRO usa CATEGORÍA)
-  // v7.20: Lee desde CONFIG dinámicamente para aceptar reservas renombradas
-  const variablesFamConfig = obtenerVariablesDesdeConfig('FAMILIA');
+  // v7.20: Usa requireValueInRange apuntando a CONFIG para que el dropdown
+  //        se actualice automáticamente al renombrar reservas (sin reinicializar)
+  const configSheetFam = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRES_HOJAS.CONFIG);
+  const rangoVariablesFam = configSheetFam.getRange(21, 3, VARIABLES_FAMILIA.length, 1); // CONFIG col C, filas 21+
   sheet.getRange('D4:D500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['-', ...variablesFamConfig], true)
-      .setAllowInvalid(false)
+      .requireValueInRange(rangoVariablesFam, true)
+      .setAllowInvalid(true)  // Permite '-' y valores vacíos
       .build()
   );
 
@@ -972,13 +974,14 @@ function aplicarValidacionesCargaNT(sheet) {
   );
 
   // SUBCATEGORÍA (columna D) - solo VARIABLES_NT (EVENTOS se eliminaron - van en GASTOS_FIJOS)
-  // v7.7: EVENTOS ya no aparece aquí
-  // v7.20: Lee desde CONFIG dinámicamente para aceptar reservas renombradas
-  const variablesNTConfig = obtenerVariablesDesdeConfig('NT');
+  // v7.20: Usa requireValueInRange apuntando a CONFIG para que el dropdown
+  //        se actualice automáticamente al renombrar reservas (sin reinicializar)
+  const configSheetNT = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRES_HOJAS.CONFIG);
+  const rangoVariablesNT = configSheetNT.getRange(21, 7, VARIABLES_NT.length, 1); // CONFIG col G, filas 21+
   sheet.getRange('D4:D500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['-', ...variablesNTConfig], true)
-      .setAllowInvalid(false)
+      .requireValueInRange(rangoVariablesNT, true)
+      .setAllowInvalid(true)  // Permite '-' y valores vacíos
       .build()
   );
 
