@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 7.19 - Sincronización dinámica de contrapartes (FECHA, MONTO, CUENTA, SUBCAT)
+ * Versión 7.20 - Validación dinámica de Reserva Variables desde CONFIG
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -465,8 +465,9 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
       return; // Si hubo contradicción, ya se limpió la celda
     }
 
-    // 2. Validar VARIABLES con subcategoría correcta
-    if (categoriaActual === 'VARIABLES' && !VARIABLES_FAMILIA.includes(valor)) {
+    // 2. Validar VARIABLES con subcategoría correcta (v7.20: lee desde CONFIG dinámicamente)
+    const variablesFamValidas = obtenerVariablesDesdeConfig('FAMILIA');
+    if (categoriaActual === 'VARIABLES' && !variablesFamValidas.includes(valor)) {
       SpreadsheetApp.getUi().alert(
         '⚠️ SUBCATEGORÍA incorrecta para VARIABLES',
         'La subcategoría "' + valor + '" no pertenece a VARIABLES.\n\n' +
@@ -592,8 +593,9 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
       return; // Si hubo contradicción, ya se limpió la celda
     }
 
-    // 2. Validar VARIABLES con subcategoría correcta
-    if (categoriaActual === 'VARIABLES' && !VARIABLES_NT.includes(valor)) {
+    // 2. Validar VARIABLES con subcategoría correcta (v7.20: lee desde CONFIG dinámicamente)
+    const variablesNTValidas = obtenerVariablesDesdeConfig('NT');
+    if (categoriaActual === 'VARIABLES' && !variablesNTValidas.includes(valor)) {
       SpreadsheetApp.getUi().alert(
         '⚠️ SUBCATEGORÍA incorrecta para VARIABLES',
         'La subcategoría "' + valor + '" no pertenece a VARIABLES de NT.\n\n' +
@@ -643,6 +645,43 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
       SpreadsheetApp.getActiveSpreadsheet().toast('✓ Contraparte eliminada', '🗑️ Auto', 2);
     }
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LECTURA DINÁMICA DE VARIABLES DESDE CONFIG (v7.20)
+// Permite renombrar "Reserva Var." sin tocar el código
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Lee las subcategorías VARIABLES desde la hoja CONFIG dinámicamente.
+ * Esto permite que el usuario renombre las "Reserva Var." en CONFIG
+ * y la validación las acepte sin necesidad de modificar el código.
+ *
+ * Posiciones en CONFIG (escritas por escribirListaConfig en Sheets.gs):
+ *   VARIABLES FAMILIA: columna 3 (C), header fila 20, items fila 21+
+ *   VARIABLES NT: columna 7 (G), header fila 20, items fila 21+
+ *
+ * @param {string} entidad - 'FAMILIA' o 'NT'
+ * @returns {string[]} Lista de subcategorías válidas
+ */
+function obtenerVariablesDesdeConfig(entidad) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const config = ss.getSheetByName(NOMBRES_HOJAS.CONFIG);
+
+  if (!config) {
+    // Fallback a arrays hardcodeados si CONFIG no existe
+    return entidad === 'FAMILIA' ? VARIABLES_FAMILIA : VARIABLES_NT;
+  }
+
+  // VARIABLES FAMILIA: col 3, VARIABLES NT: col 7
+  const col = entidad === 'FAMILIA' ? 3 : 7;
+  const maxItems = 20; // margen suficiente para las reservas
+
+  const valores = config.getRange(21, col, maxItems, 1).getValues()
+    .map(function(r) { return r[0]; })
+    .filter(function(v) { return v !== '' && v !== null; });
+
+  return valores.length > 0 ? valores : (entidad === 'FAMILIA' ? VARIABLES_FAMILIA : VARIABLES_NT);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
