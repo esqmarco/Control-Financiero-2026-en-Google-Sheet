@@ -340,9 +340,14 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
   const linkId = obtenerLinkId(sheet, row);
   const tieneContraparte = linkId && linkId.length === 6;
 
-  // Columna A = FECHA (columna 1) - v7.19: Sincronizar si ya tiene contraparte
-  if (col === 1 && tieneContraparte && valor) {
-    sincronizarContraparte(linkId, NOMBRES_HOJAS.CARGA_FAMILIA, 1, valor);
+  // Columna A = FECHA (columna 1) - v7.21: También reintenta auto-creación
+  if (col === 1 && valor) {
+    if (tieneContraparte) {
+      sincronizarContraparte(linkId, NOMBRES_HOJAS.CARGA_FAMILIA, 1, valor);
+    } else {
+      // v7.21: Reintentar auto-creación cuando FECHA se completa
+      intentarAutoCreacionFamilia(sheet, row);
+    }
   }
 
   // Columna B = TIPO (columna 2)
@@ -359,6 +364,10 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     } else {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
+      // v7.21: Reintentar auto-creación cuando TIPO cambia a Egreso Familiar
+      if (!tieneContraparte && valor === 'Egreso Familiar') {
+        intentarAutoCreacionFamilia(sheet, row);
+      }
     }
   }
 
@@ -437,6 +446,10 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     // Para egresos: habilitar subcategoría solo si es VARIABLES
     if (valor === 'VARIABLES') {
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
+      // v7.21: Reintentar auto-creación cuando CATEGORÍA cambia a VARIABLES
+      if (!tieneContraparte) {
+        intentarAutoCreacionFamilia(sheet, row);
+      }
     } else {
       // Deshabilitar subcategoría para otras categorías de egreso
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
@@ -479,7 +492,9 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     }
 
     // 3. Validar préstamos/devoluciones (balance cruzado)
-    validarPrestamoDevolucionFamilia(sheet, row, valor);
+    // v7.21: Si validación bloquea, no intentar auto-creación
+    const bloqueadoFam = validarPrestamoDevolucionFamilia(sheet, row, valor);
+    if (bloqueadoFam) return;
 
     // 4. v7.19: Manejar préstamos/devoluciones
     const esPrestamoODevolucion = (valor === 'Préstamo Familia → NT' || valor === 'Devolución Familia → NT');
@@ -509,8 +524,13 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
   const tieneContraparte = linkId && linkId.length === 6;
 
   // Columna A = FECHA (columna 1) - v7.19: Sincronizar si ya tiene contraparte
-  if (col === 1 && tieneContraparte && valor) {
-    sincronizarContraparte(linkId, NOMBRES_HOJAS.CARGA_NT, 1, valor);
+  if (col === 1 && valor) {
+    if (tieneContraparte) {
+      sincronizarContraparte(linkId, NOMBRES_HOJAS.CARGA_NT, 1, valor);
+    } else {
+      // v7.21: Reintentar auto-creación cuando FECHA se completa
+      intentarAutoCreacionNT(sheet, row);
+    }
   }
 
   // Columna B = TIPO (columna 2)
@@ -522,6 +542,10 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
     } else {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
+      // v7.21: Reintentar auto-creación cuando TIPO cambia a Egreso NT
+      if (!tieneContraparte && valor === 'Egreso NT') {
+        intentarAutoCreacionNT(sheet, row);
+      }
     }
   }
 
@@ -578,6 +602,10 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
 
     if (valor === 'VARIABLES' || valor === 'EVENTOS') {
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
+      // v7.21: Reintentar auto-creación cuando CATEGORÍA cambia a VARIABLES
+      if (!tieneContraparte && valor === 'VARIABLES') {
+        intentarAutoCreacionNT(sheet, row);
+      }
     } else {
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
     }
@@ -622,7 +650,9 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
     }
 
     // 4. Validar préstamos/devoluciones (balance cruzado)
-    validarPrestamoDevolucionNT(sheet, row, valor);
+    // v7.21: Si validación bloquea, no intentar auto-creación
+    const bloqueadoNT = validarPrestamoDevolucionNT(sheet, row, valor);
+    if (bloqueadoNT) return;
 
     // 5. v7.19: Manejar préstamos/devoluciones
     const esPrestamoODevolucion = (valor === 'Préstamo NT → Familia' || valor === 'Devolución NT → Familia');
@@ -831,6 +861,7 @@ function validarPrestamoDevolucionFamilia(sheet, row, valor) {
         SpreadsheetApp.getUi().ButtonSet.OK
       );
       sheet.getRange(row, 4).setValue(''); // Limpiar la celda
+      return true; // v7.21: Indica que fue bloqueado
     }
   } else if (valor === 'Devolución Familia → NT') {
     const deudaFamiliaANT = calcularDeudaFamiliaANT();
@@ -843,8 +874,10 @@ function validarPrestamoDevolucionFamilia(sheet, row, valor) {
         SpreadsheetApp.getUi().ButtonSet.OK
       );
       sheet.getRange(row, 4).setValue(''); // Limpiar la celda
+      return true; // v7.21: Indica que fue bloqueado
     }
   }
+  return false; // v7.21: No fue bloqueado, puede continuar
 }
 
 /**
@@ -865,6 +898,7 @@ function validarPrestamoDevolucionNT(sheet, row, valor) {
         SpreadsheetApp.getUi().ButtonSet.OK
       );
       sheet.getRange(row, 4).setValue(''); // Limpiar la celda
+      return true; // v7.21: Indica que fue bloqueado
     }
   } else if (valor === 'Devolución NT → Familia') {
     const deudaNTaFamilia = calcularDeudaNTAFamilia();
@@ -877,8 +911,10 @@ function validarPrestamoDevolucionNT(sheet, row, valor) {
         SpreadsheetApp.getUi().ButtonSet.OK
       );
       sheet.getRange(row, 4).setValue(''); // Limpiar la celda
+      return true; // v7.21: Indica que fue bloqueado
     }
   }
+  return false; // v7.21: No fue bloqueado, puede continuar
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
