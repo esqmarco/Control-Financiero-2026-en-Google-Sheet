@@ -101,3 +101,43 @@ DISPONIBLE = TOTAL_DISPONIBLE (suma de cuentas)
 ```
 
 **Razón:** Si hay ganancia, dividir entre 3. No necesita más.
+
+---
+
+## BUG 8: Auto-creación no retrigerea en TODOS los campos
+
+```javascript
+// INCORRECTO - Solo SUBCAT, MONTO, CUENTA reintentan
+if (col === 4 || col === 6 || col === 7) intentarAutoCreacion();
+
+// CORRECTO - TODOS los campos reintentan
+if (col === 1 || col === 2 || col === 3 || col === 4 || col === 6 || col === 7) {
+  intentarAutoCreacion();
+}
+```
+
+**Razón:** Si el usuario completa FECHA, TIPO o CATEGORÍA después de SUBCATEGORÍA, la auto-creación nunca se dispara.
+
+---
+
+## BUG 9: Validación no retorna resultado al caller
+
+```javascript
+// INCORRECTO - Limpia celda pero no avisa
+function validarPrestamo(sheet, row, valor) {
+  if (bloqueado) sheet.getRange(row, 4).setValue('');
+  // No retorna nada, código sigue ejecutando
+}
+validarPrestamo(...);
+intentarAutoCreacion(); // Se ejecuta con celda vacía
+
+// CORRECTO - Retorna boolean y caller hace return
+function validarPrestamo(sheet, row, valor) {
+  if (bloqueado) { sheet.getRange(row, 4).setValue(''); return true; }
+  return false;
+}
+if (validarPrestamo(...)) return;
+intentarAutoCreacion(); // Solo si no fue bloqueado
+```
+
+**Razón:** Sin return, la auto-creación lee la celda ya vacía y sale silenciosamente.

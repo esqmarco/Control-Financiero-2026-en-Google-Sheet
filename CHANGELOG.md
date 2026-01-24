@@ -4,6 +4,28 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.21] - 2026-01-24
+
+### Fixed
+- Auto-creación de "Devolución NT → Familia" no generaba ingreso en CARGA_FAMILIA
+- FECHA, TIPO y CATEGORÍA ahora reintentan `intentarAutoCreacion` para entradas nuevas
+- `validarPrestamoDevolucionNT/Familia` retornan boolean y hacen `return` si bloquean
+- Eliminado flujo donde validación limpiaba celda pero código seguía ejecutando
+
+---
+
+## [7.20] - 2026-01-22
+
+### Added
+- Reservas de VARIABLES dinámicamente renombrables desde CONFIG
+- `obtenerVariablesDesdeConfig()` lee subcategorías dinámicamente
+- Dropdown SUBCATEGORÍA usa `requireValueInRange` para reflejar cambios en CONFIG
+
+### Changed
+- Validación de SUBCATEGORÍA ahora lee desde CONFIG en lugar de arrays hardcodeados
+
+---
+
 ## [7.19] - 2026-01-22
 
 ### Added

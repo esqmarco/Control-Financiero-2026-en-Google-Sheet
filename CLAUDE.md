@@ -1182,6 +1182,46 @@ function estaEnModoAutoCreacion() {
 
 ---
 
+## Bug Fixes [2026-01-24] - v7.21 (CRÍTICO)
+
+### Auto-creación de devolución NT→Familia no se disparaba
+- **Problema**: Al registrar "Devolución NT → Familia" en CARGA_NT, la auto-creación de
+  "Devolución NeuroTEA" en CARGA_FAMILIA no se disparaba
+- **Causa raíz**: `intentarAutoCreacionNT()` requiere 6 campos completos, pero solo se
+  reintentaba al editar SUBCATEGORÍA, MONTO o CUENTA. Ediciones de FECHA, TIPO o
+  CATEGORÍA no retriggereaban la auto-creación
+- **Impacto**: Si el usuario completaba los campos en cierto orden (ej: SUBCATEGORÍA antes
+  de MONTO/CUENTA), la auto-creación fallaba silenciosamente en cada intento y nunca se
+  recuperaba
+- **Solución**:
+  1. FECHA (col 1): ahora retrigerea `intentarAutoCreacion` para entradas sin LINK_ID
+  2. TIPO (col 2): retrigerea cuando cambia a "Egreso NT" / "Egreso Familiar"
+  3. CATEGORÍA (col 3): retrigerea cuando cambia a "VARIABLES"
+  4. `validarPrestamoDevolucionNT/Familia` ahora retornan `true/false`
+  5. Si validación bloquea → `return` inmediato (antes seguía ejecutando con celda vacía)
+- **Archivos**: Code.gs (procesarEdicionCargaNT, procesarEdicionCargaFamilia, validarPrestamo*)
+
+### Trigger points completos para auto-creación (v7.21)
+```
+| Campo         | ¿Retrigerea auto-creación? |
+|---------------|---------------------------|
+| FECHA (col 1) | ✓ SÍ (v7.21)             |
+| TIPO (col 2)  | ✓ SÍ (v7.21)             |
+| CATEGORÍA (3) | ✓ SÍ (v7.21)             |
+| SUBCATEGORÍA  | ✓ SÍ (v7.19)             |
+| MONTO (col 6) | ✓ SÍ (v7.18)             |
+| CUENTA (col 7)| ✓ SÍ (v7.19)             |
+```
+
+### Bug secundario: validación no hacía return
+- **Problema**: `validarPrestamoDevolucionNT()` limpiaba la celda cuando balance <= 0,
+  pero no retornaba. El código seguía y llamaba `intentarAutoCreacionNT()` que leía
+  la celda vacía y salía silenciosamente
+- **Solución**: Funciones ahora retornan `true` (bloqueado) o `false` (permitido).
+  El caller hace `if (bloqueado) return;` antes de intentar auto-creación
+
+---
+
 ## LECCIONES APRENDIDAS (NO IGNORAR)
 
 > Ver también: `.claude/rules/errores-historicos.md` para lista completa de bugs resueltos.
@@ -1194,9 +1234,11 @@ function estaEnModoAutoCreacion() {
 
 ### Auto-creación de Préstamos/Devoluciones
 - Solo disparar cuando **TODOS** los campos estén completos (FECHA, TIPO, CATEGORÍA, SUBCATEGORÍA, MONTO, CUENTA)
+- **TODOS** los campos deben retriggerar `intentarAutoCreacion` (no solo SUBCAT/MONTO/CUENTA)
 - Usar LINK_ID (6 caracteres) para vincular contrapartes
 - Sincronizar cambios automáticamente (FECHA, MONTO, CUENTA)
 - Si cambia SUBCATEGORÍA (préstamo↔devolución) → borrar y recrear
+- Funciones de validación (`validarPrestamo*`) deben retornar boolean y hacer `return` si bloquean
 
 ### Fórmulas
 - **NUNCA** usar SUMIFS con MONTH()/YEAR() → usar SUMPRODUCT
@@ -1215,5 +1257,5 @@ function estaEnModoAutoCreacion() {
 
 ---
 
-*Última actualización: 2026-01-22*
-*Versión: 7.19 - Sincronización dinámica de contrapartes*
+*Última actualización: 2026-01-24*
+*Versión: 7.21 - Fix auto-creación devoluciones*
