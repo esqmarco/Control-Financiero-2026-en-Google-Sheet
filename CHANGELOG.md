@@ -6,6 +6,12 @@ Todas las versiones notables del sistema.
 
 ## [7.21] - 2026-01-24
 
+### Added
+- Auto-limpieza de contrapartes huérfanas via trigger `onChange` (detecta `REMOVE_ROW`)
+- `limpiarContrapartesHuerfanas()`: escanea LINK_IDs sin par y elimina filas huérfanas
+- `instalarTriggerOnChange()`: instala el trigger una sola vez desde menú
+- Menú: Utilidades → "Verificar Contrapartes Huérfanas" + "Instalar Auto-limpieza"
+
 ### Fixed
 - Auto-creación de "Devolución NT → Familia" no generaba ingreso en CARGA_FAMILIA
 - FECHA, TIPO y CATEGORÍA ahora reintentan `intentarAutoCreacion` para entradas nuevas

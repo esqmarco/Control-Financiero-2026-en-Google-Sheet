@@ -52,7 +52,9 @@ function onOpen() {
       .addItem('🔄 Actualizar Validaciones', 'actualizarTodasValidaciones')
       .addItem('📈 Recalcular Tablero', 'recalcularTablero')
       .addItem('🎨 Aplicar Estilos', 'aplicarEstilosGlobales')
-      .addItem('🧹 Limpiar Datos de Prueba', 'limpiarDatosPrueba'))
+      .addItem('🧹 Limpiar Datos de Prueba', 'limpiarDatosPrueba')
+      .addItem('🔍 Verificar Contrapartes Huérfanas', 'limpiarContrapartesHuerfanas')
+      .addItem('⚡ Instalar Auto-limpieza (onChange)', 'instalarTriggerOnChange'))
     .addSeparator()
 
     // Info
@@ -1405,4 +1407,112 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
     console.log('AUTO-NT ERROR: ' + error.message);
     ss.toast('❌ Error auto-creación: ' + error.message, 'Error', 5);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LIMPIEZA DE CONTRAPARTES HUÉRFANAS (v7.21)
+// Detecta LINK_IDs que existen en una hoja pero no en la otra y los elimina
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Handler para trigger onChange (instalable).
+ * Se dispara cuando hay cambios estructurales (insertar/eliminar filas).
+ * Solo actúa en REMOVE_ROW para limpiar contrapartes huérfanas.
+ */
+function onChangeHandler(e) {
+  if (!e || e.changeType !== 'REMOVE_ROW') return;
+  limpiarContrapartesHuerfanas();
+}
+
+/**
+ * Escanea CARGA_FAMILIA y CARGA_NT buscando LINK_IDs huérfanos.
+ * Un LINK_ID es huérfano si existe en una hoja pero no en la otra.
+ * Los elimina automáticamente y notifica al usuario.
+ * Se puede ejecutar manualmente desde el menú o automáticamente via onChange.
+ */
+function limpiarContrapartesHuerfanas() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
+  const cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
+
+  if (!cargaFam || !cargaNT) return;
+
+  // Recoger todos los LINK_IDs de cada hoja
+  const linkIdsFam = obtenerLinkIds(cargaFam);
+  const linkIdsNT = obtenerLinkIds(cargaNT);
+
+  let huerfanasEliminadas = 0;
+
+  // Buscar huérfanas en CARGA_FAMILIA (LINK_ID existe en FAM pero no en NT)
+  const huerfanasFam = linkIdsFam.filter(function(item) {
+    return !linkIdsNT.some(function(nt) { return nt.linkId === item.linkId; });
+  });
+
+  // Buscar huérfanas en CARGA_NT (LINK_ID existe en NT pero no en FAM)
+  const huerfanasNT = linkIdsNT.filter(function(item) {
+    return !linkIdsFam.some(function(fam) { return fam.linkId === item.linkId; });
+  });
+
+  // Eliminar huérfanas de CARGA_FAMILIA (de abajo hacia arriba para no desplazar filas)
+  huerfanasFam.sort(function(a, b) { return b.fila - a.fila; });
+  for (var i = 0; i < huerfanasFam.length; i++) {
+    cargaFam.deleteRow(huerfanasFam[i].fila);
+    huerfanasEliminadas++;
+    console.log('HUÉRFANA: Eliminada fila ' + huerfanasFam[i].fila + ' de CARGA_FAMILIA (LINK_ID: ' + huerfanasFam[i].linkId + ')');
+  }
+
+  // Eliminar huérfanas de CARGA_NT (de abajo hacia arriba)
+  huerfanasNT.sort(function(a, b) { return b.fila - a.fila; });
+  for (var j = 0; j < huerfanasNT.length; j++) {
+    cargaNT.deleteRow(huerfanasNT[j].fila);
+    huerfanasEliminadas++;
+    console.log('HUÉRFANA: Eliminada fila ' + huerfanasNT[j].fila + ' de CARGA_NT (LINK_ID: ' + huerfanasNT[j].linkId + ')');
+  }
+
+  // Notificar resultado
+  if (huerfanasEliminadas > 0) {
+    ss.toast('✓ Eliminadas ' + huerfanasEliminadas + ' contraparte(s) huérfana(s)', '🧹 Auto-limpieza', 4);
+  }
+}
+
+/**
+ * Obtiene todos los LINK_IDs válidos de una hoja CARGA.
+ * @param {Sheet} sheet - Hoja CARGA_FAMILIA o CARGA_NT
+ * @returns {Array<{linkId: string, fila: number}>} Lista de LINK_IDs con su fila
+ */
+function obtenerLinkIds(sheet) {
+  const datos = sheet.getDataRange().getValues();
+  var resultado = [];
+  for (var i = 3; i < datos.length; i++) {
+    var linkId = String(datos[i][8] || '').trim();
+    if (linkId && linkId.length === 6) {
+      resultado.push({ linkId: linkId, fila: i + 1 });
+    }
+  }
+  return resultado;
+}
+
+/**
+ * Instala el trigger onChange para auto-limpiar contrapartes huérfanas.
+ * Solo necesita ejecutarse UNA VEZ. Si ya existe, no crea duplicado.
+ */
+function instalarTriggerOnChange() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Verificar si ya existe
+  const triggers = ScriptApp.getUserTriggers(ss);
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'onChangeHandler') {
+      ss.toast('⚡ El trigger ya está instalado', 'Info', 3);
+      return;
+    }
+  }
+
+  // Instalar trigger
+  ScriptApp.newTrigger('onChangeHandler')
+    .forSpreadsheet(ss)
+    .onChange()
+    .create();
+
+  ss.toast('✓ Trigger onChange instalado. Las contrapartes huérfanas se eliminarán automáticamente.', '⚡ Instalado', 5);
 }
