@@ -1213,6 +1213,20 @@ function estaEnModoAutoCreacion() {
 | CUENTA (col 7)| ✓ SÍ (v7.19)             |
 ```
 
+### Auto-limpieza de contrapartes huérfanas (onChange)
+- **Problema**: Si el usuario elimina una fila con clic derecho → "Eliminar fila",
+  `onEdit` NO se dispara (limitación de Apps Script). La contraparte queda huérfana
+  y corrompe los cálculos de balance cruzado.
+- **Solución**:
+  1. `onChangeHandler(e)`: trigger instalable que detecta `REMOVE_ROW`
+  2. `limpiarContrapartesHuerfanas()`: escanea ambas hojas CARGA buscando LINK_IDs
+     que existen en una pero no en la otra → elimina las filas huérfanas
+  3. `instalarTriggerOnChange()`: función de menú para instalar el trigger (una sola vez)
+  4. `obtenerLinkIds(sheet)`: utilidad que extrae todos los LINK_IDs de una hoja
+- **Menú**: Utilidades → "Verificar Contrapartes Huérfanas" (manual) + "Instalar Auto-limpieza"
+- **Instalación**: Ejecutar UNA vez desde menú. El trigger queda activo permanentemente.
+- **Archivos**: Code.gs (funciones nuevas + menú actualizado)
+
 ### Bug secundario: validación no hacía return
 - **Problema**: `validarPrestamoDevolucionNT()` limpiaba la celda cuando balance <= 0,
   pero no retornaba. El código seguía y llamaba `intentarAutoCreacionNT()` que leía
