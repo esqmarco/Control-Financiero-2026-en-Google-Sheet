@@ -1236,6 +1236,31 @@ function estaEnModoAutoCreacion() {
 
 ---
 
+## Bug Fixes [2026-01-24] - v7.22
+
+### Validación SUBCATEGORÍA mostraba "No válido" al seleccionar Ingreso/Ahorro
+- **Problema**: v7.20 cambió validación de `requireValueInList(['-', ...VARIABLES])` a
+  `requireValueInRange(CONFIG)`. El rango CONFIG no incluye "-", así que al seleccionar
+  un tipo ingreso y poner "-" en SUBCATEGORÍA, Google Sheets mostraba error "No válido"
+- **Impacto**: Confusión visual al usuario - parecía error cuando era comportamiento esperado
+- **Solución**:
+  1. `clearDataValidations()` en celda SUBCATEGORÍA al poner "-" (ingreso/ahorro)
+  2. Restaurar `requireValueInRange(CONFIG)` cuando TIPO cambia a Egreso
+- **Archivos**: Code.gs (procesarEdicionCargaFamilia, procesarEdicionCargaNT)
+
+### Fórmulas distribución ganancia NT simplificadas
+- **Problema**: Fórmulas usaban `VALUE(CONFIG!$B$42)/100` etc. (innecesariamente complejo)
+- **Solución**: `=IF(ganancia>0;ganancia/3;0)` - dividir entre 3 si es positiva, 0 si negativa
+- **Archivos**: Sheets.gs (PRESUPUESTO y MOVIMIENTO)
+- **Nota**: Tablero.gs ya usaba la fórmula simple
+
+### Nuevas subcategorías agregadas
+- **VARIABLES FAMILIA**: "Gastos del Colegio" (reemplaza Reserva Var. 1)
+- **VARIABLES NT**: "Muebles y equipos" (reemplaza Reserva Var. 1)
+- **Archivos**: Config.gs (VARIABLES_FAMILIA, VARIABLES_NT, VARIABLES_PRESUP_FAM, VARIABLES_PRESUP_NT)
+
+---
+
 ## LECCIONES APRENDIDAS (NO IGNORAR)
 
 > Ver también: `.claude/rules/errores-historicos.md` para lista completa de bugs resueltos.
@@ -1272,4 +1297,4 @@ function estaEnModoAutoCreacion() {
 ---
 
 *Última actualización: 2026-01-24*
-*Versión: 7.21 - Fix auto-creación devoluciones*
+*Versión: 7.22 - Fix validación SUBCATEGORÍA + distribución simplificada + nuevas subcategorías*
