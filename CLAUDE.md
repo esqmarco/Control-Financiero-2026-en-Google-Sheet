@@ -150,7 +150,7 @@ gs/
 11. Gastos no identificados
 12. **Devolución Familia → NT** (FAM devuelve préstamo a NT)
 13. **Préstamo Familia → NT** (FAM presta a NT)
-14. Reserva Var. 1
+14. **Gastos del Colegio** (v7.22)
 15. Reserva Var. 2
 16. Reserva Var. 3
 
@@ -164,7 +164,7 @@ gs/
 7. **Horas Extras Fatima** (v7.7)
 8. **Préstamo NT → Familia** (NT presta a FAM)
 9. **Devolución NT → Familia** (NT devuelve préstamo a FAM)
-10. Reserva Var. 1
+10. **Muebles y equipos** (v7.22)
 11. Reserva Var. 2
 12. Reserva Var. 3
 

@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '7.20';
+const VERSION = '7.22';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -206,7 +206,7 @@ const VARIABLES_FAMILIA = [
   'Gastos no identificados',
   'Devolución Familia → NT',
   'Préstamo Familia → NT',      // Familia presta a NT
-  'Reserva Var. 1',             // v7.7: Agregado al dropdown
+  'Gastos del Colegio',          // v7.22: Agregado por usuario
   'Reserva Var. 2',
   'Reserva Var. 3'
 ];
@@ -231,7 +231,7 @@ const VARIABLES_NT = [
   'Horas Extras Fatima',         // v7.7: Agregado
   'Préstamo NT → Familia',
   'Devolución NT → Familia',     // NT devuelve préstamo a Familia
-  'Reserva Var. 1',              // v7.7: Agregado al dropdown
+  'Muebles y equipos',           // v7.22: Agregado por usuario
   'Reserva Var. 2',
   'Reserva Var. 3'
 ];
@@ -395,7 +395,7 @@ const VARIABLES_PRESUP_FAM = [
   { concepto: 'Gastos no identificados', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Devolución Familia → NT', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Préstamo Familia → NT', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },  // Familia presta a NT
-  { concepto: 'Reserva Var. 1', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
+  { concepto: 'Gastos del Colegio', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },   // v7.22: Agregado por usuario
   { concepto: 'Reserva Var. 2', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
   { concepto: 'Reserva Var. 3', categoria: 'VARIABLES', frecuencia: '-', monto: 0 }
 ];
@@ -472,7 +472,7 @@ const VARIABLES_PRESUP_NT = [
   { concepto: 'Horas Extras Fatima', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },      // v7.7: Agregado
   { concepto: 'Préstamo NT → Familia', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Devolución NT → Familia', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },  // NT devuelve a Familia
-  { concepto: 'Reserva Var. 1', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
+  { concepto: 'Muebles y equipos', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },    // v7.22: Agregado por usuario
   { concepto: 'Reserva Var. 2', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
   { concepto: 'Reserva Var. 3', categoria: 'VARIABLES', frecuencia: '-', monto: 0 }
 ];
