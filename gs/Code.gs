@@ -359,13 +359,22 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
 
     if (esIngreso) {
       sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
-      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else if (esAhorro) {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
-      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
+      // v7.22: Restaurar validación SUBCATEGORÍA apuntando a CONFIG
+      const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRES_HOJAS.CONFIG);
+      const rangoVarFam = configSheet.getRange(21, 3, VARIABLES_FAMILIA.length, 1);
+      sheet.getRange(row, 4).setDataValidation(
+        SpreadsheetApp.newDataValidation()
+          .requireValueInRange(rangoVarFam, true)
+          .setAllowInvalid(true)
+          .build()
+      );
       // v7.21: Reintentar auto-creación cuando TIPO cambia a Egreso Familiar
       if (!tieneContraparte && valor === 'Egreso Familiar') {
         intentarAutoCreacionFamilia(sheet, row);
@@ -540,10 +549,19 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
     const esIngreso = TODOS_TIPOS_INGRESO_NT.includes(valor);
     if (esIngreso) {
       sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
-      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
+      // v7.22: Restaurar validación SUBCATEGORÍA apuntando a CONFIG
+      const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRES_HOJAS.CONFIG);
+      const rangoVarNT = configSheet.getRange(21, 7, VARIABLES_NT.length, 1);
+      sheet.getRange(row, 4).setDataValidation(
+        SpreadsheetApp.newDataValidation()
+          .requireValueInRange(rangoVarNT, true)
+          .setAllowInvalid(true)
+          .build()
+      );
       // v7.21: Reintentar auto-creación cuando TIPO cambia a Egreso NT
       if (!tieneContraparte && valor === 'Egreso NT') {
         intentarAutoCreacionNT(sheet, row);
