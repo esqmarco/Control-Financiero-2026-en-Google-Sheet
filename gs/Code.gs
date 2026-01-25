@@ -1326,6 +1326,9 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       fecha, tipoIngreso, '-', '-', descripcion, monto, 'Atlas NeuroTEA', '', linkId
     ]]);
     aplicarFormatoFecha(cargaNT, filaDestino);
+    // v7.22: Limpiar validaciones de CATEGORÍA y SUBCATEGORÍA para ingresos auto-creados
+    cargaNT.getRange(filaDestino, 3).clearDataValidations();
+    cargaNT.getRange(filaDestino, 4).clearDataValidations();
 
     // Guardar LINK_ID en fila original
     sheet.getRange(row, 9).setValue(linkId);
@@ -1414,6 +1417,9 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
       fecha, tipoIngreso, '-', '-', descripcion, monto, 'ITAU Marco', '', linkId
     ]]);
     aplicarFormatoFecha(cargaFam, filaDestino);
+    // v7.22: Limpiar validaciones de CATEGORÍA y SUBCATEGORÍA para ingresos auto-creados
+    cargaFam.getRange(filaDestino, 3).clearDataValidations();
+    cargaFam.getRange(filaDestino, 4).clearDataValidations();
 
     // Guardar LINK_ID en fila original
     sheet.getRange(row, 9).setValue(linkId);
