@@ -358,7 +358,7 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     const esAhorro = (valor === TIPO_AHORRO);
 
     if (esIngreso) {
-      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else if (esAhorro) {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
@@ -548,7 +548,7 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
   if (col === 2) {
     const esIngreso = TODOS_TIPOS_INGRESO_NT.includes(valor);
     if (esIngreso) {
-      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
