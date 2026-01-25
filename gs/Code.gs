@@ -358,7 +358,7 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
     const esAhorro = (valor === TIPO_AHORRO);
 
     if (esIngreso) {
-      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else if (esAhorro) {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
@@ -548,7 +548,7 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
   if (col === 2) {
     const esIngreso = TODOS_TIPOS_INGRESO_NT.includes(valor);
     if (esIngreso) {
-      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
@@ -1326,6 +1326,9 @@ function autoCrearTransaccionCruzadaFamilia(sheet, row) {
       fecha, tipoIngreso, '-', '-', descripcion, monto, 'Atlas NeuroTEA', '', linkId
     ]]);
     aplicarFormatoFecha(cargaNT, filaDestino);
+    // v7.22: Limpiar validaciones de CATEGORÍA y SUBCATEGORÍA para ingresos auto-creados
+    cargaNT.getRange(filaDestino, 3).clearDataValidations();
+    cargaNT.getRange(filaDestino, 4).clearDataValidations();
 
     // Guardar LINK_ID en fila original
     sheet.getRange(row, 9).setValue(linkId);
@@ -1414,6 +1417,9 @@ function autoCrearTransaccionCruzadaNT(sheet, row) {
       fecha, tipoIngreso, '-', '-', descripcion, monto, 'ITAU Marco', '', linkId
     ]]);
     aplicarFormatoFecha(cargaFam, filaDestino);
+    // v7.22: Limpiar validaciones de CATEGORÍA y SUBCATEGORÍA para ingresos auto-creados
+    cargaFam.getRange(filaDestino, 3).clearDataValidations();
+    cargaFam.getRange(filaDestino, 4).clearDataValidations();
 
     // Guardar LINK_ID en fila original
     sheet.getRange(row, 9).setValue(linkId);
