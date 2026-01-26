@@ -1,493 +1,22 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * WEBAPP.GS - DASHBOARD HTML/CSS PROFESIONAL
+ * WEBAPP.GS - DASHBOARD FINANCIERO v2.0
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 6.3 - Préstamos bidireccionales NT↔FAM, GANANCIA consistente
+ * Google Charts Visualization API + Tabs + 12-month trends
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FUNCIONES AUXILIARES PARA GENERAR HTML DINÁMICO
+// HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function generarFilasCuentasFamilia(cuentas) {
-  var html = '';
-  for (var i = 0; i < cuentas.length; i++) {
-    var c = cuentas[i];
-    var esperadoClass = c.esperado < 0 ? 'text-red' : '';
-    var difClass = c.diferencia > 0 ? 'text-green' : (c.diferencia < 0 ? 'text-red' : 'text-gray');
-    var difText = c.diferencia !== 0 ? ((c.diferencia > 0 ? '+' : '') + formatearGuaranies(c.diferencia)) : '-';
-    html += '<tr>';
-    html += '<td>' + c.nombre + '</td>';
-    html += '<td class="text-right ' + esperadoClass + '">' + formatearGuaranies(c.esperado) + '</td>';
-    html += '<td class="text-right text-blue font-bold">' + formatearGuaranies(c.real) + '</td>';
-    html += '<td class="text-right ' + difClass + ' font-bold">' + difText + '</td>';
-    html += '</tr>';
-  }
-  return html;
-}
-
-function generarFilasPresupuestoFamilia(categorias) {
-  var html = '';
-  for (var i = 0; i < categorias.length; i++) {
-    var cat = categorias[i];
-    var pct = cat.presupuesto > 0 ? Math.round(cat.real / cat.presupuesto * 100) : 0;
-    var isIngreso = cat.categoria.toUpperCase().indexOf('INGRESO') >= 0;
-    var badgeClass = 'badge-green';
-    if (isIngreso) {
-      badgeClass = pct >= 100 ? 'badge-green' : (pct >= 90 ? 'badge-yellow' : 'badge-red');
-    } else {
-      badgeClass = pct <= 100 ? 'badge-green' : (pct <= 110 ? 'badge-yellow' : 'badge-red');
-    }
-    html += '<tr>';
-    html += '<td class="font-bold">► ' + cat.categoria + '</td>';
-    html += '<td class="text-right">' + formatearGuaranies(cat.presupuesto) + '</td>';
-    html += '<td class="text-right">' + formatearGuaranies(cat.real) + '</td>';
-    html += '<td class="text-center"><span class="badge ' + badgeClass + '">' + pct + '%</span></td>';
-    html += '</tr>';
-  }
-  return html;
-}
-
-function generarFilasLiquidez(semanas) {
-  var html = '';
-  for (var i = 0; i < semanas.length; i++) {
-    var sem = semanas[i];
-    var bgColor = i % 2 === 0 ? '#ffffff' : '#ecfdf5';
-    var saldoClass = sem.saldo < 0 ? 'text-red' : '';
-    var badgeClass = sem.saldo >= 0 ? 'badge-solid-green' : 'badge-solid-red';
-    var badgeText = sem.saldo >= 0 ? 'OK' : 'FALTA';
-    var gastosText = sem.gastos > 0 ? ('-' + formatearGuaranies(sem.gastos)) : '-';
-    html += '<tr style="background: ' + bgColor + '">';
-    html += '<td>' + sem.nombre + '</td>';
-    html += '<td class="text-right">' + gastosText + '</td>';
-    html += '<td class="text-right font-bold ' + saldoClass + '">' + formatearGuaranies(sem.saldo) + '</td>';
-    html += '<td class="text-center"><span class="badge ' + badgeClass + '">' + badgeText + '</span></td>';
-    html += '</tr>';
-  }
-  return html;
-}
-
-function generarFilasPresupuestoNT(categorias) {
-  var html = '';
-  for (var i = 0; i < categorias.length; i++) {
-    var cat = categorias[i];
-    var pct = cat.presupuesto > 0 ? Math.round(cat.real / cat.presupuesto * 100) : 0;
-    var isIngreso = cat.categoria.toUpperCase().indexOf('INGRESO') >= 0;
-    var isGanancia = cat.categoria.toUpperCase().indexOf('GANANCIA') >= 0;
-    var badgeClass = 'badge-green';
-    if (isIngreso || isGanancia) {
-      badgeClass = pct >= 100 ? 'badge-green' : (pct >= 90 ? 'badge-yellow' : 'badge-red');
-    } else {
-      badgeClass = pct <= 100 ? 'badge-green' : (pct <= 110 ? 'badge-yellow' : 'badge-red');
-    }
-    html += '<tr>';
-    html += '<td class="font-bold">► ' + cat.categoria + '</td>';
-    html += '<td class="text-right">' + formatearGuaranies(cat.presupuesto) + '</td>';
-    html += '<td class="text-right">' + formatearGuaranies(cat.real) + '</td>';
-    html += '<td class="text-center"><span class="badge ' + badgeClass + '">' + pct + '%</span></td>';
-    html += '</tr>';
-  }
-  return html;
-}
-
-function generarFilasCuentasNT(cuentas) {
-  var html = '';
-  for (var i = 0; i < cuentas.length; i++) {
-    var c = cuentas[i];
-    var bgColor = i % 2 === 0 ? '#eff6ff' : '#ffffff';
-    var badgeClass = c.saldo >= c.acumulado ? 'badge-green' : 'badge-yellow';
-    var badgeText = c.saldo >= c.acumulado ? '✓' : '⚠';
-    html += '<tr style="background: ' + bgColor + '">';
-    html += '<td>' + c.nombre + '</td>';
-    html += '<td class="text-right text-blue font-bold">' + formatearGuaranies(c.saldo) + '</td>';
-    html += '<td class="text-right">' + formatearGuaranies(c.acumulado) + '</td>';
-    html += '<td class="text-center"><span class="badge ' + badgeClass + '">' + badgeText + '</span></td>';
-    html += '</tr>';
-  }
-  return html;
-}
-
-function generarAlertaBalanceCruzado(datos) {
-  var saldo = datos.balanceCruzado.balanceNeto || 0;
-  if (saldo > 0) {
-    // FAMILIA debe a NT (NT ha prestado más de lo que FAM devolvió)
-    return '<div class="alert-icon">🔴</div>' +
-           '<div class="alert-title">FAMILIA DEBE A NT</div>' +
-           '<div class="alert-value">Gs. ' + formatearGuaranies(saldo) + '</div>' +
-           '<div class="alert-desc">NeuroTEA ha prestado más a Familia de lo que Familia ha devuelto.</div>';
-  } else if (saldo < 0) {
-    // NT debe a FAMILIA (FAM ha prestado más de lo que NT devolvió)
-    return '<div class="alert-icon">🟡</div>' +
-           '<div class="alert-title">NT DEBE A FAMILIA</div>' +
-           '<div class="alert-value">Gs. ' + formatearGuaranies(Math.abs(saldo)) + '</div>' +
-           '<div class="alert-desc">Familia ha prestado más a NeuroTEA de lo que NT ha devuelto.</div>';
-  } else {
-    return '<div class="alert-icon">✅</div>' +
-           '<div class="alert-title">BALANCE EQUILIBRADO</div>' +
-           '<div class="alert-value">Gs. 0</div>' +
-           '<div class="alert-desc">No hay deudas pendientes entre entidades.</div>';
-  }
-}
-
-function generarMesesOptions() {
-  var html = '';
-  for (var i = 0; i < MESES.length; i++) {
-    html += '<option>' + MESES[i] + ' ' + AÑO + '</option>';
-  }
-  return html;
-}
-
-function generarTortaGastos(categorias, tipo) {
-  // Filtrar solo categorías de egresos (no ingresos, no balance)
-  var gastos = [];
-  var total = 0;
-  var colores = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#6b7280', '#ec4899', '#06b6d4'];
-
-  for (var i = 0; i < categorias.length; i++) {
-    var cat = categorias[i];
-    var nombre = cat.categoria.toUpperCase();
-    // Excluir ingresos y totales
-    if (nombre.indexOf('INGRESO') === -1 && nombre.indexOf('BALANCE') === -1 && nombre.indexOf('GANANCIA') === -1) {
-      if (cat.real > 0) {
-        gastos.push({ nombre: cat.categoria, valor: cat.real });
-        total += cat.real;
-      }
-    }
-  }
-
-  if (total === 0 || gastos.length === 0) {
-    return '<div style="text-align:center;padding:40px;color:#6b7280">Sin gastos registrados</div>';
-  }
-
-  // Generar SVG de la torta
-  var svgSize = 160;
-  var cx = svgSize / 2;
-  var cy = svgSize / 2;
-  var radius = 60;
-  var startAngle = -90;
-
-  var svg = '<svg class="chart-svg" viewBox="0 0 ' + svgSize + ' ' + svgSize + '">';
-
-  for (var j = 0; j < gastos.length; j++) {
-    var gasto = gastos[j];
-    var pct = gasto.valor / total;
-    var angle = pct * 360;
-    var color = colores[j % colores.length];
-
-    var endAngle = startAngle + angle;
-    var largeArc = angle > 180 ? 1 : 0;
-
-    var x1 = cx + radius * Math.cos(startAngle * Math.PI / 180);
-    var y1 = cy + radius * Math.sin(startAngle * Math.PI / 180);
-    var x2 = cx + radius * Math.cos(endAngle * Math.PI / 180);
-    var y2 = cy + radius * Math.sin(endAngle * Math.PI / 180);
-
-    if (gastos.length === 1) {
-      // Si solo hay un segmento, dibujar un círculo completo
-      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="' + color + '"/>';
-    } else {
-      svg += '<path d="M' + cx + ',' + cy + ' L' + x1 + ',' + y1 + ' A' + radius + ',' + radius + ' 0 ' + largeArc + ',1 ' + x2 + ',' + y2 + ' Z" fill="' + color + '"/>';
-    }
-
-    startAngle = endAngle;
-  }
-
-  svg += '</svg>';
-
-  // Generar leyenda
-  var leyenda = '<div class="chart-legend">';
-  for (var k = 0; k < gastos.length; k++) {
-    var g = gastos[k];
-    var pctLeyenda = Math.round(g.valor / total * 100);
-    var colorL = colores[k % colores.length];
-    leyenda += '<div class="chart-legend-item">';
-    leyenda += '<div class="chart-legend-color" style="background:' + colorL + '"></div>';
-    leyenda += '<span>' + g.nombre + ' (' + pctLeyenda + '%)</span>';
-    leyenda += '</div>';
-  }
-  leyenda += '</div>';
-
-  return svg + leyenda;
+function formatearGuaranies(num) {
+  if (num === 0 || num === null || num === undefined) return '0';
+  return new Intl.NumberFormat('es-PY').format(Math.round(num));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FUNCIÓN PRINCIPAL: GENERAR HTML DEL DASHBOARD
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function generarHTMLDashboard() {
-  var datos = obtenerDatosDashboard();
-
-  // Calcular valores derivados
-  var pctGastosNT = datos.neurotea.ingresos > 0 ? Math.round(datos.neurotea.gastos / datos.neurotea.ingresos * 100) : 0;
-  var progressClass = pctGastosNT > 93 ? 'danger' : '';
-  var metaCumplida = datos.neurotea.ganancia >= datos.neurotea.meta;
-  var totalAcumuladoNT = 0;
-  for (var i = 0; i < datos.cuentasNT.length; i++) {
-    totalAcumuladoNT += datos.cuentasNT[i].acumulado;
-  }
-
-  // Meta distribución
-  // v7.6: Los porcentajes se leen de datos.metas (desde CONFIG)
-  var metaFondo = Math.round(datos.distribucion.metaTotal * datos.metas.distUtilidad / 100);
-  var metaFondoEmerg = Math.round(datos.distribucion.metaTotal * datos.metas.distEmergencia / 100);
-  var metaFondoInv = Math.round(datos.distribucion.metaTotal * datos.metas.distInversion / 100);
-
-  return '<!DOCTYPE html>' +
-'<html lang="es">' +
-'<head>' +
-'  <meta charset="UTF-8">' +
-'  <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-'  <title>Control Financiero ' + AÑO + ' - NeuroTEA & Familia</title>' +
-'  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">' +
-'  <style>' +
-'    * { margin: 0; padding: 0; box-sizing: border-box; }' +
-'    body { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); min-height: 100vh; }' +
-'    .header { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1d4ed8 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(30, 64, 175, 0.3); }' +
-'    .header h1 { font-size: 1.8em; font-weight: 700; display: flex; align-items: center; gap: 12px; }' +
-'    .header-controls { display: flex; align-items: center; gap: 25px; }' +
-'    .header select { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; font-size: 1em; cursor: pointer; background: white; color: #1e40af; }' +
-'    .header .date { font-size: 0.95em; opacity: 0.9; }' +
-'    .header .date strong { font-weight: 600; }' +
-'    .main { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; padding: 25px; max-width: 1600px; margin: 0 auto; }' +
-'    .column { display: flex; flex-direction: column; gap: 20px; }' +
-'    .column-header { text-align: center; padding: 15px; border-radius: 12px 12px 0 0; font-weight: 700; font-size: 1.3em; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }' +
-'    .familia .column-header { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }' +
-'    .neurotea .column-header { background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); }' +
-'    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s; }' +
-'    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }' +
-'    .card-title { font-weight: 700; font-size: 1.05em; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }' +
-'    .familia .card-title { color: #059669; }' +
-'    .neurotea .card-title { color: #1d4ed8; }' +
-'    table { width: 100%; border-collapse: collapse; font-size: 0.9em; }' +
-'    th { background: #f8fafc; padding: 12px 10px; text-align: left; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }' +
-'    td { padding: 10px; border-bottom: 1px solid #f1f5f9; transition: background 0.2s; }' +
-'    tr:hover td { background: #f8fafc; }' +
-'    .familia th { background: #ecfdf5; }' +
-'    .neurotea th { background: #eff6ff; }' +
-'    .text-right { text-align: right; }' +
-'    .text-center { text-align: center; }' +
-'    .font-bold { font-weight: 600; }' +
-'    .text-green { color: #059669; }' +
-'    .text-red { color: #dc2626; }' +
-'    .text-yellow { color: #d97706; }' +
-'    .text-blue { color: #2563eb; }' +
-'    .text-gray { color: #6b7280; }' +
-'    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }' +
-'    .badge-green { background: #dcfce7; color: #166534; }' +
-'    .badge-red { background: #fef2f2; color: #991b1b; }' +
-'    .badge-yellow { background: #fef3c7; color: #92400e; }' +
-'    .badge-solid-green { background: #22c55e; color: white; }' +
-'    .badge-solid-red { background: #ef4444; color: white; }' +
-'    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }' +
-'    .kpi-box { padding: 15px; border-radius: 10px; transition: transform 0.2s; }' +
-'    .kpi-box:hover { transform: scale(1.02); }' +
-'    .kpi-label { font-size: 0.75em; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }' +
-'    .kpi-value { font-size: 1.5em; font-weight: 700; }' +
-'    .progress-container { margin: 15px 0; }' +
-'    .progress-bar { height: 24px; background: #e5e7eb; border-radius: 12px; overflow: hidden; position: relative; }' +
-'    .progress-fill { height: 100%; background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); border-radius: 12px; transition: width 0.5s ease; }' +
-'    .progress-fill.danger { background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); }' +
-'    .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: 600; font-size: 0.85em; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }' +
-'    .flujo-container { display: flex; flex-direction: column; gap: 8px; }' +
-'    .flujo-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-radius: 8px; transition: transform 0.2s; }' +
-'    .flujo-item:hover { transform: translateX(5px); }' +
-'    .flujo-ingresos { background: #dcfce7; }' +
-'    .flujo-pagados { background: #fef2f2; }' +
-'    .flujo-pendientes { background: #fef3c7; }' +
-'    .flujo-balance { padding: 15px; border-radius: 10px; color: white; font-weight: 700; }' +
-'    .flujo-balance.familia { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }' +
-'    .flujo-balance.neurotea { background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); }' +
-'    .fondos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }' +
-'    .fondo-box { padding: 15px; border-radius: 10px; text-align: center; transition: transform 0.2s; }' +
-'    .fondo-box:hover { transform: scale(1.03); }' +
-'    .fondo-box.utilidad { background: #dbeafe; }' +
-'    .fondo-box.emergencia { background: #ffedd5; }' +
-'    .fondo-box.inversion { background: #cffafe; }' +
-'    .fondo-label { font-size: 0.8em; color: #64748b; margin-bottom: 5px; }' +
-'    .fondo-meta { font-weight: 700; font-size: 1.1em; }' +
-'    .fondo-real { font-size: 0.85em; margin-top: 5px; }' +
-'    .fondo-real.ok { color: #059669; }' +
-'    .fondo-real.warning { color: #d97706; }' +
-'    .balance-section { background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #1f2937 100%); color: white; padding: 25px; border-radius: 15px; grid-column: 1 / -1; margin-top: 10px; box-shadow: 0 8px 30px rgba(31, 41, 55, 0.3); }' +
-'    .balance-section h3 { text-align: center; margin-bottom: 20px; font-size: 1.3em; display: flex; align-items: center; justify-content: center; gap: 10px; }' +
-'    .balance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }' +
-'    .balance-table { background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }' +
-'    .balance-table th { background: rgba(0,0,0,0.2); color: white; }' +
-'    .balance-table td { border-color: rgba(255,255,255,0.1); }' +
-'    .balance-table tr:hover td { background: rgba(255,255,255,0.05); }' +
-'    .alert-box { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); border-radius: 15px; padding: 30px; text-align: center; backdrop-filter: blur(10px); }' +
-'    .alert-icon { font-size: 4em; margin-bottom: 10px; }' +
-'    .alert-title { font-size: 1.3em; margin-bottom: 10px; font-weight: 600; }' +
-'    .alert-value { font-size: 2.5em; font-weight: 700; margin-bottom: 15px; }' +
-'    .alert-desc { font-size: 0.95em; opacity: 0.9; line-height: 1.5; }' +
-'    .footer { text-align: center; padding: 25px; color: #64748b; font-size: 0.85em; border-top: 1px solid #e2e8f0; background: white; }' +
-'    .footer .version { font-weight: 600; color: #475569; }' +
-'    @media (max-width: 1200px) { .main { grid-template-columns: 1fr; } .balance-grid { grid-template-columns: 1fr; } }' +
-'  </style>' +
-'</head>' +
-'<body>' +
-'  <div class="header">' +
-'    <h1>📊 TABLERO DE CONTROL FINANCIERO</h1>' +
-'    <div class="header-controls">' +
-'      <div><span>Mes:</span> <select id="mes">' + generarMesesOptions() + '</select></div>' +
-'      <div class="date">Hoy: <strong>' + new Date().toLocaleDateString('es-PY') + '</strong></div>' +
-'    </div>' +
-'  </div>' +
-'  <div class="main">' +
-'    <!-- COLUMNA FAMILIA -->' +
-'    <div class="column familia">' +
-'      <div class="column-header">🏠 FAMILIA</div>' +
-'      <!-- 1. SALDOS EN CUENTAS -->' +
-'      <div class="card">' +
-'        <div class="card-title">💰 SALDOS EN CUENTAS</div>' +
-'        <table><thead><tr><th>Cuenta</th><th class="text-right">Esperado</th><th class="text-right">Saldo Banco ✏️</th><th class="text-right">Diferencia</th></tr></thead>' +
-'        <tbody>' + generarFilasCuentasFamilia(datos.cuentasFamilia) + '</tbody></table>' +
-'        <p style="font-size: 0.8em; color: #6b7280; margin-top: 10px;">✏️ = Ingreso manual</p>' +
-'      </div>' +
-'      <!-- 2. INDICADORES DE DISTRIBUCIÓN -->' +
-'      <div class="card">' +
-'        <div class="card-title">🎯 INDICADORES DE DISTRIBUCIÓN</div>' +
-'        <div class="kpi-grid">' +
-'          <div class="kpi-box" style="background:#dbeafe"><div class="kpi-label">💵 INGRESOS DEL MES</div><div class="kpi-value text-blue">' + formatearGuaranies(datos.familia.ingresosReal) + '</div></div>' +
-'          <div class="kpi-box" style="background:#fee2e2"><div class="kpi-label">📤 EGRESOS PAGADOS</div><div class="kpi-value text-red">' + formatearGuaranies(datos.familia.egresosReal) + '</div></div>' +
-'          <div class="kpi-box" style="background:#dcfce7"><div class="kpi-label">💰 AHORRO</div><div class="kpi-value text-green">' + formatearGuaranies(datos.indicadoresFam.ahorro) + '</div></div>' +
-'          <div class="kpi-box" style="background:#fef3c7"><div class="kpi-label">🛡️ FONDO EMERGENCIA</div><div class="kpi-value text-yellow">' + formatearGuaranies(datos.indicadoresFam.fondoEmergencia) + '</div></div>' +
-'        </div>' +
-'        <div style="text-align:center;margin-top:15px;padding:12px;border-radius:8px;background:#f3f4f6">' +
-         (function() {
-           var diff = datos.familia.ingresosReal - (datos.familia.egresosReal + datos.indicadoresFam.ahorro + datos.indicadoresFam.fondoEmergencia);
-           if (Math.abs(diff) < 1000) {
-             return '<span class="badge badge-solid-green">✅ EQUILIBRADO: Ingresos distribuidos correctamente</span>';
-           } else if (diff > 0) {
-             return '<span class="badge badge-yellow">💰 DISPONIBLE: Gs. ' + formatearGuaranies(diff) + ' sin asignar</span>';
-           } else {
-             return '<span class="badge badge-solid-red">⚠️ DÉFICIT: Gs. ' + formatearGuaranies(Math.abs(diff)) + ' de más pagado</span>';
-           }
-         })() +
-'        </div>' +
-'      </div>' +
-'      <!-- 3. FLUJO DE CAJA DEL MES -->' +
-'      <div class="card">' +
-'        <div class="card-title">💵 FLUJO DE CAJA DEL MES</div>' +
-'        <div class="flujo-container">' +
-'          <div class="flujo-item flujo-ingresos"><span>Ingresos</span><span class="font-bold text-green">+ ' + formatearGuaranies(datos.familia.ingresosReal) + '</span></div>' +
-'          <div class="flujo-item flujo-pagados"><span>Egresos Pagados</span><span class="font-bold text-red">- ' + formatearGuaranies(datos.familia.egresosReal) + '</span></div>' +
-'          <div class="flujo-item flujo-pendientes"><span>Egresos Pendientes</span><span class="font-bold text-yellow">- ' + formatearGuaranies(datos.familia.egresosPendientes) + '</span></div>' +
-'          <div class="flujo-balance familia"><span>PROYECCIÓN</span><span>' + formatearGuaranies(datos.familia.ingresosReal - datos.familia.egresosReal - datos.familia.egresosPendientes) + '</span></div>' +
-'        </div>' +
-'      </div>' +
-'      <!-- 4. % GASTOS POR CATEGORÍA -->' +
-'      <div class="card">' +
-'        <div class="card-title">📊 % GASTOS POR CATEGORÍA</div>' +
-'        <div class="chart-container">' +
-           generarTortaGastos(datos.presupuestoFamilia, 'familia') +
-'        </div>' +
-'      </div>' +
-'    </div>' +
-'    <!-- COLUMNA NEUROTEA -->' +
-'    <div class="column neurotea">' +
-'      <div class="column-header">🏥 NEUROTEA</div>' +
-'      <!-- 1. SALDOS EN CUENTAS (PRIMERO) -->' +
-'      <div class="card">' +
-'        <div class="card-title">💰 SALDOS EN CUENTAS</div>' +
-'        <table><thead><tr><th>Cuenta</th><th class="text-right">Saldo ✏️</th><th class="text-right">Acumulado</th><th class="text-center">Estado</th></tr></thead>' +
-'        <tbody>' + generarFilasCuentasNT(datos.cuentasNT) + '</tbody>' +
-'        <tfoot><tr style="background: #e5e7eb;">' +
-'          <td class="font-bold">💵 TOTAL DISPONIBLE</td>' +
-'          <td class="text-right font-bold">' + formatearGuaranies(datos.totalCuentasNT) + '</td>' +
-'          <td class="text-right font-bold">' + formatearGuaranies(totalAcumuladoNT) + '</td>' +
-'          <td class="text-center">-</td>' +
-'        </tr></tfoot></table>' +
-'        <p style="font-size: 0.8em; color: #6b7280; margin-top: 10px;">✏️ = Ingreso manual</p>' +
-'      </div>' +
-'      <!-- 2. INDICADORES DE METAS -->' +
-'      <div class="card">' +
-'        <div class="card-title">🎯 INDICADORES DE METAS</div>' +
-'        <div class="kpi-grid">' +
-'          <div class="kpi-box" style="background:#dbeafe"><div class="kpi-label">💵 INGRESOS DEL MES</div><div class="kpi-value text-blue">' + formatearGuaranies(datos.neurotea.ingresos) + '</div></div>' +
-'          <div class="kpi-box" style="background:#fee2e2"><div class="kpi-label">📤 EGRESOS PAGADOS</div><div class="kpi-value text-red">' + formatearGuaranies(datos.neurotea.gastos) + '</div></div>' +
-'          <div class="kpi-box" style="background:#fef3c7"><div class="kpi-label">⏳ EGRESOS PENDIENTES</div><div class="kpi-value text-yellow">' + formatearGuaranies(datos.neurotea.egresosPendientes) + '</div></div>' +
-'          <div class="kpi-box" style="background:#f3f4f6"><div class="kpi-label">📊 PROYECCIÓN FIN MES</div><div class="kpi-value">' + formatearGuaranies(datos.neurotea.ingresos - datos.neurotea.gastos - datos.neurotea.egresosPendientes) + '</div></div>' +
-'        </div>' +
-'        <div style="margin-top:12px">' +
-'          <div class="kpi-grid">' +
-'            <div class="kpi-box" style="background:#dcfce7"><div class="kpi-label">💰 GANANCIA REAL</div><div class="kpi-value text-green">' + formatearGuaranies(datos.neurotea.ganancia) + '</div></div>' +
-'            <div class="kpi-box" style="background:#fef3c7"><div class="kpi-label">🎯 META ' + datos.metas.ganancia + '%</div><div class="kpi-value text-yellow">' + formatearGuaranies(datos.neurotea.meta) + '</div></div>' +
-'          </div>' +
-'        </div>' +
-'        <div class="progress-container">' +
-'          <div style="display:flex;justify-content:space-between;font-size:0.9em;margin-bottom:8px"><span>% Gastos sobre Ingresos</span><span class="font-bold">' + pctGastosNT + '% / ' + datos.metas.maxGastos + '% máx</span></div>' +
-'          <div class="progress-bar"><div class="progress-fill ' + progressClass + '" style="width:' + Math.min(pctGastosNT, 100) + '%"></div><span class="progress-text">' + pctGastosNT + '%</span></div>' +
-'        </div>' +
-'        <div style="text-align:center;margin:15px 0">' +
-           (metaCumplida
-             ? '<span class="badge badge-solid-green" style="padding:10px 25px;font-size:1em">✅ META CUMPLIDA - Superávit: ' + formatearGuaranies(datos.neurotea.ganancia - datos.neurotea.meta) + '</span>'
-             : '<span class="badge badge-solid-red" style="padding:10px 25px;font-size:1em">⚠️ META NO CUMPLIDA - Falta: ' + formatearGuaranies(datos.neurotea.meta - datos.neurotea.ganancia) + '</span>') +
-'        </div>' +
-'        <div style="border-top:1px solid #e5e7eb;padding-top:15px;margin-top:15px">' +
-'          <div class="font-bold" style="margin-bottom:12px">Distribución de Ganancia (Meta: ' + formatearGuaranies(datos.distribucion.metaTotal) + ')</div>' +
-'          <div class="fondos-grid">' +
-'            <div class="fondo-box utilidad"><div class="fondo-label" style="color:#1d4ed8">Utilidad Dueño (' + datos.metas.distUtilidad + '%)</div><div class="fondo-meta">' + formatearGuaranies(metaFondo) + '</div><div class="fondo-real ' + (datos.distribucion.utilidad >= metaFondo ? 'ok' : 'warning') + '">' + (datos.distribucion.utilidad >= metaFondo ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.utilidad) + '</div></div>' +
-'            <div class="fondo-box emergencia"><div class="fondo-label" style="color:#ea580c">Fondo Emerg. (' + datos.metas.distEmergencia + '%)</div><div class="fondo-meta">' + formatearGuaranies(metaFondoEmerg) + '</div><div class="fondo-real ' + (datos.distribucion.emergencia >= metaFondoEmerg ? 'ok' : 'warning') + '">' + (datos.distribucion.emergencia >= metaFondoEmerg ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.emergencia) + '</div></div>' +
-'            <div class="fondo-box inversion"><div class="fondo-label" style="color:#0891b2">Fondo Inversión (' + datos.metas.distInversion + '%)</div><div class="fondo-meta">' + formatearGuaranies(metaFondoInv) + '</div><div class="fondo-real ' + (datos.distribucion.inversion >= metaFondoInv ? 'ok' : 'warning') + '">' + (datos.distribucion.inversion >= metaFondoInv ? '✓' : '⚠') + ' ' + formatearGuaranies(datos.distribucion.inversion) + '</div></div>' +
-'          </div>' +
-'        </div>' +
-'      </div>' +
-'      <!-- 3. FLUJO DE CAJA DEL MES NT -->' +
-'      <div class="card">' +
-'        <div class="card-title">💵 FLUJO DE CAJA DEL MES</div>' +
-'        <div class="flujo-container">' +
-'          <div class="flujo-item flujo-ingresos"><span>Ingresos</span><span class="font-bold text-green">+ ' + formatearGuaranies(datos.neurotea.ingresos) + '</span></div>' +
-'          <div class="flujo-item flujo-pagados"><span>Gastos Pagados</span><span class="font-bold text-red">- ' + formatearGuaranies(datos.neurotea.gastos) + '</span></div>' +
-'          <div class="flujo-item flujo-pendientes"><span>Egresos Pendientes</span><span class="font-bold text-yellow">- ' + formatearGuaranies(datos.neurotea.egresosPendientes) + '</span></div>' +
-'          <div class="flujo-balance neurotea"><span>PROYECCIÓN</span><span>' + formatearGuaranies(datos.neurotea.ingresos - datos.neurotea.gastos - datos.neurotea.egresosPendientes) + '</span></div>' +
-'        </div>' +
-'      </div>' +
-'      <!-- 4. % GASTOS POR CATEGORÍA NT -->' +
-'      <div class="card">' +
-'        <div class="card-title">📊 % GASTOS POR CATEGORÍA</div>' +
-'        <div class="chart-container">' +
-           generarTortaGastos(datos.presupuestoNT, 'neurotea') +
-'        </div>' +
-'      </div>' +
-'    </div>' +
-'    <!-- BALANCE CRUZADO BIDIRECCIONAL -->' +
-'    <div class="balance-section">' +
-'      <h3>🔄 BALANCE CRUZADO: NEUROTEA ↔ FAMILIA</h3>' +
-'      <div class="balance-grid">' +
-'        <table class="balance-table"><thead><tr><th>Concepto</th><th class="text-right">Este Mes</th><th class="text-right">Acumulado Año</th></tr></thead>' +
-'        <tbody>' +
-'          <tr style="background:rgba(255,255,255,0.05)"><td colspan="3" class="font-bold" style="color:#fca5a5">↗️ FLUJO NT → FAMILIA</td></tr>' +
-'          <tr><td>Préstamo NT → Familia</td><td class="text-right" style="color:#fca5a5">' + (datos.balanceCruzado.prestamoNTMes > 0 ? formatearGuaranies(datos.balanceCruzado.prestamoNTMes) : '-') + '</td><td class="text-right font-bold" style="color:#fca5a5">' + formatearGuaranies(datos.balanceCruzado.prestamoNTAcum) + '</td></tr>' +
-'          <tr><td>Devolución Familia → NT</td><td class="text-right" style="color:#86efac">' + (datos.balanceCruzado.devFamMes > 0 ? formatearGuaranies(datos.balanceCruzado.devFamMes) : '-') + '</td><td class="text-right font-bold" style="color:#86efac">' + formatearGuaranies(datos.balanceCruzado.devFamAcum) + '</td></tr>' +
-'          <tr style="background:rgba(0,0,0,0.1)"><td class="font-bold">📊 Deuda FAM → NT</td><td class="text-right font-bold">' + formatearGuaranies(datos.balanceCruzado.deudaFamMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(datos.balanceCruzado.deudaFamAcum) + '</td></tr>' +
-'          <tr style="background:rgba(255,255,255,0.05)"><td colspan="3" class="font-bold" style="color:#fde68a">↗️ FLUJO FAM → NT</td></tr>' +
-'          <tr><td>Préstamo Familia → NT</td><td class="text-right" style="color:#fde68a">' + (datos.balanceCruzado.prestamoFamMes > 0 ? formatearGuaranies(datos.balanceCruzado.prestamoFamMes) : '-') + '</td><td class="text-right font-bold" style="color:#fde68a">' + formatearGuaranies(datos.balanceCruzado.prestamoFamAcum) + '</td></tr>' +
-'          <tr><td>Devolución NT → Familia</td><td class="text-right" style="color:#86efac">' + (datos.balanceCruzado.devNTMes > 0 ? formatearGuaranies(datos.balanceCruzado.devNTMes) : '-') + '</td><td class="text-right font-bold" style="color:#86efac">' + formatearGuaranies(datos.balanceCruzado.devNTAcum) + '</td></tr>' +
-'          <tr style="background:rgba(0,0,0,0.1)"><td class="font-bold">📊 Deuda NT → FAM</td><td class="text-right font-bold">' + formatearGuaranies(datos.balanceCruzado.deudaNTMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(datos.balanceCruzado.deudaNTAcum) + '</td></tr>' +
-'        </tbody>' +
-'        <tfoot><tr style="background:rgba(0,0,0,0.3)">' +
-'          <td class="font-bold">💰 BALANCE NETO</td>' +
-'          <td class="text-right font-bold" style="color:' + (datos.balanceCruzado.balanceNetoMes > 0 ? '#fca5a5' : (datos.balanceCruzado.balanceNetoMes < 0 ? '#fde68a' : '#86efac')) + '">' + formatearGuaranies(datos.balanceCruzado.balanceNetoMes) + '</td>' +
-'          <td class="text-right font-bold" style="color:' + (datos.balanceCruzado.balanceNeto > 0 ? '#fca5a5' : (datos.balanceCruzado.balanceNeto < 0 ? '#fde68a' : '#86efac')) + '">' + formatearGuaranies(datos.balanceCruzado.balanceNeto) + '</td>' +
-'        </tr></tfoot></table>' +
-'        <div class="alert-box">' + generarAlertaBalanceCruzado(datos) + '</div>' +
-'      </div>' +
-'    </div>' +
-'  </div>' +
-'  <div class="footer">' +
-'    <p>Control Financiero ' + AÑO + ' - NeuroTEA & Familia</p>' +
-'    <p class="version">Versión ' + VERSION + '</p>' +
-'    <p style="margin-top:5px">✏️ = Campo de ingreso manual | 🔗 = Calculado automáticamente</p>' +
-'  </div>' +
-'</body>' +
-'</html>';
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// FUNCIÓN PARA OBTENER DATOS DEL DASHBOARD
-// Calcula posiciones dinámicamente basándose en la estructura del TABLERO
+// DATA COLLECTION - Comprehensive data for dashboard
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function obtenerDatosDashboard() {
@@ -495,326 +24,672 @@ function obtenerDatosDashboard() {
   var tablero = ss.getSheetByName(NOMBRES_HOJAS.TABLERO);
   var movimiento = ss.getSheetByName(NOMBRES_HOJAS.MOVIMIENTO);
   var config = ss.getSheetByName(NOMBRES_HOJAS.CONFIG);
+  var cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
+  var cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
+  var gastosFijos = ss.getSheetByName(NOMBRES_HOJAS.GASTOS_FIJOS);
+  var presupuesto = ss.getSheetByName(NOMBRES_HOJAS.PRESUPUESTO);
 
   var mesSeleccionado = movimiento ? movimiento.getRange('B3').getValue() : 'Enero';
+  var mesNum = MESES.indexOf(mesSeleccionado) + 1;
 
-  // v7.6: Leer METAS desde CONFIG (filas 40-44, columna B)
-  var metaGananciaPct = 7, metaMaxGastosPct = 93;
-  var distUtilidadPct = 33.33, distEmergenciaPct = 33.33, distInversionPct = 33.34;
-  if (config) {
-    metaGananciaPct = Number(config.getRange('B40').getValue()) || 7;
-    metaMaxGastosPct = Number(config.getRange('B41').getValue()) || 93;
-    distUtilidadPct = Number(config.getRange('B42').getValue()) || 33.33;
-    distEmergenciaPct = Number(config.getRange('B43').getValue()) || 33.33;
-    distInversionPct = Number(config.getRange('B44').getValue()) || 33.34;
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // CÁLCULO DINÁMICO DE POSICIONES (basado en Tablero.gs)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // FAMILIA - Posiciones calculadas
-  var FILA_INICIO_CUENTAS_FAM = 8;  // Primera cuenta FAMILIA
-  var FILA_TOTAL_CUENTAS_FAM = FILA_INICIO_CUENTAS_FAM + CUENTAS_FAMILIA.length; // 8 + 10 = 18
-  var FILA_TITULO_RESUMEN = FILA_TOTAL_CUENTAS_FAM + 3; // 18 + 3 = 21
-  var FILA_INGRESOS_FAM = FILA_TITULO_RESUMEN + 2; // 21 + 2 = 23
-  var FILA_EGRESOS_FAM = FILA_INGRESOS_FAM + 1; // 24
-  var FILA_BALANCE_FAM = FILA_EGRESOS_FAM + 1; // 25
-  var FILA_TITULO_LIQUIDEZ = FILA_BALANCE_FAM + 2; // 25 + 2 = 27
-  var FILA_CAJA_DISP = FILA_TITULO_LIQUIDEZ + 2; // 27 + 2 = 29
-  var FILA_SEMANA_1 = FILA_CAJA_DISP + 1; // 30
-  var FILA_SALDO_FINAL_FAM = FILA_SEMANA_1 + 3; // 30 + 3 = 33
-
-  // NEUROTEA - Posiciones fijas según estructura
-  var FILA_INGRESOS_NT = 9;  // Valores Ingresos/Gastos NT
-  var FILA_GANANCIA_NT = 13; // Valores Ganancia/Meta NT
-  var FILA_DISTRIBUCION = 20; // Valores distribución
-  var FILA_INICIO_CUENTAS_NT = 24; // Primera cuenta NT
-  var FILA_TOTAL_CUENTAS_NT = FILA_INICIO_CUENTAS_NT + CUENTAS_NT.length; // 24 + 3 = 27
-
-  // BALANCE CRUZADO - Posición calculada
-  var FILA_BALANCE_CRUZADO = Math.max(FILA_SALDO_FINAL_FAM, FILA_TOTAL_CUENTAS_NT + 2) + 3; // max(33, 29) + 3 = 36
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // LECTURA DE DATOS
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // Función auxiliar para leer valor numérico seguro
   function leerNumero(rango) {
     try {
       var val = rango.getValue();
       if (val === '' || val === null || val === undefined) return 0;
       var num = Number(val);
       return isNaN(num) ? 0 : num;
-    } catch(e) {
-      return 0;
-    }
+    } catch(e) { return 0; }
   }
 
-  // SALDOS EN CUENTAS FAMILIA
+  // ═══ METAS FROM CONFIG (v7.28: rows B43-B47) ═══
+  var metas = { ganancia: 7, maxGastos: 93, distUtilidad: 33.33, distEmergencia: 33.33, distInversion: 33.34 };
+  if (config) {
+    metas.ganancia = Number(config.getRange('B43').getValue()) || 7;
+    metas.maxGastos = Number(config.getRange('B44').getValue()) || 93;
+    metas.distUtilidad = Number(config.getRange('B45').getValue()) || 33.33;
+    metas.distEmergencia = Number(config.getRange('B46').getValue()) || 33.33;
+    metas.distInversion = Number(config.getRange('B47').getValue()) || 33.34;
+  }
+
+  // ═══ TABLERO - Dynamic row positions ═══
+  var FILA_INICIO_CUENTAS_FAM = 8;
+  var FILA_TOTAL_CUENTAS_FAM = FILA_INICIO_CUENTAS_FAM + CUENTAS_FAMILIA.length;
+  var FILA_TITULO_RESUMEN = FILA_TOTAL_CUENTAS_FAM + 3;
+  var FILA_INGRESOS_FAM = FILA_TITULO_RESUMEN + 2;
+  var FILA_EGRESOS_FAM = FILA_INGRESOS_FAM + 1;
+  var FILA_BALANCE_FAM = FILA_EGRESOS_FAM + 1;
+  var FILA_TITULO_LIQUIDEZ = FILA_BALANCE_FAM + 2;
+  var FILA_CAJA_DISP = FILA_TITULO_LIQUIDEZ + 2;
+  var FILA_SEMANA_1 = FILA_CAJA_DISP + 1;
+  var FILA_SALDO_FINAL_FAM = FILA_SEMANA_1 + 3;
+
+  var FILA_INGRESOS_NT = 9;
+  var FILA_GANANCIA_NT = 13;
+  var FILA_DISTRIBUCION = 20;
+  var FILA_INICIO_CUENTAS_NT = 24;
+  var FILA_TOTAL_CUENTAS_NT = FILA_INICIO_CUENTAS_NT + CUENTAS_NT.length;
+  var FILA_BALANCE_CRUZADO = Math.max(FILA_SALDO_FINAL_FAM, FILA_TOTAL_CUENTAS_NT + 2) + 3;
+
+  // ═══ ACCOUNTS - FAMILIA ═══
   var cuentasFamilia = [];
   if (tablero) {
     for (var i = 0; i < CUENTAS_FAMILIA.length; i++) {
       var fila = FILA_INICIO_CUENTAS_FAM + i;
       cuentasFamilia.push({
         nombre: CUENTAS_FAMILIA[i],
-        esperado: leerNumero(tablero.getRange(fila, 3)),  // Columna C
-        real: leerNumero(tablero.getRange(fila, 4)),      // Columna D
-        diferencia: leerNumero(tablero.getRange(fila, 5)) // Columna E
+        esperado: leerNumero(tablero.getRange(fila, 3)),
+        real: leerNumero(tablero.getRange(fila, 4)),
+        diferencia: leerNumero(tablero.getRange(fila, 5))
       });
     }
   }
 
-  // INDICADORES NEUROTEA (celdas merged: H-I = Ingresos/Ganancia, J-K = Gastos/Meta)
-  var ingresosNT = 0, gastosNT = 0, gananciaNT = 0, metaNT = 0;
-  if (tablero) {
-    ingresosNT = leerNumero(tablero.getRange(FILA_INGRESOS_NT, 8));  // H9
-    gastosNT = leerNumero(tablero.getRange(FILA_INGRESOS_NT, 10));   // J9
-    gananciaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 8));  // H13
-    metaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 10));     // J13
-  }
-
-  // DISTRIBUCIÓN DE GANANCIA NT (fila 20: I=Utilidad, J=Emergencia, K=Inversión)
-  var utilidadDueno = 0, fondoEmergencia = 0, fondoInversion = 0;
-  if (tablero) {
-    utilidadDueno = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 9));    // I20
-    fondoEmergencia = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 10)); // J20
-    fondoInversion = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 11));  // K20
-  }
-
-  // RESUMEN DEL MES FAMILIA (columna C=Presupuesto, D=Real)
-  var ingresosFamPres = 0, ingresosFamReal = 0;
-  var egresosFamPres = 0, egresosFamReal = 0;
-  var egresosPendientesFam = 0;
-  var balanceFamPres = 0, balanceFamReal = 0;
-  if (tablero) {
-    ingresosFamPres = leerNumero(tablero.getRange(FILA_INGRESOS_FAM, 3));  // C23
-    ingresosFamReal = leerNumero(tablero.getRange(FILA_INGRESOS_FAM, 4));  // D23
-    egresosFamPres = leerNumero(tablero.getRange(FILA_EGRESOS_FAM, 3));    // C24
-    egresosFamReal = leerNumero(tablero.getRange(FILA_EGRESOS_FAM, 4));    // D24
-    balanceFamPres = leerNumero(tablero.getRange(FILA_BALANCE_FAM, 3));    // C25
-    balanceFamReal = leerNumero(tablero.getRange(FILA_BALANCE_FAM, 4));    // D25
-  }
-
-  // INDICADORES FAMILIA: Ahorro y Fondo Emergencia (desde MOVIMIENTO)
-  var ahorroFam = 0, fondoEmergenciaFam = 0;
-  if (movimiento) {
-    // Leer columnas B (Tipo), F (Real), J (Est.Pago) de MOVIMIENTO FAMILIA
-    var datosFamMov = movimiento.getRange('A9:J116').getValues();  // v7.25: Rango actualizado (FAMILIA: 9-116)
-    for (var idx = 0; idx < datosFamMov.length; idx++) {
-      var fila = datosFamMov[idx];
-      var concepto = fila[0] ? fila[0].toString() : '';
-      var tipo = fila[1] ? fila[1].toString() : '';
-      var real = Number(fila[5]) || 0;  // Columna F
-      var estPago = fila[9] ? fila[9].toString() : '';  // Columna J
-
-      // Ahorro (buscar en concepto o categoría)
-      if (concepto.indexOf('Ahorro') >= 0 || concepto.indexOf('AHORRO') >= 0) {
-        ahorroFam += real;
-      }
-      // Fondo Emergencia
-      if (concepto.indexOf('Fondo') >= 0 && concepto.indexOf('Emergencia') >= 0) {
-        fondoEmergenciaFam += real;
-      }
-      // Egresos Pendientes FAMILIA
-      if (tipo === 'Egreso' && estPago === 'Pendiente') {
-        egresosPendientesFam += real;
-      }
-    }
-  }
-
-  // EGRESOS PENDIENTES NEUROTEA (desde MOVIMIENTO)
-  var egresosPendientesNT = 0;
-  if (movimiento) {
-    var datosNTMovPend = movimiento.getRange('A122:J206').getValues();  // v7.25: Rango actualizado (NEUROTEA: 122-206)
-    for (var idxNT = 0; idxNT < datosNTMovPend.length; idxNT++) {
-      var filaNT = datosNTMovPend[idxNT];
-      var tipoNT = filaNT[1] ? filaNT[1].toString() : '';
-      var realNT = Number(filaNT[5]) || 0;  // Columna F
-      var estPagoNT = filaNT[9] ? filaNT[9].toString() : '';  // Columna J
-
-      if (tipoNT === 'Egreso' && estPagoNT === 'Pendiente') {
-        egresosPendientesNT += realNT;
-      }
-    }
-  }
-
-  // SALDOS EN CUENTAS NT (columna I=Saldo, J=Acumulado)
+  // ═══ ACCOUNTS - NEUROTEA ═══
   var cuentasNT = [];
   if (tablero) {
     for (var j = 0; j < CUENTAS_NT.length; j++) {
       var filaNT = FILA_INICIO_CUENTAS_NT + j;
       cuentasNT.push({
         nombre: CUENTAS_NT[j],
-        saldo: leerNumero(tablero.getRange(filaNT, 9)),     // Columna I
-        acumulado: leerNumero(tablero.getRange(filaNT, 10)) // Columna J
+        saldo: leerNumero(tablero.getRange(filaNT, 9)),
+        acumulado: leerNumero(tablero.getRange(filaNT, 10))
       });
     }
   }
   var totalCuentasNT = tablero ? leerNumero(tablero.getRange(FILA_TOTAL_CUENTAS_NT, 9)) : 0;
 
-  // LIQUIDEZ FAMILIA (columna C=Gastos, D=Saldo)
-  var cajaDisponibleFam = 0;
-  var semanasFam = [];
-  var saldoFinalFam = 0, totalGastosFam = 0;
+  // ═══ NEUROTEA INDICATORS ═══
+  var ingresosNT = 0, gastosNT = 0, gananciaNT = 0, metaNT = 0;
+  var utilidadDueno = 0, fondoEmergenciaNT = 0, fondoInversionNT = 0;
+  var egresosPendientesNT = 0;
   if (tablero) {
-    cajaDisponibleFam = leerNumero(tablero.getRange(FILA_CAJA_DISP, 4)); // D29
-    var nombresSemanadas = ['Esta semana', 'Próxima semana', '3ra semana'];
+    ingresosNT = leerNumero(tablero.getRange(FILA_INGRESOS_NT, 8));
+    gastosNT = leerNumero(tablero.getRange(FILA_INGRESOS_NT, 10));
+    gananciaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 8));
+    metaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 10));
+    utilidadDueno = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 9));
+    fondoEmergenciaNT = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 10));
+    fondoInversionNT = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 11));
+  }
+
+  // ═══ FAMILIA RESUMEN ═══
+  var ingresosFamReal = 0, egresosFamReal = 0, egresosPendientesFam = 0;
+  var ahorroFam = 0, fondoEmergenciaFam = 0;
+  if (tablero) {
+    ingresosFamReal = leerNumero(tablero.getRange(FILA_INGRESOS_FAM, 4));
+    egresosFamReal = leerNumero(tablero.getRange(FILA_EGRESOS_FAM, 4));
+  }
+
+  // Read MOVIMIENTO for FAMILIA ahorro, fondo, pendientes
+  if (movimiento) {
+    var datosFamMov = movimiento.getRange('A9:J116').getValues();
+    for (var idx = 0; idx < datosFamMov.length; idx++) {
+      var filaM = datosFamMov[idx];
+      var concepto = filaM[0] ? filaM[0].toString() : '';
+      var tipo = filaM[1] ? filaM[1].toString() : '';
+      var real = Number(filaM[5]) || 0;
+      var estPago = filaM[9] ? filaM[9].toString() : '';
+
+      if (concepto.indexOf('Ahorro') >= 0 || concepto.indexOf('AHORRO') >= 0) ahorroFam += real;
+      if (concepto.indexOf('Fondo') >= 0 && concepto.indexOf('Emergencia') >= 0) fondoEmergenciaFam += real;
+      if (tipo === 'Egreso' && estPago === 'Pendiente') egresosPendientesFam += real;
+    }
+  }
+
+  // NEUROTEA pendientes
+  if (movimiento) {
+    var datosNTMov = movimiento.getRange('A122:J206').getValues();
+    for (var idxNT = 0; idxNT < datosNTMov.length; idxNT++) {
+      var filaNTM = datosNTMov[idxNT];
+      var tipoNT = filaNTM[1] ? filaNTM[1].toString() : '';
+      var realNT = Number(filaNTM[5]) || 0;
+      var estPagoNT = filaNTM[9] ? filaNTM[9].toString() : '';
+      if (tipoNT === 'Egreso' && estPagoNT === 'Pendiente') egresosPendientesNT += realNT;
+    }
+  }
+
+  // ═══ LIQUIDEZ FAMILIA ═══
+  var liquidez = { cajaDisponible: 0, semanas: [], saldoFinal: 0 };
+  if (tablero) {
+    liquidez.cajaDisponible = leerNumero(tablero.getRange(FILA_CAJA_DISP, 4));
+    var nombresS = ['Esta semana', 'Prox. semana', '3ra semana'];
     for (var k = 0; k < 3; k++) {
       var filaS = FILA_SEMANA_1 + k;
-      semanasFam.push({
-        nombre: nombresSemanadas[k],
-        gastos: leerNumero(tablero.getRange(filaS, 3)),  // Columna C
-        saldo: leerNumero(tablero.getRange(filaS, 4)),   // Columna D
-        estado: tablero.getRange(filaS, 5).getValue() || ''
+      liquidez.semanas.push({
+        nombre: nombresS[k],
+        gastos: leerNumero(tablero.getRange(filaS, 3)),
+        saldo: leerNumero(tablero.getRange(filaS, 4))
       });
     }
-    totalGastosFam = leerNumero(tablero.getRange(FILA_SALDO_FINAL_FAM, 3)); // C33
-    saldoFinalFam = leerNumero(tablero.getRange(FILA_SALDO_FINAL_FAM, 4));  // D33
+    liquidez.saldoFinal = leerNumero(tablero.getRange(FILA_SALDO_FINAL_FAM, 4));
   }
 
-  // BALANCE CRUZADO BIDIRECCIONAL (columna C=Este Mes, D=Acumulado)
-  // Estructura v6.3: 8 filas (FLOW NT→FAM: Préstamo, Devolución, Deuda + FLOW FAM→NT: Préstamo, Devolución, Deuda + Balance)
-  var prestamoNTMes = 0, prestamoNTAcum = 0;
-  var devFamMes = 0, devFamAcum = 0;
-  var deudaFamMes = 0, deudaFamAcum = 0;
-  var prestamoFamMes = 0, prestamoFamAcum = 0;
-  var devNTMes = 0, devNTAcum = 0;
-  var deudaNTMes = 0, deudaNTAcum = 0;
-  var balanceNetoMes = 0, balanceNeto = 0;
+  // ═══ BALANCE CRUZADO ═══
+  var balanceCruzado = {
+    prestamoNTMes: 0, prestamoNTAcum: 0, devFamMes: 0, devFamAcum: 0,
+    deudaFamMes: 0, deudaFamAcum: 0,
+    prestamoFamMes: 0, prestamoFamAcum: 0, devNTMes: 0, devNTAcum: 0,
+    deudaNTMes: 0, deudaNTAcum: 0,
+    balanceNetoMes: 0, balanceNeto: 0
+  };
   if (tablero) {
-    // FLOW 1: NT → FAM (filas relativas al inicio de Balance Cruzado)
-    var filaPrestamoNT = FILA_BALANCE_CRUZADO + 2;    // Préstamo NT → Familia
-    var filaDevFam = filaPrestamoNT + 1;              // Devolución Familia → NT
-    var filaDeudaFam = filaDevFam + 1;                // Deuda FAM → NT (subtotal)
-    // FLOW 2: FAM → NT
-    var filaPrestamoFam = filaDeudaFam + 1;           // Préstamo Familia → NT
-    var filaDevNT = filaPrestamoFam + 1;              // Devolución NT → Familia
-    var filaDeudaNT = filaDevNT + 1;                  // Deuda NT → FAM (subtotal)
-    // Balance Neto
-    var filaBalanceNeto = filaDeudaNT + 1;            // BALANCE NETO
-
-    prestamoNTMes = leerNumero(tablero.getRange(filaPrestamoNT, 3));
-    prestamoNTAcum = leerNumero(tablero.getRange(filaPrestamoNT, 4));
-    devFamMes = leerNumero(tablero.getRange(filaDevFam, 3));
-    devFamAcum = leerNumero(tablero.getRange(filaDevFam, 4));
-    deudaFamMes = leerNumero(tablero.getRange(filaDeudaFam, 3));
-    deudaFamAcum = leerNumero(tablero.getRange(filaDeudaFam, 4));
-    prestamoFamMes = leerNumero(tablero.getRange(filaPrestamoFam, 3));
-    prestamoFamAcum = leerNumero(tablero.getRange(filaPrestamoFam, 4));
-    devNTMes = leerNumero(tablero.getRange(filaDevNT, 3));
-    devNTAcum = leerNumero(tablero.getRange(filaDevNT, 4));
-    deudaNTMes = leerNumero(tablero.getRange(filaDeudaNT, 3));
-    deudaNTAcum = leerNumero(tablero.getRange(filaDeudaNT, 4));
-    balanceNetoMes = leerNumero(tablero.getRange(filaBalanceNeto, 3));
-    balanceNeto = leerNumero(tablero.getRange(filaBalanceNeto, 4));
+    var fBC = FILA_BALANCE_CRUZADO + 2;
+    balanceCruzado.prestamoNTMes = leerNumero(tablero.getRange(fBC, 3));
+    balanceCruzado.prestamoNTAcum = leerNumero(tablero.getRange(fBC, 4));
+    balanceCruzado.devFamMes = leerNumero(tablero.getRange(fBC+1, 3));
+    balanceCruzado.devFamAcum = leerNumero(tablero.getRange(fBC+1, 4));
+    balanceCruzado.deudaFamMes = leerNumero(tablero.getRange(fBC+2, 3));
+    balanceCruzado.deudaFamAcum = leerNumero(tablero.getRange(fBC+2, 4));
+    balanceCruzado.prestamoFamMes = leerNumero(tablero.getRange(fBC+3, 3));
+    balanceCruzado.prestamoFamAcum = leerNumero(tablero.getRange(fBC+3, 4));
+    balanceCruzado.devNTMes = leerNumero(tablero.getRange(fBC+4, 3));
+    balanceCruzado.devNTAcum = leerNumero(tablero.getRange(fBC+4, 4));
+    balanceCruzado.deudaNTMes = leerNumero(tablero.getRange(fBC+5, 3));
+    balanceCruzado.deudaNTAcum = leerNumero(tablero.getRange(fBC+5, 4));
+    balanceCruzado.balanceNetoMes = leerNumero(tablero.getRange(fBC+6, 3));
+    balanceCruzado.balanceNeto = leerNumero(tablero.getRange(fBC+6, 4));
   }
 
-  // PRESUPUESTO VS REAL POR CATEGORÍAS (desde MOVIMIENTO)
-  // ACTUALIZADO v4.1: Nueva estructura columnas - A=CONCEPTO, D=DÍA, E=PRESUPUESTO, F=REAL
-  var presupuestoFamilia = [];
-  var presupuestoNT = [];
-
+  // ═══ CATEGORY BREAKDOWN FROM MOVIMIENTO ═══
+  var categoriasFamilia = [];
+  var categoriasNT = [];
   if (movimiento) {
-    var datosFam = movimiento.getRange('A9:F70').getValues();  // A hasta F (6 columnas)
-    for (var m = 0; m < datosFam.length; m++) {
-      var row = datosFam[m];
-      var concepto = row[0];
-      if (concepto && concepto.toString().indexOf('►') >= 0) {
-        presupuestoFamilia.push({
-          categoria: concepto.toString().replace('►', '').trim(),
-          presupuesto: Number(row[4]) || 0,  // Columna E (índice 4) = PRESUPUESTO
-          real: Number(row[5]) || 0          // Columna F (índice 5) = REAL
+    var dataFMov = movimiento.getRange('A9:F116').getValues();
+    for (var m = 0; m < dataFMov.length; m++) {
+      var c = (dataFMov[m][0] || '').toString();
+      if (c.indexOf('\u25B6') >= 0) {
+        categoriasFamilia.push({
+          nombre: c.replace('\u25B6', '').trim(),
+          presupuesto: Number(dataFMov[m][4]) || 0,
+          real: Number(dataFMov[m][5]) || 0
         });
       }
     }
-
-    var datosNTMov = movimiento.getRange('A73:F150').getValues();  // A hasta F (6 columnas)
-    for (var n = 0; n < datosNTMov.length; n++) {
-      var rowNTMov = datosNTMov[n];
-      var conceptoNT = rowNTMov[0];
-      if (conceptoNT && conceptoNT.toString().indexOf('►') >= 0) {
-        presupuestoNT.push({
-          categoria: conceptoNT.toString().replace('►', '').trim(),
-          presupuesto: Number(rowNTMov[4]) || 0,  // Columna E (índice 4) = PRESUPUESTO
-          real: Number(rowNTMov[5]) || 0          // Columna F (índice 5) = REAL
+    var dataNMov = movimiento.getRange('A122:F206').getValues();
+    for (var n = 0; n < dataNMov.length; n++) {
+      var cn = (dataNMov[n][0] || '').toString();
+      if (cn.indexOf('\u25B6') >= 0) {
+        categoriasNT.push({
+          nombre: cn.replace('\u25B6', '').trim(),
+          presupuesto: Number(dataNMov[n][4]) || 0,
+          real: Number(dataNMov[n][5]) || 0
         });
       }
     }
   }
+
+  // ═══ 12-MONTH TREND DATA ═══
+  var tendencia = {
+    familia: {
+      ingresos: new Array(12).fill(0), egresos: new Array(12).fill(0),
+      ahorro: new Array(12).fill(0),
+      presupIngresos: new Array(12).fill(0), presupEgresos: new Array(12).fill(0)
+    },
+    neurotea: {
+      ingresos: new Array(12).fill(0), egresos: new Array(12).fill(0),
+      presupIngresos: new Array(12).fill(0), presupEgresos: new Array(12).fill(0)
+    }
+  };
+
+  // CARGA_FAMILIA monthly sums
+  if (cargaFam) {
+    var dataCF = cargaFam.getRange('A4:F500').getValues();
+    for (var ci = 0; ci < dataCF.length; ci++) {
+      var fecha = dataCF[ci][0];
+      var tipoC = (dataCF[ci][1] || '').toString();
+      var montoC = Number(dataCF[ci][5]) || 0;
+      if (!fecha || montoC === 0) continue;
+      var mesC, yearC;
+      try { mesC = fecha.getMonth(); yearC = fecha.getFullYear(); } catch(e) { continue; }
+      if (yearC !== AÑO) continue;
+      if (tipoC === 'Egreso Familiar') tendencia.familia.egresos[mesC] += montoC;
+      else if (tipoC === 'Ahorro') tendencia.familia.ahorro[mesC] += montoC;
+      else if (tipoC) tendencia.familia.ingresos[mesC] += montoC;
+    }
+  }
+
+  // CARGA_NT monthly sums
+  if (cargaNT) {
+    var dataCN = cargaNT.getRange('A4:F500').getValues();
+    for (var ni = 0; ni < dataCN.length; ni++) {
+      var fechaN = dataCN[ni][0];
+      var tipoN = (dataCN[ni][1] || '').toString();
+      var montoN = Number(dataCN[ni][5]) || 0;
+      if (!fechaN || montoN === 0) continue;
+      var mesN, yearN;
+      try { mesN = fechaN.getMonth(); yearN = fechaN.getFullYear(); } catch(e) { continue; }
+      if (yearN !== AÑO) continue;
+      if (tipoN === 'Egreso NT') tendencia.neurotea.egresos[mesN] += montoN;
+      else if (tipoN) tendencia.neurotea.ingresos[mesN] += montoN;
+    }
+  }
+
+  // GASTOS_FIJOS monthly sums (add to egresos)
+  if (gastosFijos) {
+    var dataGF = gastosFijos.getRange('A2:R500').getValues();
+    for (var gi = 0; gi < dataGF.length; gi++) {
+      var entidad = (dataGF[gi][1] || '').toString().trim();
+      if (!dataGF[gi][0] || !entidad) continue;
+      for (var gm = 0; gm < 12; gm++) {
+        var val = Number(dataGF[gi][6 + gm]) || 0;
+        if (val === 0) continue;
+        if (entidad === 'FAMILIA') tendencia.familia.egresos[gm] += val;
+        else if (entidad === 'NEUROTEA') tendencia.neurotea.egresos[gm] += val;
+      }
+    }
+  }
+
+  // PRESUPUESTO total rows (planned values per month)
+  if (presupuesto) {
+    var dataP = presupuesto.getRange('A1:P200').getValues();
+    for (var pi = 0; pi < dataP.length; pi++) {
+      var cp = (dataP[pi][0] || '').toString();
+      if (cp.indexOf('TOTAL INGRESOS FAMILIA') >= 0) {
+        for (var pm = 0; pm < 12; pm++) tendencia.familia.presupIngresos[pm] = Number(dataP[pi][3 + pm]) || 0;
+      } else if (cp.indexOf('TOTAL EGRESOS FAMILIA') >= 0) {
+        for (var pm = 0; pm < 12; pm++) tendencia.familia.presupEgresos[pm] = Number(dataP[pi][3 + pm]) || 0;
+      } else if (cp.indexOf('TOTAL INGRESOS NEUROTEA') >= 0) {
+        for (var pm = 0; pm < 12; pm++) tendencia.neurotea.presupIngresos[pm] = Number(dataP[pi][3 + pm]) || 0;
+      } else if (cp.indexOf('TOTAL EGRESOS NEUROTEA') >= 0) {
+        for (var pm = 0; pm < 12; pm++) tendencia.neurotea.presupEgresos[pm] = Number(dataP[pi][3 + pm]) || 0;
+      }
+    }
+  }
+
+  // ═══ RETURN COMPLETE DATA ═══
+  var disponibleFam = ingresosFamReal - egresosFamReal - ahorroFam - fondoEmergenciaFam;
+  var proyeccionFam = disponibleFam - egresosPendientesFam;
+  var pctGastosNT = ingresosNT > 0 ? Math.round(gastosNT / ingresosNT * 100) : 0;
 
   return {
     mes: mesSeleccionado,
-    año: AÑO,
-    cuentasFamilia: cuentasFamilia,
-    cuentasNT: cuentasNT,
-    totalCuentasNT: totalCuentasNT,
+    mesNum: mesNum,
+    meses: MESES_CORTOS,
     familia: {
-      ingresosPres: ingresosFamPres,
-      ingresosReal: ingresosFamReal,
-      egresosPres: egresosFamPres,
-      egresosReal: egresosFamReal,
-      egresosPendientes: egresosPendientesFam,
-      balancePres: balanceFamPres,
-      balanceReal: balanceFamReal
-    },
-    indicadoresFam: {
+      ingresos: ingresosFamReal,
+      egresos: egresosFamReal,
       ahorro: ahorroFam,
-      fondoEmergencia: fondoEmergenciaFam
+      fondoEmergencia: fondoEmergenciaFam,
+      pendientes: egresosPendientesFam,
+      disponible: disponibleFam,
+      proyeccion: proyeccionFam
     },
     neurotea: {
       ingresos: ingresosNT,
-      gastos: gastosNT,
-      egresosPendientes: egresosPendientesNT,
+      egresos: gastosNT,
+      pendientes: egresosPendientesNT,
       ganancia: gananciaNT,
-      meta: metaNT
+      meta: metaNT,
+      pctGastos: pctGastosNT,
+      distribucion: { utilidad: utilidadDueno, emergencia: fondoEmergenciaNT, inversion: fondoInversionNT }
     },
-    distribucion: {
-      utilidad: utilidadDueno,
-      emergencia: fondoEmergencia,
-      inversion: fondoInversion,
-      metaTotal: metaNT
-    },
-    presupuestoFamilia: presupuestoFamilia,
-    presupuestoNT: presupuestoNT,
-    liquidezFamilia: {
-      cajaDisponible: cajaDisponibleFam,
-      semanas: semanasFam,
-      totalGastos: totalGastosFam,
-      saldoFinal: saldoFinalFam
-    },
-    balanceCruzado: {
-      // FLOW NT → FAM
-      prestamoNTMes: prestamoNTMes,
-      prestamoNTAcum: prestamoNTAcum,
-      devFamMes: devFamMes,
-      devFamAcum: devFamAcum,
-      deudaFamMes: deudaFamMes,
-      deudaFamAcum: deudaFamAcum,
-      // FLOW FAM → NT
-      prestamoFamMes: prestamoFamMes,
-      prestamoFamAcum: prestamoFamAcum,
-      devNTMes: devNTMes,
-      devNTAcum: devNTAcum,
-      deudaNTMes: deudaNTMes,
-      deudaNTAcum: deudaNTAcum,
-      // Balance neto
-      balanceNetoMes: balanceNetoMes,
-      balanceNeto: balanceNeto
-    },
-    // v7.6: METAS leídas desde CONFIG
-    metas: {
-      ganancia: metaGananciaPct,
-      maxGastos: metaMaxGastosPct,
-      distUtilidad: distUtilidadPct,
-      distEmergencia: distEmergenciaPct,
-      distInversion: distInversionPct
-    }
+    cuentasFamilia: cuentasFamilia,
+    cuentasNT: cuentasNT,
+    totalCuentasNT: totalCuentasNT,
+    categorias: { familia: categoriasFamilia, neurotea: categoriasNT },
+    tendencia: tendencia,
+    liquidez: liquidez,
+    balanceCruzado: balanceCruzado,
+    metas: metas
   };
 }
 
-// Función auxiliar para formatear números
-function formatearGuaranies(num) {
-  if (num === 0 || num === null || num === undefined) return '0';
-  return new Intl.NumberFormat('es-PY').format(Math.round(num));
+// ═══════════════════════════════════════════════════════════════════════════════
+// HTML GENERATION - Complete dashboard with Google Charts
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function generarHTMLDashboard() {
+  var datos = obtenerDatosDashboard();
+  var dataJson = JSON.stringify(datos);
+
+  // ═══ CSS ═══
+  var css = ''
+  + '* { margin:0; padding:0; box-sizing:border-box; }'
+  + 'body { font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#f1f5f9; color:#1e293b; }'
+  + '.header { background:#1e293b; color:white; padding:16px 24px; display:flex; justify-content:space-between; align-items:center; }'
+  + '.header h1 { font-size:1.3em; font-weight:700; }'
+  + '.header-right { display:flex; align-items:center; gap:16px; font-size:0.9em; }'
+  + '.header select { padding:6px 12px; border:none; border-radius:6px; font-weight:600; background:white; color:#1e293b; }'
+  + '.tabs { display:flex; background:#e2e8f0; border-bottom:2px solid #cbd5e1; }'
+  + '.tab { padding:12px 28px; cursor:pointer; font-weight:600; font-size:0.95em; border:none; background:transparent; color:#64748b; transition:all 0.2s; }'
+  + '.tab:hover { background:#f1f5f9; color:#334155; }'
+  + '.tab.active { background:white; color:#1e293b; border-bottom:3px solid #3b82f6; margin-bottom:-2px; }'
+  + '.tab-content { display:none; padding:20px; max-width:1500px; margin:0 auto; }'
+  + '.tab-content.active { display:block; }'
+  + '.grid { display:grid; gap:16px; margin-bottom:16px; }'
+  + '.grid-5 { grid-template-columns:repeat(5,1fr); }'
+  + '.grid-2 { grid-template-columns:1fr 1fr; }'
+  + '.grid-1 { grid-template-columns:1fr; }'
+  + '.grid-3 { grid-template-columns:1fr 1fr 1fr; }'
+  + '.card { background:white; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }'
+  + '.card-title { font-weight:700; font-size:0.85em; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #f1f5f9; }'
+  + '.kpi { border-left:4px solid #e2e8f0; padding:14px 16px; border-radius:8px; background:white; box-shadow:0 1px 3px rgba(0,0,0,0.06); }'
+  + '.kpi-label { font-size:0.75em; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }'
+  + '.kpi-value { font-size:1.5em; font-weight:700; }'
+  + '.kpi-sub { font-size:0.8em; margin-top:4px; }'
+  + '.kpi-blue { border-left-color:#3b82f6; } .kpi-blue .kpi-value { color:#1d4ed8; }'
+  + '.kpi-red { border-left-color:#ef4444; } .kpi-red .kpi-value { color:#dc2626; }'
+  + '.kpi-green { border-left-color:#22c55e; } .kpi-green .kpi-value { color:#16a34a; }'
+  + '.kpi-amber { border-left-color:#f59e0b; } .kpi-amber .kpi-value { color:#d97706; }'
+  + '.kpi-gray { border-left-color:#6b7280; } .kpi-gray .kpi-value { color:#374151; }'
+  + '.chart-box { min-height:300px; }'
+  + 'table { width:100%; border-collapse:collapse; font-size:0.88em; }'
+  + 'th { background:#f8fafc; padding:10px 8px; text-align:left; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0; }'
+  + 'td { padding:9px 8px; border-bottom:1px solid #f1f5f9; }'
+  + 'tr:hover td { background:#f8fafc; }'
+  + '.text-right { text-align:right; } .text-center { text-align:center; } .font-bold { font-weight:600; }'
+  + '.text-green { color:#16a34a; } .text-red { color:#dc2626; } .text-blue { color:#2563eb; } .text-amber { color:#d97706; } .text-gray { color:#6b7280; }'
+  + '.badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.78em; font-weight:600; }'
+  + '.badge-green { background:#dcfce7; color:#166534; } .badge-red { background:#fef2f2; color:#991b1b; } .badge-amber { background:#fef3c7; color:#92400e; }'
+  + '.alert-card { padding:20px; border-radius:10px; text-align:center; }'
+  + '.alert-card .icon { font-size:2.5em; margin-bottom:8px; }'
+  + '.alert-card .title { font-size:1.1em; font-weight:700; margin-bottom:4px; }'
+  + '.alert-card .value { font-size:1.8em; font-weight:700; margin-bottom:8px; }'
+  + '.alert-card .desc { font-size:0.88em; color:#64748b; }'
+  + '.liq-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:8px; margin-bottom:6px; }'
+  + '.liq-rojo { background:#fef2f2; } .liq-amarillo { background:#fef3c7; } .liq-verde { background:#f0fdf4; } .liq-azul { background:#eff6ff; }'
+  + '.section-title { font-size:0.95em; font-weight:700; color:#334155; margin-bottom:12px; display:flex; align-items:center; gap:6px; }'
+  + '.footer { text-align:center; padding:16px; color:#94a3b8; font-size:0.8em; border-top:1px solid #e2e8f0; background:white; margin-top:20px; }'
+  + '@media(max-width:1200px) { .grid-5{grid-template-columns:repeat(3,1fr);} .grid-2{grid-template-columns:1fr;} .grid-3{grid-template-columns:1fr;} }'
+  + '@media(max-width:768px) { .grid-5{grid-template-columns:repeat(2,1fr);} .tab{padding:10px 16px;font-size:0.85em;} }';
+
+  // ═══ HTML BODY ═══
+
+  // --- KPI helper ---
+  function kpi(clase, label, valor, sub) {
+    return '<div class="kpi ' + clase + '"><div class="kpi-label">' + label + '</div>'
+      + '<div class="kpi-value">Gs. ' + formatearGuaranies(valor) + '</div>'
+      + (sub ? '<div class="kpi-sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  function pctBadge(pres, real, esIngreso) {
+    if (pres === 0) return '';
+    var pct = Math.round(real / pres * 100);
+    var cls = esIngreso ? (pct >= 100 ? 'badge-green' : pct >= 90 ? 'badge-amber' : 'badge-red')
+                        : (pct <= 100 ? 'badge-green' : pct <= 110 ? 'badge-amber' : 'badge-red');
+    return '<span class="badge ' + cls + '">' + pct + '% ejecutado</span>';
+  }
+
+  // --- FAMILIA TAB ---
+  var famTab = '';
+
+  // KPIs
+  famTab += '<div class="grid grid-5">';
+  famTab += kpi('kpi-blue', 'Ingresos del mes', datos.familia.ingresos, '');
+  famTab += kpi('kpi-red', 'Egresos pagados', datos.familia.egresos, '');
+  famTab += kpi('kpi-green', 'Ahorro', datos.familia.ahorro, '');
+  famTab += kpi('kpi-gray', 'Disponible', datos.familia.disponible, '');
+  famTab += kpi('kpi-amber', 'Pendientes', datos.familia.pendientes, '');
+  famTab += '</div>';
+
+  // Trend chart
+  famTab += '<div class="card"><div class="card-title">Ingresos vs Egresos - Evolucion Mensual ' + AÑO + '</div><div id="chart_fam_trend" class="chart-box"></div></div>';
+
+  // Category bars + Donut
+  famTab += '<div class="grid grid-2">';
+  famTab += '<div class="card"><div class="card-title">Detalle de egresos del mes</div><div id="chart_fam_cat_bars" class="chart-box"></div></div>';
+  famTab += '<div class="card"><div class="card-title">Distribucion de egresos</div><div id="chart_fam_donut" class="chart-box"></div></div>';
+  famTab += '</div>';
+
+  // Budget vs Real
+  famTab += '<div class="card"><div class="card-title">Presupuesto vs Real por categoria</div><div id="chart_fam_budget" class="chart-box"></div></div>';
+
+  // Accounts + Liquidez
+  famTab += '<div class="grid grid-2">';
+  // Accounts table
+  famTab += '<div class="card"><div class="card-title">Saldos por cuenta bancaria</div><table><thead><tr><th>Cuenta</th><th class="text-right">Esperado</th><th class="text-right">Banco</th><th class="text-right">Dif.</th></tr></thead><tbody>';
+  for (var ai = 0; ai < datos.cuentasFamilia.length; ai++) {
+    var ct = datos.cuentasFamilia[ai];
+    var difCls = ct.diferencia > 0 ? 'text-green' : ct.diferencia < 0 ? 'text-red' : 'text-gray';
+    famTab += '<tr><td>' + ct.nombre + '</td><td class="text-right">' + formatearGuaranies(ct.esperado) + '</td><td class="text-right text-blue font-bold">' + formatearGuaranies(ct.real) + '</td><td class="text-right font-bold ' + difCls + '">' + (ct.diferencia !== 0 ? formatearGuaranies(ct.diferencia) : '-') + '</td></tr>';
+  }
+  famTab += '</tbody></table></div>';
+
+  // Liquidez
+  famTab += '<div class="card"><div class="card-title">Liquidez - Gastos pendientes</div>';
+  famTab += '<div class="liq-item liq-verde"><span>Disponible</span><span class="font-bold text-green">Gs. ' + formatearGuaranies(datos.liquidez.cajaDisponible) + '</span></div>';
+  for (var li = 0; li < datos.liquidez.semanas.length; li++) {
+    var sem = datos.liquidez.semanas[li];
+    var liqCls = li === 0 ? 'liq-amarillo' : li === 1 ? 'liq-azul' : 'liq-azul';
+    famTab += '<div class="liq-item ' + liqCls + '"><span>' + sem.nombre + '</span><span class="font-bold">- Gs. ' + formatearGuaranies(sem.gastos) + '</span></div>';
+  }
+  var saldoFinCls = datos.liquidez.saldoFinal >= 0 ? 'text-green' : 'text-red';
+  famTab += '<div class="liq-item" style="background:#1e293b;color:white;margin-top:6px"><span class="font-bold">Saldo fin de mes</span><span class="font-bold">Gs. ' + formatearGuaranies(datos.liquidez.saldoFinal) + '</span></div>';
+  famTab += '</div>';
+  famTab += '</div>'; // close grid-2
+
+  // --- NEUROTEA TAB ---
+  var ntTab = '';
+
+  // KPIs
+  ntTab += '<div class="grid grid-5">';
+  ntTab += kpi('kpi-blue', 'Ingresos del mes', datos.neurotea.ingresos, '');
+  ntTab += kpi('kpi-red', 'Egresos pagados', datos.neurotea.egresos, '');
+  ntTab += kpi('kpi-green', 'Ganancia real', datos.neurotea.ganancia, (datos.neurotea.ganancia >= datos.neurotea.meta ? '<span class="text-green">Meta cumplida</span>' : '<span class="text-red">Meta no cumplida</span>'));
+  ntTab += kpi('kpi-amber', 'Pendientes', datos.neurotea.pendientes, '');
+  ntTab += kpi('kpi-gray', '% Gastos / Ingresos', 0, '').replace('Gs. 0', datos.neurotea.pctGastos + '%').replace('kpi-gray', datos.neurotea.pctGastos <= datos.metas.maxGastos ? 'kpi-green' : 'kpi-red');
+  ntTab += '</div>';
+
+  // Trend chart
+  ntTab += '<div class="card"><div class="card-title">Estado de Resultados Mensual - NeuroTEA ' + AÑO + '</div><div id="chart_nt_trend" class="chart-box"></div></div>';
+
+  // Category bars + Donut
+  ntTab += '<div class="grid grid-2">';
+  ntTab += '<div class="card"><div class="card-title">Detalle de egresos del mes</div><div id="chart_nt_cat_bars" class="chart-box"></div></div>';
+  ntTab += '<div class="card"><div class="card-title">Distribucion de egresos</div><div id="chart_nt_donut" class="chart-box"></div></div>';
+  ntTab += '</div>';
+
+  // Ganancia distribution
+  ntTab += '<div class="card"><div class="card-title">Distribucion de ganancia (Meta: Gs. ' + formatearGuaranies(datos.neurotea.meta) + ')</div><div id="chart_nt_ganancia" class="chart-box" style="min-height:250px"></div></div>';
+
+  // Budget vs Real
+  ntTab += '<div class="card"><div class="card-title">Presupuesto vs Real por categoria</div><div id="chart_nt_budget" class="chart-box"></div></div>';
+
+  // Accounts table
+  ntTab += '<div class="card"><div class="card-title">Cuentas NeuroTEA</div><table><thead><tr><th>Cuenta</th><th class="text-right">Esperado</th><th class="text-right">Acumulado</th></tr></thead><tbody>';
+  for (var nai = 0; nai < datos.cuentasNT.length; nai++) {
+    var cnt = datos.cuentasNT[nai];
+    ntTab += '<tr><td>' + cnt.nombre + '</td><td class="text-right text-blue font-bold">' + formatearGuaranies(cnt.saldo) + '</td><td class="text-right">' + formatearGuaranies(cnt.acumulado) + '</td></tr>';
+  }
+  ntTab += '<tr style="background:#f1f5f9"><td class="font-bold">TOTAL</td><td class="text-right font-bold text-blue">' + formatearGuaranies(datos.totalCuentasNT) + '</td><td></td></tr>';
+  ntTab += '</tbody></table></div>';
+
+  // --- BALANCE CRUZADO TAB ---
+  var balTab = '';
+  var bc = datos.balanceCruzado;
+  var balNeto = bc.balanceNeto;
+  var estadoTxt = balNeto > 0 ? 'FAMILIA DEBE A NT' : balNeto < 0 ? 'NT DEBE A FAMILIA' : 'EQUILIBRADO';
+  var estadoIcon = balNeto > 0 ? '\uD83D\uDD34' : balNeto < 0 ? '\uD83D\uDFE1' : '\u2705';
+  var estadoBg = balNeto > 0 ? '#fef2f2' : balNeto < 0 ? '#fefce8' : '#f0fdf4';
+  var estadoColor = balNeto > 0 ? '#dc2626' : balNeto < 0 ? '#d97706' : '#16a34a';
+
+  // KPIs
+  balTab += '<div class="grid grid-3">';
+  balTab += kpi('kpi-red', 'Deuda FAMILIA a NT', bc.deudaFamAcum, 'Acumulado a\u00F1o');
+  balTab += kpi('kpi-amber', 'Deuda NT a FAMILIA', bc.deudaNTAcum, 'Acumulado a\u00F1o');
+  balTab += '<div class="kpi" style="border-left-color:' + estadoColor + '"><div class="kpi-label">Balance neto</div><div class="kpi-value" style="color:' + estadoColor + '">Gs. ' + formatearGuaranies(Math.abs(balNeto)) + '</div><div class="kpi-sub">' + estadoTxt + '</div></div>';
+  balTab += '</div>';
+
+  // Alert + Table
+  balTab += '<div class="grid grid-2">';
+  // Table
+  balTab += '<div class="card"><div class="card-title">Detalle de flujos cruzados</div><table><thead><tr><th>Concepto</th><th class="text-right">Este mes</th><th class="text-right">Acumulado</th></tr></thead><tbody>';
+  balTab += '<tr style="background:#fef2f2"><td colspan="3" class="font-bold">NT \u2192 FAMILIA</td></tr>';
+  balTab += '<tr><td>Prestamo NT \u2192 Familia</td><td class="text-right">' + formatearGuaranies(bc.prestamoNTMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.prestamoNTAcum) + '</td></tr>';
+  balTab += '<tr><td>Devolucion Familia \u2192 NT</td><td class="text-right text-green">' + formatearGuaranies(bc.devFamMes) + '</td><td class="text-right text-green font-bold">' + formatearGuaranies(bc.devFamAcum) + '</td></tr>';
+  balTab += '<tr style="background:#f1f5f9"><td class="font-bold">Deuda FAM \u2192 NT</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaFamMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaFamAcum) + '</td></tr>';
+  balTab += '<tr style="background:#fefce8"><td colspan="3" class="font-bold">FAMILIA \u2192 NT</td></tr>';
+  balTab += '<tr><td>Prestamo Familia \u2192 NT</td><td class="text-right">' + formatearGuaranies(bc.prestamoFamMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.prestamoFamAcum) + '</td></tr>';
+  balTab += '<tr><td>Devolucion NT \u2192 Familia</td><td class="text-right text-green">' + formatearGuaranies(bc.devNTMes) + '</td><td class="text-right text-green font-bold">' + formatearGuaranies(bc.devNTAcum) + '</td></tr>';
+  balTab += '<tr style="background:#f1f5f9"><td class="font-bold">Deuda NT \u2192 FAM</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaNTMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaNTAcum) + '</td></tr>';
+  balTab += '</tbody></table></div>';
+
+  // Alert box
+  balTab += '<div class="card" style="display:flex;align-items:center;justify-content:center"><div class="alert-card" style="background:' + estadoBg + '">';
+  balTab += '<div class="icon">' + estadoIcon + '</div>';
+  balTab += '<div class="title" style="color:' + estadoColor + '">' + estadoTxt + '</div>';
+  balTab += '<div class="value" style="color:' + estadoColor + '">Gs. ' + formatearGuaranies(Math.abs(balNeto)) + '</div>';
+  if (balNeto > 0) balTab += '<div class="desc">NeuroTEA ha prestado mas a Familia de lo que Familia ha devuelto.</div>';
+  else if (balNeto < 0) balTab += '<div class="desc">Familia ha prestado mas a NeuroTEA de lo que NT ha devuelto.</div>';
+  else balTab += '<div class="desc">No hay deudas pendientes entre entidades.</div>';
+  balTab += '</div></div>';
+  balTab += '</div>'; // close grid-2
+
+  // ═══ JAVASCRIPT FOR CHARTS ═══
+  var js = ''
+  // --- Tab switching ---
+  + 'function showTab(name){'
+  + '  document.querySelectorAll(".tab-content").forEach(function(t){t.classList.remove("active");});'
+  + '  document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("active");});'
+  + '  document.getElementById("tab-"+name).classList.add("active");'
+  + '  document.querySelector("[data-tab=\\""+name+"\\"]").classList.add("active");'
+  + '  if(name==="familia") drawFamiliaCharts();'
+  + '  else if(name==="neurotea") drawNeuroteaCharts();'
+  + '}'
+
+  // --- Format helper ---
+  + 'function fmtGs(n){if(!n)return"0";return new Intl.NumberFormat("es-PY").format(Math.round(n));}'
+
+  // --- Google Charts load ---
+  + 'google.charts.load("current",{packages:["corechart"]});'
+  + 'google.charts.setOnLoadCallback(function(){drawFamiliaCharts();});'
+
+  // --- Common chart options ---
+  + 'var BASE_OPT={fontName:"Inter",backgroundColor:"transparent",chartArea:{left:60,top:40,right:20,bottom:50,width:"85%",height:"70%"},legend:{position:"top",textStyle:{fontSize:11}},animation:{startup:true,duration:600,easing:"out"},titleTextStyle:{color:"#334155",fontSize:13,bold:true}};'
+
+  // ═══ FAMILIA CHARTS ═══
+  + 'function drawFamiliaCharts(){'
+  + '  drawFamTrend();drawFamCatBars();drawFamDonut();drawFamBudget();'
+  + '}'
+
+  // Combo: 12-month trend
+  + 'function drawFamTrend(){'
+  + '  var d=new google.visualization.DataTable();'
+  + '  d.addColumn("string","Mes");d.addColumn("number","Ingresos");d.addColumn("number","Egresos");d.addColumn("number","Balance");'
+  + '  for(var i=0;i<12;i++){'
+  + '    var ing=DATA.tendencia.familia.ingresos[i];var egr=DATA.tendencia.familia.egresos[i];'
+  + '    var bal=ing-egr-DATA.tendencia.familia.ahorro[i];'
+  + '    d.addRow([DATA.meses[i],ing||null,egr||null,(ing||egr)?bal:null]);'
+  + '  }'
+  + '  var o=Object.assign({},BASE_OPT,{seriesType:"bars",series:{2:{type:"line",lineWidth:3,pointSize:5,color:"#22c55e"}},colors:["#3b82f6","#ef4444"],vAxes:{0:{title:"Gs.",format:"short"}},bar:{groupWidth:"60%"}});'
+  + '  new google.visualization.ComboChart(document.getElementById("chart_fam_trend")).draw(d,o);'
+  + '}'
+
+  // Bar: Category breakdown
+  + 'function drawFamCatBars(){'
+  + '  var cats=DATA.categorias.familia;var gastos=[];var total=0;'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("AHORRO")===-1&&c.real>0){gastos.push(c);total+=c.real;}}'
+  + '  gastos.sort(function(a,b){return b.real-a.real;});'
+  + '  var d=new google.visualization.DataTable();d.addColumn("string","Categoria");d.addColumn("number","Monto");d.addColumn({type:"string",role:"annotation"});'
+  + '  var colors=["#ef4444","#f97316","#eab308","#06b6d4","#8b5cf6","#6b7280"];'
+  + '  for(var i=0;i<gastos.length;i++){var g=gastos[i];var pct=total>0?Math.round(g.real/total*100):0;d.addRow([g.nombre,g.real,"Gs. "+fmtGs(g.real)+" | "+pct+"%"]);}'
+  + '  if(gastos.length===0){document.getElementById("chart_fam_cat_bars").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin egresos registrados</p>";return;}'
+  + '  var o=Object.assign({},BASE_OPT,{bars:"horizontal",legend:"none",colors:colors,chartArea:{left:130,top:20,right:80,bottom:20,width:"60%",height:"85%"},annotations:{textStyle:{fontSize:11,color:"#334155"},alwaysOutside:true}});'
+  + '  new google.visualization.BarChart(document.getElementById("chart_fam_cat_bars")).draw(d,o);'
+  + '}'
+
+  // Donut: Expense distribution
+  + 'function drawFamDonut(){'
+  + '  var cats=DATA.categorias.familia;var d=[["Categoria","Monto"]];'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("AHORRO")===-1&&c.real>0)d.push([c.nombre,c.real]);}'
+  + '  if(d.length===1){document.getElementById("chart_fam_donut").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
+  + '  var o=Object.assign({},BASE_OPT,{pieHole:0.4,pieSliceText:"percentage",colors:["#ef4444","#f97316","#eab308","#06b6d4","#8b5cf6","#6b7280"],chartArea:{left:10,top:30,right:10,bottom:10,width:"90%",height:"85%"},legend:{position:"right",textStyle:{fontSize:11}}});'
+  + '  new google.visualization.PieChart(document.getElementById("chart_fam_donut")).draw(google.visualization.arrayToDataTable(d),o);'
+  + '}'
+
+  // Budget vs Real grouped bars
+  + 'function drawFamBudget(){'
+  + '  var cats=DATA.categorias.familia;var d=[["Categoria","Presupuesto","Real"]];'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];if(c.presupuesto>0||c.real>0)d.push([c.nombre,c.presupuesto,c.real]);}'
+  + '  if(d.length===1){document.getElementById("chart_fam_budget").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
+  + '  var o=Object.assign({},BASE_OPT,{bars:"horizontal",colors:["#94a3b8","#3b82f6"],chartArea:{left:150,top:40,right:30,bottom:20,width:"65%",height:"80%"},bar:{groupWidth:"70%"}});'
+  + '  new google.visualization.BarChart(document.getElementById("chart_fam_budget")).draw(google.visualization.arrayToDataTable(d),o);'
+  + '}'
+
+  // ═══ NEUROTEA CHARTS ═══
+  + 'function drawNeuroteaCharts(){'
+  + '  drawNTTrend();drawNTCatBars();drawNTDonut();drawNTGanancia();drawNTBudget();'
+  + '}'
+
+  // Combo: 12-month Income Statement
+  + 'function drawNTTrend(){'
+  + '  var d=new google.visualization.DataTable();'
+  + '  d.addColumn("string","Mes");d.addColumn("number","Ingresos");d.addColumn("number","Egresos");d.addColumn("number","% Ganancia");'
+  + '  for(var i=0;i<12;i++){'
+  + '    var ing=DATA.tendencia.neurotea.ingresos[i];var egr=DATA.tendencia.neurotea.egresos[i];'
+  + '    var pct=ing>0?Math.round((ing-egr)/ing*100):null;'
+  + '    d.addRow([DATA.meses[i],ing||null,egr||null,(ing>0)?pct:null]);'
+  + '  }'
+  + '  var o=Object.assign({},BASE_OPT,{seriesType:"bars",series:{2:{type:"line",targetAxisIndex:1,lineWidth:3,pointSize:5,color:"#22c55e"}},colors:["#3b82f6","#ef4444"],vAxes:{0:{title:"Gs.",format:"short"},1:{title:"% Ganancia",format:"#\\'%\\'",viewWindow:{min:0,max:30}}},bar:{groupWidth:"60%"}});'
+  + '  new google.visualization.ComboChart(document.getElementById("chart_nt_trend")).draw(d,o);'
+  + '}'
+
+  // Bar: NT category breakdown
+  + 'function drawNTCatBars(){'
+  + '  var cats=DATA.categorias.neurotea;var gastos=[];var total=0;'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("GANANCIA")===-1&&c.real>0){gastos.push(c);total+=c.real;}}'
+  + '  gastos.sort(function(a,b){return b.real-a.real;});'
+  + '  var d=new google.visualization.DataTable();d.addColumn("string","Categoria");d.addColumn("number","Monto");d.addColumn({type:"string",role:"annotation"});'
+  + '  var colors=["#3b82f6","#6366f1","#8b5cf6","#06b6d4","#14b8a6","#6b7280"];'
+  + '  for(var i=0;i<gastos.length;i++){var g=gastos[i];var pct=total>0?Math.round(g.real/total*100):0;d.addRow([g.nombre,g.real,"Gs. "+fmtGs(g.real)+" | "+pct+"%"]);}'
+  + '  if(gastos.length===0){document.getElementById("chart_nt_cat_bars").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin egresos registrados</p>";return;}'
+  + '  var o=Object.assign({},BASE_OPT,{bars:"horizontal",legend:"none",colors:colors,chartArea:{left:160,top:20,right:100,bottom:20,width:"50%",height:"85%"},annotations:{textStyle:{fontSize:11,color:"#334155"},alwaysOutside:true}});'
+  + '  new google.visualization.BarChart(document.getElementById("chart_nt_cat_bars")).draw(d,o);'
+  + '}'
+
+  // Donut: NT expense distribution
+  + 'function drawNTDonut(){'
+  + '  var cats=DATA.categorias.neurotea;var d=[["Categoria","Monto"]];'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("GANANCIA")===-1&&c.real>0)d.push([c.nombre,c.real]);}'
+  + '  if(d.length===1){document.getElementById("chart_nt_donut").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
+  + '  var o=Object.assign({},BASE_OPT,{pieHole:0.4,pieSliceText:"percentage",colors:["#3b82f6","#6366f1","#8b5cf6","#06b6d4","#14b8a6","#6b7280"],chartArea:{left:10,top:30,right:10,bottom:10,width:"90%",height:"85%"},legend:{position:"right",textStyle:{fontSize:11}}});'
+  + '  new google.visualization.PieChart(document.getElementById("chart_nt_donut")).draw(google.visualization.arrayToDataTable(d),o);'
+  + '}'
+
+  // Column: Ganancia distribution
+  + 'function drawNTGanancia(){'
+  + '  var dist=DATA.neurotea.distribucion;var metas=DATA.metas;var metaTotal=DATA.neurotea.meta;'
+  + '  var metaUtil=Math.round(metaTotal*metas.distUtilidad/100);var metaEmerg=Math.round(metaTotal*metas.distEmergencia/100);var metaInv=Math.round(metaTotal*metas.distInversion/100);'
+  + '  var d=google.visualization.arrayToDataTable(['
+  + '    ["Fondo","Meta","Real"],'
+  + '    ["Utilidad Dueno ("+metas.distUtilidad+"%)",metaUtil,dist.utilidad],'
+  + '    ["Fondo Emergencia ("+metas.distEmergencia+"%)",metaEmerg,dist.emergencia],'
+  + '    ["Fondo Inversion ("+metas.distInversion+"%)",metaInv,dist.inversion]'
+  + '  ]);'
+  + '  var o=Object.assign({},BASE_OPT,{colors:["#94a3b8","#22c55e"],bar:{groupWidth:"50%"},vAxis:{format:"short"}});'
+  + '  new google.visualization.ColumnChart(document.getElementById("chart_nt_ganancia")).draw(d,o);'
+  + '}'
+
+  // Budget vs Real NT
+  + 'function drawNTBudget(){'
+  + '  var cats=DATA.categorias.neurotea;var d=[["Categoria","Presupuesto","Real"]];'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];if(c.presupuesto>0||c.real>0)d.push([c.nombre,c.presupuesto,c.real]);}'
+  + '  if(d.length===1){document.getElementById("chart_nt_budget").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
+  + '  var o=Object.assign({},BASE_OPT,{bars:"horizontal",colors:["#94a3b8","#3b82f6"],chartArea:{left:180,top:40,right:30,bottom:20,width:"55%",height:"80%"},bar:{groupWidth:"70%"}});'
+  + '  new google.visualization.BarChart(document.getElementById("chart_nt_budget")).draw(google.visualization.arrayToDataTable(d),o);'
+  + '}';
+
+  // ═══ ASSEMBLE COMPLETE HTML ═══
+  return '<!DOCTYPE html>'
+  + '<html lang="es"><head>'
+  + '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">'
+  + '<title>Control Financiero ' + AÑO + '</title>'
+  + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">'
+  + '<style>' + css + '</style>'
+  + '</head><body>'
+  + '<div class="header"><h1>Control Financiero ' + AÑO + '</h1>'
+  + '<div class="header-right"><span>Mes: <strong>' + datos.mes + '</strong></span><span>|</span><span>' + new Date().toLocaleDateString('es-PY') + '</span></div>'
+  + '</div>'
+  + '<div class="tabs">'
+  + '<button class="tab active" data-tab="familia" onclick="showTab(\'familia\')">FAMILIA</button>'
+  + '<button class="tab" data-tab="neurotea" onclick="showTab(\'neurotea\')">NEUROTEA</button>'
+  + '<button class="tab" data-tab="balance" onclick="showTab(\'balance\')">BALANCE CRUZADO</button>'
+  + '</div>'
+  + '<div id="tab-familia" class="tab-content active">' + famTab + '</div>'
+  + '<div id="tab-neurotea" class="tab-content">' + ntTab + '</div>'
+  + '<div id="tab-balance" class="tab-content">' + balTab + '</div>'
+  + '<div class="footer">Control Financiero ' + AÑO + ' - NeuroTEA & Familia | v' + VERSION + '</div>'
+  + '<script src="https://www.gstatic.com/charts/loader.js"><\/script>'
+  + '<script>var DATA=' + dataJson + ';' + js + '<\/script>'
+  + '</body></html>';
 }
