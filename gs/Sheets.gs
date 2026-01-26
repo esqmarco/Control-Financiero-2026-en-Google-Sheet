@@ -1785,8 +1785,8 @@ function aplicarFormatoCondicionalMovimiento(sheet) {
  */
 function crearHojaLIQUIDEZ_FAMILIA() {
   const sheet = crearOLimpiarHoja(NOMBRES_HOJAS.LIQUIDEZ_FAM);
-  // v7.1: Rangos corregidos según CLAUDE.md (FAMILIA: 9-113)
-  return crearHojaLiquidezEntidad(sheet, 'FAMILIA', '🏠', 9, 113);
+  // v7.25: Rangos actualizados (FAMILIA: 9-116) - 3 reservas variables más
+  return crearHojaLiquidezEntidad(sheet, 'FAMILIA', '🏠', 9, 116);
 }
 
 /**
@@ -1795,8 +1795,8 @@ function crearHojaLIQUIDEZ_FAMILIA() {
  */
 function crearHojaLIQUIDEZ_NT() {
   const sheet = crearOLimpiarHoja(NOMBRES_HOJAS.LIQUIDEZ_NT);
-  // v7.1: Rangos corregidos según CLAUDE.md (NEUROTEA: 119-200)
-  return crearHojaLiquidezEntidad(sheet, 'NEUROTEA', '🏥', 119, 200);
+  // v7.25: Rangos actualizados (NEUROTEA: 122-206) - 3 reservas variables más en FAM y NT
+  return crearHojaLiquidezEntidad(sheet, 'NEUROTEA', '🏥', 122, 206);
 }
 
 /**

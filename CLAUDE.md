@@ -136,7 +136,7 @@ gs/
 
 ## Subcategorías Variables
 
-### FAMILIA - VARIABLES (16 items - v7.7)
+### FAMILIA - VARIABLES (19 items - v7.25)
 1. Supermercado
 2. Combustible
 3. **Alimentación** (v7.7)
@@ -151,10 +151,9 @@ gs/
 12. **Devolución Familia → NT** (FAM devuelve préstamo a NT)
 13. **Préstamo Familia → NT** (FAM presta a NT)
 14. **Gastos del Colegio** (v7.22)
-15. Reserva Var. 2
-16. Reserva Var. 3
+15-19. Reserva Var. 1 a Reserva Var. 5 (renombrables desde CONFIG)
 
-### NEUROTEA - VARIABLES (12 items - v7.7)
+### NEUROTEA - VARIABLES (15 items - v7.25)
 1. Insumos y Papelería
 2. Reparaciones Clínica
 3. Mantenimiento Aire
@@ -165,8 +164,7 @@ gs/
 8. **Préstamo NT → Familia** (NT presta a FAM)
 9. **Devolución NT → Familia** (NT devuelve préstamo a FAM)
 10. **Muebles y equipos** (v7.22)
-11. Reserva Var. 2
-12. Reserva Var. 3
+11-15. Reserva Var. 1 a Reserva Var. 5 (renombrables desde CONFIG)
 
 ### NEUROTEA - EVENTOS (18 items: 6 definidos + 12 reservas) - v7.7
 > **DECISIÓN [2026-01-20]**: EVENTOS ahora se registra en GASTOS_FIJOS (no en CARGA_NT).
@@ -769,10 +767,10 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 | Entidad | Rango de Filas | Uso |
 |---------|----------------|-----|
-| **FAMILIA** | 9-113 | Todas las fórmulas de FAMILIA |
-| **NEUROTEA** | 119-200 | Todas las fórmulas de NEUROTEA |
+| **FAMILIA** | 9-116 | Todas las fórmulas de FAMILIA |
+| **NEUROTEA** | 122-206 | Todas las fórmulas de NEUROTEA |
 
-> **BUG CORREGIDO [2026-01-13]**: Las fórmulas de NEUROTEA usaban 73-150, lo cual incluía SUSCRIPCIONES de FAMILIA. Corregido a 119-200.
+> **BUG CORREGIDO [2026-01-13]**: Las fórmulas de NEUROTEA usaban 73-150, lo cual incluía SUSCRIPCIONES de FAMILIA. Corregido a 122-206 (v7.25).
 
 ---
 
@@ -785,7 +783,7 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 - [ ] ¿Las listas están completas (tipos, categorías, cuentas)?
 - [ ] ¿Ejecuté /verificar después del cambio?
 - [ ] ¿Las decisiones en DECISIONES.md están respetadas?
-- [ ] ¿Los rangos de filas son correctos? (FAMILIA: 9-113, NEUROTEA: 119-200)
+- [ ] ¿Los rangos de filas son correctos? (FAMILIA: 9-116, NEUROTEA: 122-206)
 
 ---
 
@@ -832,7 +830,7 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ### Rangos incorrectos en LIQUIDEZ
 - **Problema**: LIQUIDEZ_FAMILIA usaba 9-70 y LIQUIDEZ_NT usaba 73-150
-- **Solución**: Corregido a FAMILIA: 9-113, NEUROTEA: 119-200
+- **Solución**: Corregido a FAMILIA: 9-116, NEUROTEA: 122-206 (v7.25)
 - **Archivos**: Sheets.gs (líneas 1544-1545, 1553-1555)
 
 ### Nomenclatura unificada: EGRESOS PAGADOS
@@ -1344,6 +1342,28 @@ function estaEnModoAutoCreacion() {
 
 ---
 
+## Mejoras [2026-01-26] - v7.25
+
+### 5 reservas dinámicas por subcategoría VARIABLES
+- **Solicitud**: Usuario necesita más reservas en subcategorías VARIABLES
+- **Cambio FAMILIA**: De 2 reservas (Reserva Var. 2-3) a 5 reservas (Reserva Var. 1-5)
+  - Total: 14 ítems fijos + 5 reservas = 19 ítems
+  - "Gastos del Colegio" se mantiene como ítem permanente
+- **Cambio NEUROTEA**: De 2 reservas (Reserva Var. 2-3) a 5 reservas (Reserva Var. 1-5)
+  - Total: 10 ítems fijos + 5 reservas = 15 ítems
+  - "Muebles y equipos" se mantiene como ítem permanente
+- **Arrays actualizados**: VARIABLES_FAMILIA, VARIABLES_NT, VARIABLES_PRESUP_FAM, VARIABLES_PRESUP_NT
+
+### Rangos MOVIMIENTO actualizados (+3 filas por entidad)
+- **FAMILIA**: 9-113 → **9-116** (+3 reservas variables)
+- **NEUROTEA**: 119-200 → **122-206** (+3 shift por FAM + 3 reservas NT)
+- **Archivos actualizados**:
+  - Sheets.gs: LIQUIDEZ (parámetros filaInicioMov/filaFinMov)
+  - Tablero.gs: Fórmulas Esperado, SUMIF/SUMIFS (12 referencias)
+  - WebApp.gs: getRange para lectura de datos (2 referencias)
+
+---
+
 ## LECCIONES APRENDIDAS (NO IGNORAR)
 
 > Ver también: `.claude/rules/errores-historicos.md` para lista completa de bugs resueltos.
@@ -1376,8 +1396,8 @@ function estaEnModoAutoCreacion() {
 - Distribución ganancia NT: simple `=SI(H>0;H/3;0)` - no complicar
 
 ### Rangos en MOVIMIENTO
-- FAMILIA: filas **9-113** (NO 9-70)
-- NEUROTEA: filas **119-200** (NO 73-150)
+- FAMILIA: filas **9-116** (NO 9-70)
+- NEUROTEA: filas **122-206** (NO 73-150)
 
 ### Workflow Anti-Errores
 1. Después de cambios en gs/ → ejecutar `/verificar`
@@ -1388,4 +1408,4 @@ function estaEnModoAutoCreacion() {
 ---
 
 *Última actualización: 2026-01-26*
-*Versión: 7.24 - SUMPRODUCT resiliente a fechas malas + requireValueInList para paste + reparación extendida de datos pegados*
+*Versión: 7.25 - 5 reservas dinámicas VARIABLES FAM/NT + rangos MOVIMIENTO actualizados*

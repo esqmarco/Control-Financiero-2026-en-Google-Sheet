@@ -600,7 +600,7 @@ function obtenerDatosDashboard() {
   var ahorroFam = 0, fondoEmergenciaFam = 0;
   if (movimiento) {
     // Leer columnas B (Tipo), F (Real), J (Est.Pago) de MOVIMIENTO FAMILIA
-    var datosFamMov = movimiento.getRange('A9:J113').getValues();  // v7.12: Rango corregido (FAMILIA: 9-113)
+    var datosFamMov = movimiento.getRange('A9:J116').getValues();  // v7.25: Rango actualizado (FAMILIA: 9-116)
     for (var idx = 0; idx < datosFamMov.length; idx++) {
       var fila = datosFamMov[idx];
       var concepto = fila[0] ? fila[0].toString() : '';
@@ -626,7 +626,7 @@ function obtenerDatosDashboard() {
   // EGRESOS PENDIENTES NEUROTEA (desde MOVIMIENTO)
   var egresosPendientesNT = 0;
   if (movimiento) {
-    var datosNTMovPend = movimiento.getRange('A119:J200').getValues();  // v7.12: Rango corregido (NEUROTEA: 119-200)
+    var datosNTMovPend = movimiento.getRange('A122:J206').getValues();  // v7.25: Rango actualizado (NEUROTEA: 122-206)
     for (var idxNT = 0; idxNT < datosNTMovPend.length; idxNT++) {
       var filaNT = datosNTMovPend[idxNT];
       var tipoNT = filaNT[1] ? filaNT[1].toString() : '';
