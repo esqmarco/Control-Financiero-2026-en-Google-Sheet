@@ -12,6 +12,13 @@ Todas las versiones notables del sistema.
 - Cascadeados todos los desplazamientos: SALDOS POR MES (50-63), CUENTA FAM (68-77), CUENTA NT (82-83)
 - Actualizadas 29 referencias hardcodeadas en Sheets.gs, Tablero.gs y CLAUDE.md
 
+### Enhanced
+- **VÁLIDO ahora valida TIPO, CATEGORÍA y SUBCATEGORÍA** (no solo fecha/año/monto)
+  - "⚠ Tipo": TIPO vacío
+  - "⚠ Cat": Egreso con CATEGORÍA="-"
+  - "⚠ Subcat": Egreso VARIABLES con SUBCATEGORÍA que no existe en CONFIG
+- Fórmulas VÁLIDO diferenciadas por entidad (FAMILIA vs NT, diferentes rangos CONFIG)
+
 ---
 
 ## [7.27] - 2026-01-26

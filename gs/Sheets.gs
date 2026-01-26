@@ -859,11 +859,10 @@ function crearHojaCARGA_FAMILIA() {
   sheet.setColumnWidth(10, 80);  // VÁLIDO (v7.26)
 
   // v7.26: Fórmula ARRAYFORMULA en J4 que valida cada fila
-  // Replica las mismas condiciones del SUMPRODUCT en MOVIMIENTO:
-  // 1. MONTH(fecha) debe ser válido (no texto)
-  // 2. YEAR(fecha) debe ser AÑO (2026)
-  // 3. MONTO debe ser numérico y no vacío
-  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";"✓")))))';
+  // Validaciones VÁLIDO (v7.28):
+  // 1. MONTH(fecha) válido  2. YEAR = 2026  3. MONTO numérico
+  // 4. TIPO no vacío  5. Egreso con CATEGORÍA="-"  6. Egreso VARIABLES con SUBCATEGORÍA inválida
+  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";IF(B4:B500="";"⚠ Tipo";IF((B4:B500="Egreso Familiar")*(C4:C500="-")>0;"⚠ Cat";IF((B4:B500="Egreso Familiar")*(C4:C500="VARIABLES")*(COUNTIF(CONFIG!$C$21:$C$39;D4:D500)=0)>0;"⚠ Subcat";"✓"))))))))';
   sheet.getRange('J4').setFormula(formulaValido);
   sheet.getRange('J4:J500').setHorizontalAlignment('center');
 
@@ -980,8 +979,8 @@ function crearHojaCARGA_NT() {
   sheet.setColumnWidth(9, 140);  // LINK_ID (v7.12)
   sheet.setColumnWidth(10, 80);  // VÁLIDO (v7.26)
 
-  // v7.26: Fórmula ARRAYFORMULA en J4 que valida cada fila
-  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";"✓")))))';
+  // Validaciones VÁLIDO (v7.28): fecha, año, monto, tipo, categoría, subcategoría
+  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";IF(B4:B500="";"⚠ Tipo";IF((B4:B500="Egreso NT")*(C4:C500="-")>0;"⚠ Cat";IF((B4:B500="Egreso NT")*(C4:C500="VARIABLES")*(COUNTIF(CONFIG!$G$21:$G$35;D4:D500)=0)>0;"⚠ Subcat";"✓"))))))))';
   sheet.getRange('J4').setFormula(formulaValido);
   sheet.getRange('J4:J500').setHorizontalAlignment('center');
 

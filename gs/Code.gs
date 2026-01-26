@@ -255,14 +255,17 @@ function actualizarTodasValidaciones() {
 function agregarColumnaValido() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";"✓")))))';
-
   let actualizadas = 0;
 
   [NOMBRES_HOJAS.CARGA_FAMILIA, NOMBRES_HOJAS.CARGA_NT].forEach(nombre => {
     const sheet = ss.getSheetByName(nombre);
     if (!sheet) return;
 
+    // v7.28: Validación completa: fecha, año, monto, tipo, categoría, subcategoría
+    const esFamilia = (nombre === NOMBRES_HOJAS.CARGA_FAMILIA);
+    const formulaValido = esFamilia
+      ? '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";IF(B4:B500="";"⚠ Tipo";IF((B4:B500="Egreso Familiar")*(C4:C500="-")>0;"⚠ Cat";IF((B4:B500="Egreso Familiar")*(C4:C500="VARIABLES")*(COUNTIF(CONFIG!$C$21:$C$39;D4:D500)=0)>0;"⚠ Subcat";"✓"))))))))'
+      : '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";IF(B4:B500="";"⚠ Tipo";IF((B4:B500="Egreso NT")*(C4:C500="-")>0;"⚠ Cat";IF((B4:B500="Egreso NT")*(C4:C500="VARIABLES")*(COUNTIF(CONFIG!$G$21:$G$35;D4:D500)=0)>0;"⚠ Subcat";"✓"))))))))';
     // Header J3
     sheet.getRange('J3')
       .setValue('VÁLIDO')
