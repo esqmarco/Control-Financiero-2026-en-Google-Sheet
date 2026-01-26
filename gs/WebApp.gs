@@ -620,7 +620,7 @@ function generarHTMLDashboard() {
   + '    var pct=ing>0?Math.round((ing-egr)/ing*100):null;'
   + '    d.addRow([DATA.meses[i],ing||null,egr||null,(ing>0)?pct:null]);'
   + '  }'
-  + '  var o=Object.assign({},BASE_OPT,{seriesType:"bars",series:{2:{type:"line",targetAxisIndex:1,lineWidth:3,pointSize:5,color:"#22c55e"}},colors:["#3b82f6","#ef4444"],vAxes:{0:{title:"Gs.",format:"short"},1:{title:"% Ganancia",format:"#\'%\'",viewWindow:{min:0,max:30}}},bar:{groupWidth:"60%"}});'
+  + '  var o=Object.assign({},BASE_OPT,{seriesType:"bars",series:{2:{type:"line",targetAxisIndex:1,lineWidth:3,pointSize:5,color:"#22c55e"}},colors:["#3b82f6","#ef4444"],vAxes:{0:{title:"Gs.",format:"short"},1:{title:"% Ganancia",viewWindow:{min:0,max:30}}},bar:{groupWidth:"60%"}});'
   + '  new google.visualization.ComboChart(document.getElementById("chart_nt_trend")).draw(d,o);'
   + '}'
 
