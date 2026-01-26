@@ -4,6 +4,23 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.26] - 2026-01-26
+
+### Added
+- **Columna VÁLIDO (J)** en CARGA_FAMILIA y CARGA_NT: ARRAYFORMULA que detecta filas que NO serán contadas en TABLERO
+  - "✓" = fila válida, será contada
+  - "⚠ Fecha" = fecha inválida/texto
+  - "⚠ Año" = año ≠ 2026
+  - "⚠ Monto" = monto vacío o texto
+- **Formato condicional**: filas con ⚠ se resaltan en rojo claro, ✓ en verde
+- **Utilidad de menú**: "✓ Agregar columna VÁLIDO a CARGA" para agregar a hojas existentes sin reinicializar
+
+### Technical
+- Sheets.gs: headers expandidos A-J, ARRAYFORMULA en J4, conditional formatting mejorado
+- Code.gs: nueva función `agregarColumnaValido()`, menú actualizado
+
+---
+
 ## [7.25] - 2026-01-26
 
 ### Changed

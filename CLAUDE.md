@@ -1022,15 +1022,23 @@ AHORA (correcto):
   - `estado`: "FAMILIA DEBE A NT" / "NT DEBE A FAMILIA" / "EQUILIBRADO"
 - **Archivos**: Utils.gs
 
-### Estructura columna LINK_ID en hojas CARGA
+### Estructura columnas LINK_ID y VÁLIDO en hojas CARGA
 ```
 | Columna | CARGA_FAMILIA | CARGA_NT |
 |---------|---------------|----------|
 | I       | LINK_ID       | LINK_ID  |
+| J       | VÁLIDO        | VÁLIDO   |
 
-Formato: 6 caracteres alfanuméricos (ej: A7K2M1)
+LINK_ID: 6 caracteres alfanuméricos (ej: A7K2M1)
 - No incluye prefijos ni fechas
 - Identificador breve y único
+
+VÁLIDO (v7.26): ARRAYFORMULA que valida cada fila
+- "✓" = Fila será contada en TABLERO
+- "⚠ Fecha" = Fecha inválida (texto/malformada)
+- "⚠ Año" = Año diferente a 2026
+- "⚠ Monto" = Monto vacío o texto
+- Filas con ⚠ se resaltan en rojo claro
 ```
 
 ### Flujo completo de transacciones cruzadas (v7.12)
@@ -1364,6 +1372,39 @@ function estaEnModoAutoCreacion() {
 
 ---
 
+## Mejoras [2026-01-26] - v7.26
+
+### Columna VÁLIDO en hojas CARGA (detección de errores silenciosos)
+- **Solicitud**: Usuario no podía saber cuáles filas NO estaban siendo contadas en TABLERO
+- **Problema**: SUMPRODUCT con IFERROR(MONTH();0) excluye silenciosamente filas con fechas
+  texto/malformadas. El usuario veía montos menores sin saber por qué.
+- **Solución**: Nueva columna J ("VÁLIDO") con ARRAYFORMULA que replica las condiciones
+  del SUMPRODUCT en MOVIMIENTO
+- **Indicadores**:
+  - "✓" = Fila válida, será contada en TABLERO
+  - "⚠ Fecha" = Fecha inválida (texto, malformada, no es fecha)
+  - "⚠ Año" = Año diferente a 2026
+  - "⚠ Monto" = Monto vacío o texto (no numérico)
+- **Formato visual**:
+  - Filas con ⚠: fondo rojo claro (#fde8e8), texto rojo oscuro (#991b1b)
+  - ✓: texto verde
+  - ⚠: texto rojo negrita
+- **Fórmula (locale español)**:
+  ```
+  =ARRAYFORMULA(IF(A4:A500="";""
+    ;IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha"
+      ;IF(IFERROR(YEAR(A4:A500);0)<>2026;"⚠ Año"
+        ;IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto"
+          ;"✓")))))
+  ```
+- **Utilidad de menú**: "✓ Agregar columna VÁLIDO a CARGA" - agrega la columna a hojas
+  existentes sin reinicializar (no pierde datos)
+- **Archivos modificados**:
+  - Sheets.gs: crearHojaCARGA_FAMILIA, crearHojaCARGA_NT, aplicarFormatoCondicionalCarga
+  - Code.gs: agregarColumnaValido(), menú actualizado
+
+---
+
 ## LECCIONES APRENDIDAS (NO IGNORAR)
 
 > Ver también: `.claude/rules/errores-historicos.md` para lista completa de bugs resueltos.
@@ -1408,4 +1449,4 @@ function estaEnModoAutoCreacion() {
 ---
 
 *Última actualización: 2026-01-26*
-*Versión: 7.25 - 5 reservas dinámicas VARIABLES FAM/NT + rangos MOVIMIENTO actualizados*
+*Versión: 7.26 - Columna VÁLIDO en CARGA para detectar errores silenciosos*
