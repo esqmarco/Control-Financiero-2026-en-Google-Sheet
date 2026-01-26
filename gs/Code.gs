@@ -54,7 +54,8 @@ function onOpen() {
       .addItem('🎨 Aplicar Estilos', 'aplicarEstilosGlobales')
       .addItem('🧹 Limpiar Datos de Prueba', 'limpiarDatosPrueba')
       .addItem('🔍 Verificar Contrapartes Huérfanas', 'limpiarContrapartesHuerfanas')
-      .addItem('⚡ Instalar Auto-limpieza (onChange)', 'instalarTriggerOnChange'))
+      .addItem('⚡ Instalar Auto-limpieza (onChange)', 'instalarTriggerOnChange')
+      .addItem('🩹 Reparar Fechas/Montos en CARGA', 'repararDatosCarga'))
     .addSeparator()
 
     // Info

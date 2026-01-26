@@ -461,3 +461,152 @@ function log(mensaje, tipo = 'info') {
 function mostrarToast(mensaje, titulo = 'Info', duracion = 5) {
   SpreadsheetApp.getActiveSpreadsheet().toast(mensaje, titulo, duracion);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REPARACIÓN DE DATOS EN CARGA (v7.23)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Repara fechas y montos en CARGA_FAMILIA y CARGA_NT que estén almacenados como texto.
+ * Esto puede ocurrir al pegar datos desde Excel u otra fuente externa.
+ *
+ * Problemas que resuelve:
+ * - Fechas como texto ("02/01/2026") → Date object
+ * - Fechas con typos ("24/012026") → corregido a "24/01/2026"
+ * - Montos como texto ("68.416.658") → Number 68416658
+ * - Años incorrectos fuera de rango → corregido a AÑO (2026)
+ */
+function repararDatosCarga() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+
+  const resultado = ui.alert(
+    '🔧 Reparar Datos de CARGA',
+    'Esta función repara fechas y montos que estén almacenados como texto en CARGA_FAMILIA y CARGA_NT.\n\n' +
+    'Esto corrige problemas como:\n' +
+    '• Fechas pegadas que no son reconocidas por MONTH()/YEAR()\n' +
+    '• Montos con formato incorrecto\n' +
+    '• Fechas con typos (barras faltantes, año incorrecto)\n\n' +
+    '¿Continuar?',
+    ui.ButtonSet.YES_NO
+  );
+
+  if (resultado !== ui.Button.YES) return;
+
+  let totalReparadas = 0;
+
+  // Reparar ambas hojas
+  [NOMBRES_HOJAS.CARGA_FAMILIA, NOMBRES_HOJAS.CARGA_NT].forEach(nombreHoja => {
+    const sheet = ss.getSheetByName(nombreHoja);
+    if (!sheet) return;
+
+    const ultimaFila = sheet.getLastRow();
+    if (ultimaFila < 4) return; // No hay datos
+
+    const rango = sheet.getRange(4, 1, ultimaFila - 3, 9); // A4:I{ultima}
+    const datos = rango.getValues();
+    let cambios = 0;
+
+    datos.forEach((fila, i) => {
+      const filaSheet = i + 4;
+      let huboCambio = false;
+
+      // ── COLUMNA A: FECHA ──
+      const fechaVal = fila[0];
+      if (fechaVal && !(fechaVal instanceof Date)) {
+        // Es texto, intentar parsear
+        const fechaStr = String(fechaVal).trim();
+        const fechaParseada = parsearFechaTexto(fechaStr);
+        if (fechaParseada) {
+          sheet.getRange(filaSheet, 1).setValue(fechaParseada);
+          sheet.getRange(filaSheet, 1).setNumberFormat('dd/mm/yyyy');
+          huboCambio = true;
+        }
+      } else if (fechaVal instanceof Date) {
+        // Es fecha pero verificar formato
+        sheet.getRange(filaSheet, 1).setNumberFormat('dd/mm/yyyy');
+      }
+
+      // ── COLUMNA F: MONTO ──
+      const montoVal = fila[5];
+      if (montoVal && typeof montoVal === 'string') {
+        const montoNumero = limpiarMonto(montoVal);
+        if (montoNumero > 0) {
+          sheet.getRange(filaSheet, 6).setValue(montoNumero);
+          huboCambio = true;
+        }
+      }
+
+      if (huboCambio) cambios++;
+    });
+
+    totalReparadas += cambios;
+    if (cambios > 0) {
+      log(`Reparadas ${cambios} filas en ${nombreHoja}`, 'fix');
+    }
+  });
+
+  if (totalReparadas > 0) {
+    ui.alert('✅ Reparación completada',
+      `Se repararon ${totalReparadas} filas con datos incorrectos.\n\n` +
+      'Las fórmulas de MOVIMIENTO y TABLERO deberían actualizarse automáticamente.',
+      ui.ButtonSet.OK);
+  } else {
+    ui.alert('✅ Todo OK',
+      'No se encontraron datos que necesiten reparación.\nTodas las fechas y montos están correctamente formateados.',
+      ui.ButtonSet.OK);
+  }
+}
+
+/**
+ * Parsea una fecha en texto al formato Date
+ * Maneja formatos: dd/mm/yyyy, dd/mm/yy, ddmmyyyy (sin barras), dd/mmyyyy (barra faltante)
+ * @param {string} texto - El texto a parsear
+ * @returns {Date|null} La fecha parseada o null si no se pudo parsear
+ */
+function parsearFechaTexto(texto) {
+  if (!texto) return null;
+
+  let dia, mes, anio;
+
+  // Formato estándar: dd/mm/yyyy
+  const match1 = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match1) {
+    dia = parseInt(match1[1]);
+    mes = parseInt(match1[2]);
+    anio = parseInt(match1[3]);
+  }
+
+  // Formato con barra faltante: dd/mmyyyy (ej: "24/012026")
+  if (!dia) {
+    const match2 = texto.match(/^(\d{1,2})\/(\d{2})(\d{4})$/);
+    if (match2) {
+      dia = parseInt(match2[1]);
+      mes = parseInt(match2[2]);
+      anio = parseInt(match2[3]);
+    }
+  }
+
+  // Formato sin barras: ddmmyyyy (ej: "02012026")
+  if (!dia) {
+    const match3 = texto.match(/^(\d{2})(\d{2})(\d{4})$/);
+    if (match3) {
+      dia = parseInt(match3[1]);
+      mes = parseInt(match3[2]);
+      anio = parseInt(match3[3]);
+    }
+  }
+
+  if (!dia || !mes || !anio) return null;
+
+  // Validar rangos
+  if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return null;
+
+  // Corregir año si está fuera de rango (ej: 2027 → 2026)
+  if (anio !== AÑO && anio > AÑO) {
+    anio = AÑO;
+  }
+
+  // Crear fecha (mes es 0-indexed en JavaScript)
+  return new Date(anio, mes - 1, dia);
+}
