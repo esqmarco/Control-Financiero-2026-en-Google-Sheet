@@ -254,7 +254,6 @@ function actualizarTodasValidaciones() {
 // v7.26: Agrega columna VÁLIDO (J) a hojas CARGA existentes sin perder datos
 function agregarColumnaValido() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const C = COLORES;
 
   const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";"✓")))))';
 
@@ -275,31 +274,9 @@ function agregarColumnaValido() {
     sheet.getRange('J4:J500').setHorizontalAlignment('center');
     sheet.setColumnWidth(10, 80);
 
-    // Formato condicional para filas inválidas
-    const reglasExistentes = sheet.getConditionalFormatRules();
-
-    const reglaFilaInvalida = SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied('=LEFT($J4;1)="⚠"')
-      .setBackground('#fde8e8')
-      .setFontColor('#991b1b')
-      .setRanges([sheet.getRange('A4:J500')])
-      .build();
-
-    const reglaInvalido = SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied('=LEFT(J4;1)="⚠"')
-      .setFontColor('#dc2626')
-      .setFontWeight('bold')
-      .setRanges([sheet.getRange('J4:J500')])
-      .build();
-
-    const reglaValido = SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo('✓')
-      .setFontColor(C.VERDE)
-      .setRanges([sheet.getRange('J4:J500')])
-      .build();
-
-    // Agregar nuevas reglas al inicio (mayor prioridad)
-    sheet.setConditionalFormatRules([reglaFilaInvalida, reglaInvalido, reglaValido, ...reglasExistentes]);
+    // Formato condicional: recrear todas las reglas (evita duplicados si se ejecuta varias veces)
+    const entidad = (nombre === NOMBRES_HOJAS.CARGA_FAMILIA) ? 'FAMILIA' : 'NEUROTEA';
+    aplicarFormatoCondicionalCarga(sheet, entidad);
 
     actualizadas++;
   });
@@ -478,10 +455,8 @@ function filtrarCargaPorMes(sheet, mesSeleccionado) {
     return;
   }
 
-  // 4. Mapear nombre de mes a número
-  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-  const mesNum = meses.indexOf(mesSeleccionado) + 1;
+  // 4. Mapear nombre de mes a número (usa constante global MESES de Config.gs)
+  const mesNum = MESES.indexOf(mesSeleccionado) + 1;
   if (mesNum === 0) return;
 
   // 5. Leer todas las fechas

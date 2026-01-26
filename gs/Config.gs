@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CONFIG.GS - DATOS MAESTROS Y CONFIGURACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 7.13 - Préstamos simplificados: solo EGRESO activa auto-creación
+ * Versión 7.27 - Filtro por mes en CARGA + columna VÁLIDO
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '7.25';
+const VERSION = '7.27';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];

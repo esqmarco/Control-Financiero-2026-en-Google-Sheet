@@ -1061,7 +1061,7 @@ function aplicarFormatoCondicionalCarga(sheet, entidad) {
   const reglaInvalido = SpreadsheetApp.newConditionalFormatRule()
     .whenFormulaSatisfied('=LEFT(J4;1)="⚠"')
     .setFontColor('#dc2626')
-    .setFontWeight('bold')
+    .setBold(true)
     .setRanges([sheet.getRange('J4:J500')])
     .build();
 
