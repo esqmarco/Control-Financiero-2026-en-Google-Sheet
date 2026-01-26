@@ -4,6 +4,22 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.25] - 2026-01-26
+
+### Changed
+- **VARIABLES FAMILIA**: 5 reservas dinámicas (antes 2) → total 19 ítems (14 fijos + 5 reservas)
+- **VARIABLES NEUROTEA**: 5 reservas dinámicas (antes 2) → total 15 ítems (10 fijos + 5 reservas)
+- "Gastos del Colegio" (FAM) y "Muebles y equipos" (NT) permanecen como ítems permanentes
+- Rangos MOVIMIENTO actualizados: FAMILIA 9-116, NEUROTEA 122-206
+
+### Technical
+- Config.gs: VARIABLES_FAMILIA, VARIABLES_NT, VARIABLES_PRESUP_FAM, VARIABLES_PRESUP_NT (+3 reservas c/u)
+- Sheets.gs: LIQUIDEZ parámetros actualizados (9,116 y 122,206)
+- Tablero.gs: 12+ referencias de rango actualizadas (SUMIF, SUMIFS, SUMPRODUCT)
+- WebApp.gs: 2 getRange actualizados
+
+---
+
 ## [7.24] - 2026-01-26
 
 ### Fixed

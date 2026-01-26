@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '7.24';
+const VERSION = '7.25';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -207,8 +207,11 @@ const VARIABLES_FAMILIA = [
   'Devolución Familia → NT',
   'Préstamo Familia → NT',      // Familia presta a NT
   'Gastos del Colegio',          // v7.22: Agregado por usuario
+  'Reserva Var. 1',              // v7.25: 5 reservas dinámicas
   'Reserva Var. 2',
-  'Reserva Var. 3'
+  'Reserva Var. 3',
+  'Reserva Var. 4',
+  'Reserva Var. 5'
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -232,8 +235,11 @@ const VARIABLES_NT = [
   'Préstamo NT → Familia',
   'Devolución NT → Familia',     // NT devuelve préstamo a Familia
   'Muebles y equipos',           // v7.22: Agregado por usuario
+  'Reserva Var. 1',              // v7.25: 5 reservas dinámicas
   'Reserva Var. 2',
-  'Reserva Var. 3'
+  'Reserva Var. 3',
+  'Reserva Var. 4',
+  'Reserva Var. 5'
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -396,8 +402,11 @@ const VARIABLES_PRESUP_FAM = [
   { concepto: 'Devolución Familia → NT', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Préstamo Familia → NT', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },  // Familia presta a NT
   { concepto: 'Gastos del Colegio', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },   // v7.22: Agregado por usuario
+  { concepto: 'Reserva Var. 1', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },    // v7.25: 5 reservas dinámicas
   { concepto: 'Reserva Var. 2', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
-  { concepto: 'Reserva Var. 3', categoria: 'VARIABLES', frecuencia: '-', monto: 0 }
+  { concepto: 'Reserva Var. 3', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
+  { concepto: 'Reserva Var. 4', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
+  { concepto: 'Reserva Var. 5', categoria: 'VARIABLES', frecuencia: '-', monto: 0 }
 ];
 
 const AHORRO_FAM = [
@@ -473,8 +482,11 @@ const VARIABLES_PRESUP_NT = [
   { concepto: 'Préstamo NT → Familia', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },
   { concepto: 'Devolución NT → Familia', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },  // NT devuelve a Familia
   { concepto: 'Muebles y equipos', categoria: 'VARIABLES', frecuencia: 'Variable', monto: 0 },    // v7.22: Agregado por usuario
+  { concepto: 'Reserva Var. 1', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },    // v7.25: 5 reservas dinámicas
   { concepto: 'Reserva Var. 2', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
-  { concepto: 'Reserva Var. 3', categoria: 'VARIABLES', frecuencia: '-', monto: 0 }
+  { concepto: 'Reserva Var. 3', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
+  { concepto: 'Reserva Var. 4', categoria: 'VARIABLES', frecuencia: '-', monto: 0 },
+  { concepto: 'Reserva Var. 5', categoria: 'VARIABLES', frecuencia: '-', monto: 0 }
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
