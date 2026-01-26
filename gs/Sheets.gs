@@ -807,9 +807,22 @@ function crearHojaCARGA_FAMILIA() {
     .setBackground(C.FAM_HEADER).setFontColor(C.BLANCO)
     .setHorizontalAlignment('center');
 
-  sheet.getRange('A2:J2').merge()
+  sheet.getRange('A2:H2').merge()
     .setValue('VARIABLES puros (Supermercado, Combustible) y AHORRO (Clara, Marco, Fondo Emergencia). Los fijos van en GASTOS_FIJOS.')
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
+
+  // v7.27: Filtro por mes
+  sheet.getRange('I2').setValue('📅 Filtro:')
+    .setFontSize(10).setFontWeight('bold').setHorizontalAlignment('right');
+  sheet.getRange('J2').setValue('TODOS')
+    .setFontSize(10).setFontWeight('bold').setHorizontalAlignment('center')
+    .setBackground('#e0f2fe').setBorder(true, true, true, true, false, false, '#93c5fd', SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange('J2').setDataValidation(
+    SpreadsheetApp.newDataValidation()
+      .requireValueInList(['TODOS', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'], true)
+      .setAllowInvalid(false)
+      .build()
+  );
 
   // ─── HEADERS DE COLUMNAS ───
   // v7.12: Columna I = LINK_ID para vincular transacciones cruzadas (préstamos/devoluciones)
@@ -916,9 +929,22 @@ function crearHojaCARGA_NT() {
     .setBackground(C.NT_HEADER).setFontColor(C.BLANCO)
     .setHorizontalAlignment('center');
 
-  sheet.getRange('A2:J2').merge()
+  sheet.getRange('A2:H2').merge()
     .setValue('Solo para gastos VARIABLES puros. Los gastos fijos y EVENTOS van en GASTOS_FIJOS.')
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
+
+  // v7.27: Filtro por mes
+  sheet.getRange('I2').setValue('📅 Filtro:')
+    .setFontSize(10).setFontWeight('bold').setHorizontalAlignment('right');
+  sheet.getRange('J2').setValue('TODOS')
+    .setFontSize(10).setFontWeight('bold').setHorizontalAlignment('center')
+    .setBackground('#e0f2fe').setBorder(true, true, true, true, false, false, '#93c5fd', SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange('J2').setDataValidation(
+    SpreadsheetApp.newDataValidation()
+      .requireValueInList(['TODOS', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'], true)
+      .setAllowInvalid(false)
+      .build()
+  );
 
   // ─── HEADERS DE COLUMNAS ───
   // v7.12: Columna I = LINK_ID para vincular transacciones cruzadas (préstamos/devoluciones)
