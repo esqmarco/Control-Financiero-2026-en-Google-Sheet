@@ -461,3 +461,163 @@ function log(mensaje, tipo = 'info') {
 function mostrarToast(mensaje, titulo = 'Info', duracion = 5) {
   SpreadsheetApp.getActiveSpreadsheet().toast(mensaje, titulo, duracion);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REPARACIÓN DE DATOS EN CARGA (v7.23)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Repara fechas y montos en CARGA_FAMILIA y CARGA_NT que estén almacenados como texto.
+ * Esto puede ocurrir al pegar datos desde otro Google Sheet o fuente externa.
+ *
+ * Comportamiento:
+ * - Fechas texto bien formadas ("02/01/2026") → auto-convierte a Date
+ * - Montos texto ("68.416.658") → auto-convierte a Number
+ * - Fechas MALFORMADAS ("24/012026", año incorrecto) → NO toca, ALERTA al usuario
+ */
+function repararDatosCarga() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+
+  const resultado = ui.alert(
+    '🔧 Reparar Datos de CARGA',
+    'Esta función revisa CARGA_FAMILIA y CARGA_NT:\n\n' +
+    '✅ Auto-repara:\n' +
+    '• Fechas pegadas como texto (formato correcto dd/mm/' + AÑO + ')\n' +
+    '• Montos pegados como texto\n\n' +
+    '⚠️ Solo alerta (NO modifica):\n' +
+    '• Fechas con barras faltantes ("24/012026")\n' +
+    '• Fechas con año incorrecto\n' +
+    '• Fechas no reconocibles\n\n' +
+    '¿Continuar?',
+    ui.ButtonSet.YES_NO
+  );
+
+  if (resultado !== ui.Button.YES) return;
+
+  let totalReparadas = 0;
+  const alertas = []; // Fechas malformadas que requieren revisión manual
+
+  // Reparar ambas hojas
+  [NOMBRES_HOJAS.CARGA_FAMILIA, NOMBRES_HOJAS.CARGA_NT].forEach(nombreHoja => {
+    const sheet = ss.getSheetByName(nombreHoja);
+    if (!sheet) return;
+
+    const ultimaFila = sheet.getLastRow();
+    if (ultimaFila < 4) return; // No hay datos
+
+    const rango = sheet.getRange(4, 1, ultimaFila - 3, 9); // A4:I{ultima}
+    const datos = rango.getValues();
+    let cambios = 0;
+
+    datos.forEach((fila, i) => {
+      const filaSheet = i + 4;
+      let huboCambio = false;
+
+      // ── COLUMNA A: FECHA ──
+      const fechaVal = fila[0];
+      if (fechaVal && !(fechaVal instanceof Date)) {
+        // Es texto - analizar qué tipo de problema tiene
+        const fechaStr = String(fechaVal).trim();
+        const analisis = analizarFechaTexto(fechaStr);
+
+        if (analisis.tipo === 'ok') {
+          // Fecha bien formada, solo es texto → auto-reparar
+          sheet.getRange(filaSheet, 1).setValue(analisis.fecha);
+          sheet.getRange(filaSheet, 1).setNumberFormat('dd/mm/yyyy');
+          huboCambio = true;
+        } else {
+          // Fecha malformada → NO tocar, agregar a alertas
+          alertas.push(`${nombreHoja} fila ${filaSheet}: "${fechaStr}" → ${analisis.problema}`);
+        }
+      } else if (fechaVal instanceof Date) {
+        // Es fecha correcta, solo asegurar formato visual
+        sheet.getRange(filaSheet, 1).setNumberFormat('dd/mm/yyyy');
+      }
+
+      // ── COLUMNA F: MONTO ──
+      const montoVal = fila[5];
+      if (montoVal && typeof montoVal === 'string') {
+        const montoNumero = limpiarMonto(montoVal);
+        if (montoNumero > 0) {
+          sheet.getRange(filaSheet, 6).setValue(montoNumero);
+          huboCambio = true;
+        }
+      }
+
+      if (huboCambio) cambios++;
+    });
+
+    totalReparadas += cambios;
+    if (cambios > 0) {
+      log(`Reparadas ${cambios} filas en ${nombreHoja}`, 'fix');
+    }
+  });
+
+  // Mostrar resultado
+  let mensaje = '';
+
+  if (totalReparadas > 0) {
+    mensaje += `✅ Se repararon ${totalReparadas} filas (texto → fecha/número).\n`;
+    mensaje += 'Las fórmulas deberían actualizarse automáticamente.\n';
+  } else {
+    mensaje += '✅ No se encontraron datos texto que reparar.\n';
+  }
+
+  if (alertas.length > 0) {
+    mensaje += `\n⚠️ ${alertas.length} fecha(s) con problemas (NO modificadas):\n\n`;
+    // Mostrar máximo 15 alertas para no desbordar el cuadro
+    const mostrar = alertas.slice(0, 15);
+    mensaje += mostrar.join('\n');
+    if (alertas.length > 15) {
+      mensaje += `\n... y ${alertas.length - 15} más. Ver log para lista completa.`;
+      alertas.forEach(a => log(a, 'warning'));
+    }
+    mensaje += '\n\nCorregí estas fechas manualmente en la hoja.';
+  }
+
+  ui.alert(
+    alertas.length > 0 ? '⚠️ Reparación con alertas' : '✅ Reparación completada',
+    mensaje,
+    ui.ButtonSet.OK
+  );
+}
+
+/**
+ * Analiza una fecha en texto y determina si es reparable automáticamente o necesita revisión.
+ *
+ * @param {string} texto - El texto a analizar
+ * @returns {Object} { tipo: 'ok'|'error', fecha?: Date, problema?: string }
+ *   - tipo 'ok': fecha bien formada, se puede auto-reparar
+ *   - tipo 'error': fecha malformada, requiere revisión manual
+ */
+function analizarFechaTexto(texto) {
+  if (!texto) return { tipo: 'error', problema: 'Vacío' };
+
+  // Solo auto-reparar formato estándar: dd/mm/yyyy con año correcto
+  const match = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match) {
+    const dia = parseInt(match[1]);
+    const mes = parseInt(match[2]);
+    const anio = parseInt(match[3]);
+
+    if (dia < 1 || dia > 31) return { tipo: 'error', problema: `Día ${dia} fuera de rango` };
+    if (mes < 1 || mes > 12) return { tipo: 'error', problema: `Mes ${mes} fuera de rango` };
+    if (anio !== AÑO) return { tipo: 'error', problema: `Año ${anio} (esperado ${AÑO})` };
+
+    return { tipo: 'ok', fecha: new Date(anio, mes - 1, dia) };
+  }
+
+  // Detectar patrones malformados conocidos para dar mejor mensaje
+  const matchBarraFaltante = texto.match(/^(\d{1,2})\/(\d{2})(\d{4})$/);
+  if (matchBarraFaltante) {
+    return { tipo: 'error', problema: `Falta "/" → ¿debería ser ${matchBarraFaltante[1]}/${matchBarraFaltante[2]}/${matchBarraFaltante[3]}?` };
+  }
+
+  const matchSinBarras = texto.match(/^(\d{2})(\d{2})(\d{4})$/);
+  if (matchSinBarras) {
+    return { tipo: 'error', problema: `Sin barras → ¿debería ser ${matchSinBarras[1]}/${matchSinBarras[2]}/${matchSinBarras[3]}?` };
+  }
+
+  return { tipo: 'error', problema: 'Formato no reconocido' };
+}

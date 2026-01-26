@@ -216,7 +216,8 @@ function crearHojaTABLERO() {
     // - Egresos de esta cuenta desde CARGA (TIPO = "Egreso Familiar")
     // - Ahorro de esta cuenta desde CARGA (TIPO = "Ahorro")
     // - Gastos fijos PAGADOS de esta cuenta desde MOVIMIENTO (v7.8: usa columna N=CUENTA)
-    const formulaEsperado = `=IFERROR(${formulaSaldoInicialFam}+SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500<>"Egreso Familiar")*(CARGA_FAMILIA!B$4:B$500<>"Ahorro")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Ahorro")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500))-SUMPRODUCT((MOVIMIENTO!$N$9:$N$113="${cuenta}")*(MOVIMIENTO!$J$9:$J$113="Pagado")*(MOVIMIENTO!$F$9:$F$113));0)`;
+    // v7.23: Cada SUMPRODUCT con IFERROR individual para que un error en fechas no mate toda la fórmula
+    const formulaEsperado = `=${formulaSaldoInicialFam}+IFERROR(SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500<>"Egreso Familiar")*(CARGA_FAMILIA!B$4:B$500<>"Ahorro")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500));0)-IFERROR(SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Egreso Familiar")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500));0)-IFERROR(SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Ahorro")*(MONTH(CARGA_FAMILIA!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_FAMILIA!A$4:A$500)=${AÑO})*(CARGA_FAMILIA!F$4:F$500));0)-IFERROR(SUMPRODUCT((MOVIMIENTO!$N$9:$N$113="${cuenta}")*(MOVIMIENTO!$J$9:$J$113="Pagado")*(MOVIMIENTO!$F$9:$F$113));0)`;
     sheet.getRange(rowFam, 3).setFormula(formulaEsperado)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
@@ -472,7 +473,8 @@ function crearHojaTABLERO() {
     // + Ingresos a esta cuenta desde CARGA (TIPO no es Egreso NT)
     // - Egresos de esta cuenta desde CARGA (TIPO = "Egreso NT")
     // - Gastos fijos PAGADOS de esta cuenta desde MOVIMIENTO (v7.8: usa columna N=CUENTA)
-    const formulaEsperado = `=IFERROR(${formulaSaldoInicialNT}+SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500<>"Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500))-SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500="Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500))-SUMPRODUCT((MOVIMIENTO!$N$119:$N$200="${cuenta}")*(MOVIMIENTO!$J$119:$J$200="Pagado")*(MOVIMIENTO!$F$119:$F$200));0)`;
+    // v7.23: Cada SUMPRODUCT con IFERROR individual
+    const formulaEsperado = `=${formulaSaldoInicialNT}+IFERROR(SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500<>"Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500));0)-IFERROR(SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500="Egreso NT")*(MONTH(CARGA_NT!A$4:A$500)=MOVIMIENTO!$N$3)*(YEAR(CARGA_NT!A$4:A$500)=${AÑO})*(CARGA_NT!F$4:F$500));0)-IFERROR(SUMPRODUCT((MOVIMIENTO!$N$119:$N$200="${cuenta}")*(MOVIMIENTO!$J$119:$J$200="Pagado")*(MOVIMIENTO!$F$119:$F$200));0)`;
     sheet.getRange(rowNT, 9).setFormula(formulaEsperado)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
