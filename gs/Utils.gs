@@ -484,7 +484,9 @@ function repararDatosCarga() {
     'Esta función revisa CARGA_FAMILIA y CARGA_NT:\n\n' +
     '✅ Auto-repara:\n' +
     '• Fechas pegadas como texto (formato correcto dd/mm/' + AÑO + ')\n' +
-    '• Montos pegados como texto\n\n' +
+    '• Montos pegados como texto\n' +
+    '• Textos con espacios extra (trim)\n' +
+    '• Validaciones incorrectas en filas pegadas\n\n' +
     '⚠️ Solo alerta (NO modifica):\n' +
     '• Fechas con barras faltantes ("24/012026")\n' +
     '• Fechas con año incorrecto\n' +
@@ -496,7 +498,13 @@ function repararDatosCarga() {
   if (resultado !== ui.Button.YES) return;
 
   let totalReparadas = 0;
+  let validacionesReparadas = 0;
   const alertas = []; // Fechas malformadas que requieren revisión manual
+
+  // Determinar tipos de ingreso por hoja
+  const tiposIngresoMap = {};
+  tiposIngresoMap[NOMBRES_HOJAS.CARGA_FAMILIA] = TODOS_TIPOS_INGRESO_FAMILIA;
+  tiposIngresoMap[NOMBRES_HOJAS.CARGA_NT] = TODOS_TIPOS_INGRESO_NT;
 
   // Reparar ambas hojas
   [NOMBRES_HOJAS.CARGA_FAMILIA, NOMBRES_HOJAS.CARGA_NT].forEach(nombreHoja => {
@@ -509,6 +517,8 @@ function repararDatosCarga() {
     const rango = sheet.getRange(4, 1, ultimaFila - 3, 9); // A4:I{ultima}
     const datos = rango.getValues();
     let cambios = 0;
+    let validaciones = 0;
+    const tiposIngreso = tiposIngresoMap[nombreHoja] || [];
 
     datos.forEach((fila, i) => {
       const filaSheet = i + 4;
@@ -535,6 +545,20 @@ function repararDatosCarga() {
         sheet.getRange(filaSheet, 1).setNumberFormat('dd/mm/yyyy');
       }
 
+      // ── COLUMNAS B, C, D, G: TRIM ESPACIOS ──
+      // Columna B=TIPO, C=CATEGORÍA, D=SUBCATEGORÍA, G=CUENTA
+      const colsTexto = [1, 2, 3, 6]; // indices 0-based en el array (B=1, C=2, D=3, G=6)
+      colsTexto.forEach(idx => {
+        const val = fila[idx];
+        if (val && typeof val === 'string') {
+          const trimmed = val.trim();
+          if (trimmed !== val) {
+            sheet.getRange(filaSheet, idx + 1).setValue(trimmed);
+            huboCambio = true;
+          }
+        }
+      });
+
       // ── COLUMNA F: MONTO ──
       const montoVal = fila[5];
       if (montoVal && typeof montoVal === 'string') {
@@ -545,12 +569,62 @@ function repararDatosCarga() {
         }
       }
 
+      // ── VALIDACIONES: Limpiar warnings en filas de ingreso/ahorro ──
+      const tipo = String(fila[1] || '').trim();
+      const categoria = String(fila[2] || '').trim();
+      const subcategoria = String(fila[3] || '').trim();
+
+      // Si TIPO es ingreso → CAT y SUBCAT deben ser "-" sin validación
+      if (tiposIngreso.includes(tipo)) {
+        if (categoria === '-' || categoria === '') {
+          sheet.getRange(filaSheet, 3).clearDataValidations();
+          if (categoria !== '-') {
+            sheet.getRange(filaSheet, 3).setValue('-');
+            huboCambio = true;
+          }
+        }
+        if (subcategoria === '-' || subcategoria === '') {
+          sheet.getRange(filaSheet, 4).clearDataValidations();
+          if (subcategoria !== '-') {
+            sheet.getRange(filaSheet, 4).setValue('-');
+            huboCambio = true;
+          }
+        }
+        validaciones++;
+      }
+      // Si TIPO es Ahorro → SUBCAT debe ser "-" sin validación
+      else if (tipo === TIPO_AHORRO) {
+        if (subcategoria === '-' || subcategoria === '') {
+          sheet.getRange(filaSheet, 4).clearDataValidations();
+          if (subcategoria !== '-') {
+            sheet.getRange(filaSheet, 4).setValue('-');
+            huboCambio = true;
+          }
+        }
+        validaciones++;
+      }
+      // Si es Egreso y CAT no es VARIABLES → SUBCAT debe ser "-" sin validación
+      else if (tipo && categoria && categoria !== 'VARIABLES' && categoria !== 'EVENTOS' && categoria !== '-') {
+        if (subcategoria === '-' || subcategoria === '') {
+          sheet.getRange(filaSheet, 4).clearDataValidations();
+          if (subcategoria !== '-') {
+            sheet.getRange(filaSheet, 4).setValue('-');
+            huboCambio = true;
+          }
+        }
+        validaciones++;
+      }
+
       if (huboCambio) cambios++;
     });
 
     totalReparadas += cambios;
+    validacionesReparadas += validaciones;
     if (cambios > 0) {
       log(`Reparadas ${cambios} filas en ${nombreHoja}`, 'fix');
+    }
+    if (validaciones > 0) {
+      log(`Validaciones limpiadas en ${validaciones} filas de ${nombreHoja}`, 'fix');
     }
   });
 
@@ -558,11 +632,16 @@ function repararDatosCarga() {
   let mensaje = '';
 
   if (totalReparadas > 0) {
-    mensaje += `✅ Se repararon ${totalReparadas} filas (texto → fecha/número).\n`;
-    mensaje += 'Las fórmulas deberían actualizarse automáticamente.\n';
+    mensaje += `✅ Se repararon ${totalReparadas} filas (texto → fecha/número/trim).\n`;
   } else {
     mensaje += '✅ No se encontraron datos texto que reparar.\n';
   }
+
+  if (validacionesReparadas > 0) {
+    mensaje += `✅ Se limpiaron validaciones en ${validacionesReparadas} filas.\n`;
+  }
+
+  mensaje += 'Las fórmulas deberían actualizarse automáticamente.\n';
 
   if (alertas.length > 0) {
     mensaje += `\n⚠️ ${alertas.length} fecha(s) con problemas (NO modificadas):\n\n`;

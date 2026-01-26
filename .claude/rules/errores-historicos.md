@@ -184,3 +184,37 @@ if (esIngreso) {
 ```
 
 **Razón:** `clearDataValidations()` elimina permanentemente el dropdown. Si el usuario cambia de Ingreso a Egreso, el dropdown de CATEGORÍA ya no aparece y no puede seleccionar nada.
+
+---
+
+## BUG 12: SUMPRODUCT muere con UNA fecha texto/malformada
+
+```
+INCORRECTO: =IFERROR(SUMPRODUCT((B=tipo)*(MONTH(A)=mes)*(YEAR(A)=año)*(F));0)
+// Si UNA celda en A tiene texto, MONTH(A) produce error en ESA celda,
+// que contamina TODA la multiplicación de arrays → SUMPRODUCT = error → IFERROR → 0
+
+CORRECTO: =IFERROR(SUMPRODUCT((B=tipo)*(IFERROR(MONTH(A);0)=mes)*(IFERROR(YEAR(A);0)=año)*(F));0)
+// IFERROR DENTRO del SUMPRODUCT: solo esa celda da 0 (no matchea ningún mes)
+// Las demás filas siguen funcionando
+```
+
+**Razón:** MONTH() y YEAR() sobre texto producen error. En un SUMPRODUCT, un error en cualquier elemento mata toda la multiplicación de arrays. El IFERROR externo captura TODO el SUMPRODUCT como error y retorna 0 para TODOS los conceptos.
+
+---
+
+## BUG 13: requireValueInRange no reconoce datos pegados desde otro Google Sheet
+
+```javascript
+// INCORRECTO - Pegar texto "Supermercado" desde otro sheet muestra warning
+.requireValueInRange(configSheet.getRange(21, 3, length, 1), true)
+// requireValueInRange valida contra celdas del rango, pero el texto pegado
+// puede no coincidir exactamente (encoding, whitespace invisible)
+
+// CORRECTO - Lista de strings para matching exacto
+.requireValueInList(VARIABLES_FAMILIA, true)
+// requireValueInList valida contra strings directos
+// Texto pegado que coincide exactamente se acepta sin warnings
+```
+
+**Razón:** `requireValueInRange(CONFIG)` referencia un rango de celdas. Los valores pegados desde otro Google Sheet pueden no coincidir exactamente con los valores del rango (diferencias invisibles de encoding/whitespace). `requireValueInList` compara strings directos, más confiable para datos pegados.

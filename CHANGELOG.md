@@ -4,6 +4,37 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.24] - 2026-01-26
+
+### Fixed
+- **BUG CRÍTICO:** SUMPRODUCT retornaba 0 si UNA fecha en CARGA era texto/malformada → ahora usa `IFERROR(MONTH();0)` y `IFERROR(YEAR();0)` dentro del SUMPRODUCT para aislar filas con fechas inválidas
+- **BUG:** SUBCATEGORÍA mostraba error de validación al pegar datos desde otro Google Sheet → cambiado de `requireValueInRange(CONFIG)` a `requireValueInList(VARIABLES_*)` para compatibilidad con paste
+- **BUG:** Validación de SUBCATEGORÍA en Code.gs (restauración Egreso) también usaba `requireValueInRange` → unificado a `requireValueInList`
+
+### Changed
+- `repararDatosCarga()` ahora también: trim de espacios en texto, limpieza de validaciones en filas de ingreso/ahorro
+- Menú renombrado: "Reparar Datos Pegados en CARGA" (antes "Reparar Fechas/Montos")
+- Todas las fórmulas SUMPRODUCT en Sheets.gs, Tablero.gs protegen MONTH/YEAR con IFERROR individual
+
+### Technical
+- Sheets.gs: 3 fórmulas SUMPRODUCT en MOVIMIENTO (ingresos, variables, ahorro)
+- Tablero.gs: 10+ fórmulas SUMPRODUCT (Esperado FAM/NT, Ahorro, Fondo, Balance cruzado)
+- Code.gs: 2 puntos de restauración de validación (FAMILIA y NT col 2 handler)
+
+---
+
+## [7.23] - 2026-01-26
+
+### Added
+- `repararDatosCarga()`: utilidad para convertir fechas/montos pegados como texto
+- `analizarFechaTexto()`: detecta fechas bien formadas vs malformadas
+- Menú: Utilidades → "Reparar Fechas/Montos en CARGA"
+
+### Fixed
+- Fórmula Esperado en Tablero.gs: cada SUMPRODUCT ahora tiene IFERROR individual (antes uno externo cubría todos)
+
+---
+
 ## [7.22] - 2026-01-26
 
 ### Added
