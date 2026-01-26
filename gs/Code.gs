@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 7.20 - Validación dinámica de Reserva Variables desde CONFIG
+ * Versión 7.24 - SUMPRODUCT resiliente + requireValueInList para paste
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -55,7 +55,7 @@ function onOpen() {
       .addItem('🧹 Limpiar Datos de Prueba', 'limpiarDatosPrueba')
       .addItem('🔍 Verificar Contrapartes Huérfanas', 'limpiarContrapartesHuerfanas')
       .addItem('⚡ Instalar Auto-limpieza (onChange)', 'instalarTriggerOnChange')
-      .addItem('🩹 Reparar Fechas/Montos en CARGA', 'repararDatosCarga'))
+      .addItem('🩹 Reparar Datos Pegados en CARGA', 'repararDatosCarga'))
     .addSeparator()
 
     // Info
@@ -365,18 +365,17 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else {
-      // v7.22: Restaurar validaciones CATEGORÍA y SUBCATEGORÍA para egresos
+      // v7.24: Restaurar validaciones CATEGORÍA y SUBCATEGORÍA para egresos
+      // Usa requireValueInList para compatibilidad con copy-paste
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO).setDataValidation(
         SpreadsheetApp.newDataValidation()
           .requireValueInList(['-', ...CARGA_CATEGORIAS_FAMILIA, ...CATEGORIAS_AHORRO_FAMILIA], true)
           .setAllowInvalid(false)
           .build()
       );
-      const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRES_HOJAS.CONFIG);
-      const rangoVarFam = configSheet.getRange(21, 3, VARIABLES_FAMILIA.length, 1);
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO).setDataValidation(
         SpreadsheetApp.newDataValidation()
-          .requireValueInRange(rangoVarFam, true)
+          .requireValueInList(VARIABLES_FAMILIA, true)
           .setAllowInvalid(true)
           .build()
       );
@@ -559,18 +558,17 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
       sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else {
-      // v7.22: Restaurar validaciones CATEGORÍA y SUBCATEGORÍA para egresos
+      // v7.24: Restaurar validaciones CATEGORÍA y SUBCATEGORÍA para egresos
+      // Usa requireValueInList para compatibilidad con copy-paste
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO).setDataValidation(
         SpreadsheetApp.newDataValidation()
           .requireValueInList(['-', ...CARGA_CATEGORIAS_NT], true)
           .setAllowInvalid(false)
           .build()
       );
-      const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRES_HOJAS.CONFIG);
-      const rangoVarNT = configSheet.getRange(21, 7, VARIABLES_NT.length, 1);
       sheet.getRange(row, 4).setBackground(COLORES.BLANCO).setDataValidation(
         SpreadsheetApp.newDataValidation()
-          .requireValueInRange(rangoVarNT, true)
+          .requireValueInList(VARIABLES_NT, true)
           .setAllowInvalid(true)
           .build()
       );

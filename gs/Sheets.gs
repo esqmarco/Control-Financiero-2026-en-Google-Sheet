@@ -872,13 +872,11 @@ function aplicarValidacionesCargaFamilia(sheet) {
   );
 
   // SUBCATEGORÍA (columna D) - solo VARIABLES (AHORRO usa CATEGORÍA)
-  // v7.20: Usa requireValueInRange apuntando a CONFIG para que el dropdown
-  //        se actualice automáticamente al renombrar reservas (sin reinicializar)
-  const configSheetFam = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRES_HOJAS.CONFIG);
-  const rangoVariablesFam = configSheetFam.getRange(21, 3, VARIABLES_FAMILIA.length, 1); // CONFIG col C, filas 21+
+  // v7.24: Usa requireValueInList para compatibilidad con copy-paste desde otros sheets
+  // (requireValueInRange no reconocía valores pegados como texto)
   sheet.getRange('D4:D500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInRange(rangoVariablesFam, true)
+      .requireValueInList(VARIABLES_FAMILIA, true)
       .setAllowInvalid(true)  // Permite '-' y valores vacíos
       .build()
   );
@@ -971,13 +969,10 @@ function aplicarValidacionesCargaNT(sheet) {
   );
 
   // SUBCATEGORÍA (columna D) - solo VARIABLES_NT (EVENTOS se eliminaron - van en GASTOS_FIJOS)
-  // v7.20: Usa requireValueInRange apuntando a CONFIG para que el dropdown
-  //        se actualice automáticamente al renombrar reservas (sin reinicializar)
-  const configSheetNT = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRES_HOJAS.CONFIG);
-  const rangoVariablesNT = configSheetNT.getRange(21, 7, VARIABLES_NT.length, 1); // CONFIG col G, filas 21+
+  // v7.24: Usa requireValueInList para compatibilidad con copy-paste desde otros sheets
   sheet.getRange('D4:D500').setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInRange(rangoVariablesNT, true)
+      .requireValueInList(VARIABLES_NT, true)
       .setAllowInvalid(true)  // Permite '-' y valores vacíos
       .build()
   );
@@ -1284,7 +1279,7 @@ function escribirSeccionMovimientoIngresos(sheet, row, titulo, items, entidad, c
     sheet.getRange(row, 5).setFormula(formulaPresup);
 
     // REAL (col F): SUMPRODUCT desde CARGA según tipo y mes
-    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$B$4:$B$500=A${row})*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$B$4:$B$500=A${row})*(IFERROR(MONTH(${hojaCarga}!$A$4:$A$500);0)=$N$3)*(IFERROR(YEAR(${hojaCarga}!$A$4:$A$500);0)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
     sheet.getRange(row, 6).setFormula(formulaReal);
 
     // DIFERENCIA (col G)
@@ -1488,7 +1483,7 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
     sheet.getRange(row, 5).setFormula(formulaPresup);
 
     // REAL (col F): SUMPRODUCT desde CARGA según subcategoría y mes
-    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$D$4:$D$500=A${row})*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$D$4:$D$500=A${row})*(IFERROR(MONTH(${hojaCarga}!$A$4:$A$500);0)=$N$3)*(IFERROR(YEAR(${hojaCarga}!$A$4:$A$500);0)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
     sheet.getRange(row, 6).setFormula(formulaReal);
 
     // DIFERENCIA (col G)
@@ -1561,7 +1556,7 @@ function escribirSeccionMovimientoAhorro(sheet, row, titulo, items, entidad, col
     sheet.getRange(row, 5).setFormula(formulaPresup);
 
     // REAL (col F): SUMPRODUCT desde CARGA donde TIPO="Ahorro" y CATEGORÍA=item.concepto
-    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$B$4:$B$500="Ahorro")*(${hojaCarga}!$C$4:$C$500=A${row})*(MONTH(${hojaCarga}!$A$4:$A$500)=$N$3)*(YEAR(${hojaCarga}!$A$4:$A$500)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
+    const formulaReal = `=IFERROR(SUMPRODUCT((${hojaCarga}!$B$4:$B$500="Ahorro")*(${hojaCarga}!$C$4:$C$500=A${row})*(IFERROR(MONTH(${hojaCarga}!$A$4:$A$500);0)=$N$3)*(IFERROR(YEAR(${hojaCarga}!$A$4:$A$500);0)=${AÑO})*(${hojaCarga}!$F$4:$F$500));0)`;
     sheet.getRange(row, 6).setFormula(formulaReal);
 
     // DIFERENCIA (col G)

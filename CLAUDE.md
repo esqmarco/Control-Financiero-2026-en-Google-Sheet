@@ -1291,6 +1291,59 @@ function estaEnModoAutoCreacion() {
 
 ---
 
+## Bug Fixes [2026-01-26] - v7.23
+
+### Utilidad para reparar datos pegados en CARGA
+- **Problema**: Al copiar datos desde otra hoja de Google Sheets, fechas y montos quedan como texto
+- **Solución**: Nueva función `repararDatosCarga()` que:
+  1. Convierte fechas texto a objetos Date (detecta formatos dd/mm/yyyy bien formados)
+  2. Alerta sobre fechas malformadas que no puede reparar automáticamente
+  3. Convierte montos texto a números usando `limpiarMonto()`
+- **Funciones nuevas**: `repararDatosCarga()`, `analizarFechaTexto()`
+- **Menú**: Utilidades → "🩹 Reparar Datos Pegados en CARGA"
+- **Archivos**: Utils.gs, Code.gs (menú)
+
+### Fórmulas Esperado en Tablero con IFERROR individual
+- **Problema**: IFERROR externo cubría todo el SUMPRODUCT, ocultando errores parciales
+- **Solución**: Cada SUMPRODUCT ahora tiene IFERROR individual para aislar errores
+- **Archivos**: Tablero.gs (fórmulas Esperado FAMILIA y NT)
+
+---
+
+## Bug Fixes [2026-01-26] - v7.24 (CRÍTICO)
+
+### SUMPRODUCT retornaba 0 con UNA fecha texto/malformada (BUG CRÍTICO)
+- **Problema**: `MONTH()` y `YEAR()` sobre texto producen error. En un SUMPRODUCT, un error en
+  cualquier elemento mata toda la multiplicación de arrays. El IFERROR externo capturaba TODO
+  el SUMPRODUCT como error y retornaba 0 para TODOS los conceptos
+- **Impacto**: TABLERO mostraba 0 para TODOS los ingresos/egresos cuando había UNA fecha mala
+- **Solución**: `IFERROR(MONTH(rango);0)` y `IFERROR(YEAR(rango);0)` DENTRO del SUMPRODUCT.
+  Mes=0/Año=0 no matchean ningún mes real (1-12), así solo esa fila se excluye
+- **Archivos modificados**:
+  - Sheets.gs: 3 fórmulas SUMPRODUCT en MOVIMIENTO (ingresos, variables, ahorro)
+  - Tablero.gs: 10+ fórmulas SUMPRODUCT (Esperado FAM/NT, Ahorro, Fondo, Balance cruzado)
+- **Fórmula corregida**:
+  ```
+  ANTES: =SUMPRODUCT((B=tipo)*(MONTH(A)=mes)*(YEAR(A)=año)*(F))
+  AHORA: =SUMPRODUCT((B=tipo)*(IFERROR(MONTH(A);0)=mes)*(IFERROR(YEAR(A);0)=año)*(F))
+  ```
+
+### SUBCATEGORÍA mostraba error al pegar datos desde otro Google Sheet
+- **Problema**: `requireValueInRange(CONFIG)` referencia un rango de celdas. Valores pegados
+  desde otro Google Sheet pueden no coincidir exactamente (diferencias invisibles de encoding/whitespace)
+- **Solución**: Cambiado a `requireValueInList(VARIABLES_FAMILIA/NT)` que compara strings directos
+- **Archivos**: Sheets.gs (2 funciones crearHojaCARGA*), Code.gs (2 puntos de restauración Egreso)
+
+### Utilidad de reparación extendida (repararDatosCarga v2)
+- **Mejoras**: Ahora también:
+  1. Trim de espacios en columnas TIPO, CATEGORÍA, SUBCATEGORÍA, CUENTA
+  2. Limpieza de validaciones en filas de ingreso (CATEGORÍA y SUBCATEGORÍA → clearDataValidations)
+  3. Limpieza de validaciones en filas de ahorro (SUBCATEGORÍA → clearDataValidations)
+  4. Limpieza de validaciones en egresos no-VARIABLES (SUBCATEGORÍA → clearDataValidations)
+- **Archivos**: Utils.gs (repararDatosCarga)
+
+---
+
 ## LECCIONES APRENDIDAS (NO IGNORAR)
 
 > Ver también: `.claude/rules/errores-historicos.md` para lista completa de bugs resueltos.
@@ -1314,9 +1367,11 @@ function estaEnModoAutoCreacion() {
 - Al restaurar Egreso después de Ingreso, **SIEMPRE** restaurar validaciones con `setDataValidation()`
 - `setValues()` (auto-creación) NO dispara `onEdit` → limpiar validaciones EXPLÍCITAMENTE después
 - Ciclo completo: Ingreso→clearDataValidations | Egreso→setDataValidation (restaurar dropdown)
+- **PREFERIR** `requireValueInList(array)` sobre `requireValueInRange(CONFIG)` para SUBCATEGORÍA → más confiable con datos pegados desde otros sheets
 
 ### Fórmulas
 - **NUNCA** usar SUMIFS con MONTH()/YEAR() → usar SUMPRODUCT
+- **SIEMPRE** usar `IFERROR(MONTH(rango);0)` e `IFERROR(YEAR(rango);0)` DENTRO del SUMPRODUCT para proteger contra fechas texto
 - **NUNCA** calcular DISPONIBLE independientemente → referenciar TOTAL DISPONIBLE
 - Distribución ganancia NT: simple `=SI(H>0;H/3;0)` - no complicar
 
@@ -1333,4 +1388,4 @@ function estaEnModoAutoCreacion() {
 ---
 
 *Última actualización: 2026-01-26*
-*Versión: 7.22 - Fix validaciones CATEGORÍA/SUBCATEGORÍA completo + auto-creación + distribución simplificada + nuevas subcategorías*
+*Versión: 7.24 - SUMPRODUCT resiliente a fechas malas + requireValueInList para paste + reparación extendida de datos pegados*
