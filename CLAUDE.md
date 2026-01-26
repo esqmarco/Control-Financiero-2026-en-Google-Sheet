@@ -1236,7 +1236,7 @@ function estaEnModoAutoCreacion() {
 
 ---
 
-## Bug Fixes [2026-01-24] - v7.22
+## Bug Fixes [2026-01-24/26] - v7.22
 
 ### Validación SUBCATEGORÍA mostraba "No válido" al seleccionar Ingreso/Ahorro
 - **Problema**: v7.20 cambió validación de `requireValueInList(['-', ...VARIABLES])` a
@@ -1247,6 +1247,36 @@ function estaEnModoAutoCreacion() {
   1. `clearDataValidations()` en celda SUBCATEGORÍA al poner "-" (ingreso/ahorro)
   2. Restaurar `requireValueInRange(CONFIG)` cuando TIPO cambia a Egreso
 - **Archivos**: Code.gs (procesarEdicionCargaFamilia, procesarEdicionCargaNT)
+
+### Validación CATEGORÍA también mostraba "No válido" en ingresos manuales
+- **Problema**: Al seleccionar un tipo ingreso, solo se limpiaba validación de SUBCATEGORÍA (col 4).
+  La celda CATEGORÍA (col 3) también tenía validación activa que rechazaba "-"
+- **Solución**: `clearDataValidations()` también en CATEGORÍA al poner "-" para ingresos
+- **Archivos**: Code.gs (procesarEdicionCargaFamilia col 2, procesarEdicionCargaNT col 2)
+
+### Transacciones auto-creadas mostraban errores de validación
+- **Problema**: Auto-creación usa `setValues()` que NO dispara `onEdit`, por lo que las celdas
+  CATEGORÍA y SUBCATEGORÍA heredaban la validación de la hoja y rechazaban "-"
+- **Solución**: `clearDataValidations()` explícito en cols 3 y 4 después de `setValues()` en
+  `autoCrearTransaccionCruzadaFamilia` y `autoCrearTransaccionCruzadaNT`
+- **Archivos**: Code.gs (funciones autoCrearTransaccionCruzada*)
+
+### BUG 1: CATEGORÍA dropdown desaparecía al volver a Egreso
+- **Problema**: Al cambiar TIPO de Ingreso → Egreso, la validación de CATEGORÍA se había
+  limpiado con `clearDataValidations()` pero nunca se restauraba. El dropdown desaparecía
+- **Solución**: Al cambiar a Egreso, restaurar validación con
+  `requireValueInList(['-', ...CARGA_CATEGORIAS_*, ...CATEGORIAS_AHORRO_*])` y
+  `requireValueInRange(CONFIG)` para SUBCATEGORÍA
+- **Archivos**: Code.gs (col===2 handler en ambas funciones procesarEdicion*)
+
+### BUG 2: SUBCATEGORÍA mostraba warning al seleccionar CATEGORÍA no-VARIABLES
+- **Problema**: Al seleccionar una CATEGORÍA que no es VARIABLES (ej: Ahorro Clara, "-"),
+  se ponía "-" en SUBCATEGORÍA sin limpiar la validación `requireValueInRange` activa
+- **Solución**: `clearDataValidations()` en TODAS las ramas donde SUBCATEGORÍA se setea a "-":
+  1. CATEGORÍA es Ingreso y usuario intenta cambiar CATEGORÍA (cols 3-4 FAMILIA y NT)
+  2. CATEGORÍA es AHORRO (col 3 FAMILIA)
+  3. CATEGORÍA no es VARIABLES ni EVENTOS (else branch col 3 FAMILIA y NT)
+- **Archivos**: Code.gs (6 puntos de clearDataValidations añadidos)
 
 ### Fórmulas distribución ganancia NT simplificadas
 - **Problema**: Fórmulas usaban `VALUE(CONFIG!$B$42)/100` etc. (innecesariamente complejo)
@@ -1279,6 +1309,12 @@ function estaEnModoAutoCreacion() {
 - Si cambia SUBCATEGORÍA (préstamo↔devolución) → borrar y recrear
 - Funciones de validación (`validarPrestamo*`) deben retornar boolean y hacer `return` si bloquean
 
+### Validaciones de Data Validation (CRÍTICO)
+- Al poner "-" en una celda que tiene `requireValueInRange`, **SIEMPRE** llamar `.clearDataValidations()`
+- Al restaurar Egreso después de Ingreso, **SIEMPRE** restaurar validaciones con `setDataValidation()`
+- `setValues()` (auto-creación) NO dispara `onEdit` → limpiar validaciones EXPLÍCITAMENTE después
+- Ciclo completo: Ingreso→clearDataValidations | Egreso→setDataValidation (restaurar dropdown)
+
 ### Fórmulas
 - **NUNCA** usar SUMIFS con MONTH()/YEAR() → usar SUMPRODUCT
 - **NUNCA** calcular DISPONIBLE independientemente → referenciar TOTAL DISPONIBLE
@@ -1296,5 +1332,5 @@ function estaEnModoAutoCreacion() {
 
 ---
 
-*Última actualización: 2026-01-24*
-*Versión: 7.22 - Fix validación SUBCATEGORÍA + distribución simplificada + nuevas subcategorías*
+*Última actualización: 2026-01-26*
+*Versión: 7.22 - Fix validaciones CATEGORÍA/SUBCATEGORÍA completo + auto-creación + distribución simplificada + nuevas subcategorías*

@@ -141,3 +141,46 @@ intentarAutoCreacion(); // Solo si no fue bloqueado
 ```
 
 **Razón:** Sin return, la auto-creación lee la celda ya vacía y sale silenciosamente.
+
+---
+
+## BUG 10: setValue('-') sin clearDataValidations()
+
+```javascript
+// INCORRECTO - "-" no está en requireValueInRange(CONFIG)
+sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+// → Google Sheets muestra "No válido" en la celda
+
+// CORRECTO - Limpiar validación antes de poner "-"
+sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
+```
+
+**Razón:** `requireValueInRange(CONFIG)` no incluye "-". Al asignar "-" a celdas con esta validación activa, Google Sheets muestra error visual. Aplica a TODAS las ramas donde se setea "-": Ingreso (cols 3+4), Ahorro (col 4), CATEGORÍA no-VARIABLES (col 4), auto-creación (cols 3+4).
+
+---
+
+## BUG 11: Validación no restaurada al cambiar de Ingreso a Egreso
+
+```javascript
+// INCORRECTO - Limpia validaciones al ir a Ingreso, pero no las restaura al volver a Egreso
+if (esIngreso) {
+  sheet.getRange(row, 3).clearDataValidations();
+} else {
+  sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
+  // ← Falta setDataValidation() → dropdown desaparece permanentemente
+}
+
+// CORRECTO - Restaurar dropdown completo al cambiar a Egreso
+if (esIngreso) {
+  sheet.getRange(row, 3).clearDataValidations();
+} else {
+  sheet.getRange(row, 3).setBackground(COLORES.BLANCO).setDataValidation(
+    SpreadsheetApp.newDataValidation()
+      .requireValueInList(['-', ...CARGA_CATEGORIAS_*, ...CATEGORIAS_AHORRO_*], true)
+      .setAllowInvalid(false)
+      .build()
+  );
+}
+```
+
+**Razón:** `clearDataValidations()` elimina permanentemente el dropdown. Si el usuario cambia de Ingreso a Egreso, el dropdown de CATEGORÍA ya no aparece y no puede seleccionar nada.

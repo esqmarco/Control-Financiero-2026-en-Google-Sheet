@@ -4,6 +4,25 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.22] - 2026-01-26
+
+### Added
+- Nuevas subcategorías: "Gastos del Colegio" (FAMILIA), "Muebles y equipos" (NT) - reemplazan Reserva Var. 1
+- Restauración completa de dropdowns CATEGORÍA/SUBCATEGORÍA al cambiar TIPO a Egreso
+
+### Changed
+- Distribución ganancia NT simplificada: `=IF(ganancia>0;ganancia/3;0)` en PRESUPUESTO y MOVIMIENTO
+
+### Fixed
+- **BUG CRÍTICO:** Validación "No válido" en SUBCATEGORÍA y CATEGORÍA al seleccionar Ingreso/Ahorro
+- **BUG CRÍTICO:** Transacciones auto-creadas (préstamos/devoluciones) mostraban error de validación
+- **BUG:** CATEGORÍA dropdown desaparecía al cambiar Ingreso → Egreso (validación no se restauraba)
+- **BUG:** SUBCATEGORÍA mostraba warning al seleccionar CATEGORÍA no-VARIABLES (faltaba clearDataValidations)
+- `clearDataValidations()` aplicado en 6+ puntos donde se asigna "-" a celdas con validación activa
+- Validaciones restauradas con `setDataValidation()` al volver a modo Egreso
+
+---
+
 ## [7.21] - 2026-01-24
 
 ### Added
