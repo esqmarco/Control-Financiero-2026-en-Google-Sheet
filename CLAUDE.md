@@ -1405,6 +1405,28 @@ function estaEnModoAutoCreacion() {
 
 ---
 
+## Mejoras [2026-01-26] - v7.27
+
+### Filtro por mes en hojas CARGA
+- **Solicitud**: Lista interminable de transacciones de todos los meses dificulta la revisión
+- **Solución**: Dropdown en celda J2 con opciones "TODOS" + 12 meses
+- **Comportamiento**:
+  - Al seleccionar un mes: oculta filas de otros meses, ordena por fecha
+  - Al seleccionar "TODOS": muestra todas las filas ordenadas por fecha
+  - Las filas ocultas **siguen existiendo** para SUMPRODUCT (no afecta cálculos)
+  - Filas vacías permanecen visibles (permite ingresar datos nuevos)
+  - Toast de confirmación: "Mostrando X transacciones de Enero"
+- **Ordenamiento**: Siempre ordena por fecha (columna A) ascendente al aplicar filtro
+  - Solo ordena columnas A-I (no mueve ARRAYFORMULA de J)
+- **Impacto en fórmulas**: CERO - las filas ocultas son invisibles visualmente pero
+  siguen siendo calculadas por SUMPRODUCT, SUMIFS, etc.
+- **Utilidad de menú**: "📅 Agregar Filtro por Mes a CARGA" para hojas existentes
+- **Archivos modificados**:
+  - Sheets.gs: crearHojaCARGA_FAMILIA, crearHojaCARGA_NT (fila 2 dividida, dropdown)
+  - Code.gs: onEdit (detección J2), filtrarCargaPorMes(), agregarFiltroMes(), menú
+
+---
+
 ## LECCIONES APRENDIDAS (NO IGNORAR)
 
 > Ver también: `.claude/rules/errores-historicos.md` para lista completa de bugs resueltos.
@@ -1449,4 +1471,4 @@ function estaEnModoAutoCreacion() {
 ---
 
 *Última actualización: 2026-01-26*
-*Versión: 7.26 - Columna VÁLIDO en CARGA para detectar errores silenciosos*
+*Versión: 7.27 - Filtro por mes en CARGA + columna VÁLIDO*

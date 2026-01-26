@@ -56,7 +56,8 @@ function onOpen() {
       .addItem('🔍 Verificar Contrapartes Huérfanas', 'limpiarContrapartesHuerfanas')
       .addItem('⚡ Instalar Auto-limpieza (onChange)', 'instalarTriggerOnChange')
       .addItem('🩹 Reparar Datos Pegados en CARGA', 'repararDatosCarga')
-      .addItem('✓ Agregar columna VÁLIDO a CARGA', 'agregarColumnaValido'))
+      .addItem('✓ Agregar columna VÁLIDO a CARGA', 'agregarColumnaValido')
+      .addItem('📅 Agregar Filtro por Mes a CARGA', 'agregarFiltroMes'))
     .addSeparator()
 
     // Info
@@ -312,6 +313,46 @@ function agregarColumnaValido() {
     SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
+// v7.27: Agrega filtro por mes a hojas CARGA existentes sin perder datos
+function agregarFiltroMes() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let actualizadas = 0;
+
+  [NOMBRES_HOJAS.CARGA_FAMILIA, NOMBRES_HOJAS.CARGA_NT].forEach(nombre => {
+    const sheet = ss.getSheetByName(nombre);
+    if (!sheet) return;
+
+    // Desmerge A2:J2 si estaba mergeado
+    sheet.getRange('A2:J2').breakApart();
+
+    // Subtitle en A2:H2
+    sheet.getRange('A2:H2').merge()
+      .setFontSize(10).setFontStyle('italic');
+
+    // Label y dropdown del filtro
+    sheet.getRange('I2').setValue('📅 Filtro:')
+      .setFontSize(10).setFontWeight('bold').setHorizontalAlignment('right');
+    sheet.getRange('J2').setValue('TODOS')
+      .setFontSize(10).setFontWeight('bold').setHorizontalAlignment('center')
+      .setBackground('#e0f2fe')
+      .setBorder(true, true, true, true, false, false, '#93c5fd', SpreadsheetApp.BorderStyle.SOLID);
+    sheet.getRange('J2').setDataValidation(
+      SpreadsheetApp.newDataValidation()
+        .requireValueInList(['TODOS', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'], true)
+        .setAllowInvalid(false)
+        .build()
+    );
+
+    actualizadas++;
+  });
+
+  SpreadsheetApp.getUi().alert('✅ Filtro por Mes Agregado',
+    actualizadas + ' hoja(s) actualizada(s).\n\n' +
+    'Seleccioná un mes en la celda J2 para filtrar.\n' +
+    '"TODOS" muestra todas las transacciones ordenadas por fecha.',
+    SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
 function recalcularTablero() {
   SpreadsheetApp.flush();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -393,6 +434,14 @@ function onEdit(e) {
   const row = e.range.getRow();
   const col = e.range.getColumn();
 
+  // v7.27: Filtro por mes en CARGA (celda J2)
+  if (row === 2 && col === 10) {
+    if (nombreHoja === NOMBRES_HOJAS.CARGA_FAMILIA || nombreHoja === NOMBRES_HOJAS.CARGA_NT) {
+      filtrarCargaPorMes(sheet, e.value);
+      return;
+    }
+  }
+
   if (row < 4) return;
 
   if (nombreHoja === NOMBRES_HOJAS.CARGA_FAMILIA) {
@@ -400,6 +449,74 @@ function onEdit(e) {
   } else if (nombreHoja === NOMBRES_HOJAS.CARGA_NT) {
     procesarEdicionCargaNT(sheet, row, col, e.value, e.oldValue);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FILTRO POR MES EN CARGA (v7.27)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function filtrarCargaPorMes(sheet, mesSeleccionado) {
+  const ss = sheet.getParent();
+  ss.toast('Aplicando filtro...', '📅 ' + (mesSeleccionado || 'TODOS'), 2);
+
+  const ultimaFila = sheet.getLastRow();
+  if (ultimaFila < 4) return; // No hay datos
+
+  const numFilas = ultimaFila - 3; // filas 4 a ultimaFila
+
+  // 1. Mostrar todas las filas de datos
+  sheet.showRows(4, numFilas);
+
+  // 2. Ordenar por fecha (columna A) - solo A:I para no mover ARRAYFORMULA de J
+  if (numFilas > 1) {
+    sheet.getRange(4, 1, numFilas, 9).sort({column: 1, ascending: true});
+  }
+
+  // 3. Si es TODOS, terminamos (todo visible y ordenado)
+  if (mesSeleccionado === 'TODOS' || !mesSeleccionado) {
+    ss.toast('Mostrando todas las transacciones (' + numFilas + ' filas)', '📅 TODOS', 3);
+    return;
+  }
+
+  // 4. Mapear nombre de mes a número
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const mesNum = meses.indexOf(mesSeleccionado) + 1;
+  if (mesNum === 0) return;
+
+  // 5. Leer todas las fechas
+  const fechas = sheet.getRange(4, 1, numFilas, 1).getValues();
+
+  // 6. Ocultar filas que no corresponden al mes (en lotes consecutivos)
+  let inicioOcultar = -1;
+  let filasVisibles = 0;
+
+  for (var i = 0; i <= numFilas; i++) {
+    var debeOcultar = false;
+
+    if (i < numFilas) {
+      var fecha = fechas[i][0];
+      if (fecha instanceof Date) {
+        debeOcultar = (fecha.getMonth() + 1) !== mesNum;
+        if (!debeOcultar) filasVisibles++;
+      } else if (fecha) {
+        // Fecha texto/inválida → ocultar al filtrar
+        debeOcultar = true;
+      }
+      // Celdas vacías → NO ocultar (permite ingresar datos nuevos)
+    }
+
+    if (debeOcultar) {
+      if (inicioOcultar === -1) inicioOcultar = i + 4;
+    } else {
+      if (inicioOcultar !== -1) {
+        sheet.hideRows(inicioOcultar, (i + 4) - inicioOcultar);
+        inicioOcultar = -1;
+      }
+    }
+  }
+
+  ss.toast('Mostrando ' + filasVisibles + ' transacciones de ' + mesSeleccionado, '📅 ' + mesSeleccionado, 3);
 }
 
 function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {

@@ -4,6 +4,22 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.27] - 2026-01-26
+
+### Added
+- **Filtro por mes** en CARGA_FAMILIA y CARGA_NT: dropdown en J2 con "TODOS" + 12 meses
+- Al filtrar: ordena por fecha + oculta filas de otros meses
+- Al seleccionar "TODOS": muestra todo ordenado cronológicamente
+- Las filas ocultas NO afectan fórmulas (SUMPRODUCT sigue calculando todo)
+- Utilidad de menú: "📅 Agregar Filtro por Mes a CARGA" para hojas existentes
+
+### Technical
+- Sheets.gs: fila 2 dividida (A2:H2 subtitle + I2 label + J2 dropdown)
+- Code.gs: onEdit detecta J2, filtrarCargaPorMes() ordena y oculta filas en lotes
+- Sort solo columnas A-I (preserva ARRAYFORMULA de J)
+
+---
+
 ## [7.26] - 2026-01-26
 
 ### Added
