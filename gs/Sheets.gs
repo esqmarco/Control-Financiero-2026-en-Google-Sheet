@@ -101,7 +101,8 @@ function crearHojaCONFIG() {
   escribirListaConfig(sheet, fila2, col, 'ESTADOS', ESTADOS, C.TEXTO);
 
   // ─── METAS NEUROTEA ───
-  const filaMetas = 38;
+  // v7.28: Moved from 38 to 41 to avoid overlap with VARIABLES_FAMILIA (19 items at C21:C39)
+  const filaMetas = 41;
   sheet.getRange(filaMetas, 1, 1, 4).merge()
     .setValue('🎯 METAS NEUROTEA (Editables)')
     .setFontSize(12).setFontWeight('bold')
@@ -113,35 +114,35 @@ function crearHojaCONFIG() {
   sheet.getRange(filaMetas + 1, 1, 1, 4).setValues(metasHeaders)
     .setFontWeight('bold').setBackground(C.GRIS_FONDO);
 
-  // Fila 40: Meta Ganancia Mínima (CONFIG!$B$40)
+  // Fila 43: Meta Ganancia Mínima (CONFIG!$B$43)
   sheet.getRange(filaMetas + 2, 1).setValue('Meta Ganancia Mínima');
   sheet.getRange(filaMetas + 2, 2).setValue(METAS_NT.GANANCIA_MINIMA_PCT)
     .setNumberFormat('0').setBackground(C.NT_FONDO).setFontWeight('bold');
   sheet.getRange(filaMetas + 2, 3).setValue('%');
   sheet.getRange(filaMetas + 2, 4).setValue('% mínimo de ganancia sobre ingresos');
 
-  // Fila 41: Meta Máximo Gastos (CONFIG!$B$41)
+  // Fila 44: Meta Máximo Gastos (CONFIG!$B$44)
   sheet.getRange(filaMetas + 3, 1).setValue('Meta Máximo Gastos');
   sheet.getRange(filaMetas + 3, 2).setValue(METAS_NT.MAXIMO_GASTOS_PCT)
     .setNumberFormat('0').setBackground(C.NT_FONDO).setFontWeight('bold');
   sheet.getRange(filaMetas + 3, 3).setValue('%');
   sheet.getRange(filaMetas + 3, 4).setValue('% máximo de gastos sobre ingresos');
 
-  // Fila 42: Distribución Utilidad Dueño (CONFIG!$B$42)
+  // Fila 45: Distribución Utilidad Dueño (CONFIG!$B$45)
   sheet.getRange(filaMetas + 4, 1).setValue('Distribución Utilidad Dueño');
   sheet.getRange(filaMetas + 4, 2).setValue(METAS_NT.DIST_UTILIDAD_DUEÑO)
     .setNumberFormat('0.00').setBackground(C.NT_FONDO).setFontWeight('bold');
   sheet.getRange(filaMetas + 4, 3).setValue('%');
   sheet.getRange(filaMetas + 4, 4).setValue('Porcentaje de ganancia para Marco');
 
-  // Fila 43: Distribución Fondo Emergencia (CONFIG!$B$43)
+  // Fila 46: Distribución Fondo Emergencia (CONFIG!$B$46)
   sheet.getRange(filaMetas + 5, 1).setValue('Distribución Fondo Emergencia');
   sheet.getRange(filaMetas + 5, 2).setValue(METAS_NT.DIST_FONDO_EMERGENCIA)
     .setNumberFormat('0.00').setBackground(C.NT_FONDO).setFontWeight('bold');
   sheet.getRange(filaMetas + 5, 3).setValue('%');
   sheet.getRange(filaMetas + 5, 4).setValue('Porcentaje para contingencias');
 
-  // Fila 44: Distribución Fondo Inversión (CONFIG!$B$44)
+  // Fila 47: Distribución Fondo Inversión (CONFIG!$B$47)
   sheet.getRange(filaMetas + 6, 1).setValue('Distribución Fondo Inversión');
   sheet.getRange(filaMetas + 6, 2).setValue(METAS_NT.DIST_FONDO_INVERSION)
     .setNumberFormat('0.00').setBackground(C.NT_FONDO).setFontWeight('bold');
@@ -155,7 +156,7 @@ function crearHojaCONFIG() {
 
   // ─── SALDOS INICIALES POR MES ───
   // Decisión [2026-01-06]: Cada mes tiene su propio saldo inicial independiente
-  const filaSaldos = 46;
+  const filaSaldos = 50;
   sheet.getRange(filaSaldos, 1, 1, 4).merge()
     .setValue('💰 SALDOS INICIALES POR MES')
     .setFontSize(12).setFontWeight('bold')
@@ -173,13 +174,13 @@ function crearHojaCONFIG() {
     const filaMes = filaSaldos + 2 + i;
     const colLetra = String.fromCharCode(66 + i); // B=Enero, C=Febrero, ... M=Diciembre
     sheet.getRange(filaMes, 1).setValue(mes);
-    // FAMILIA = SUM de las 10 cuentas (filas 65-74)
-    sheet.getRange(filaMes, 2).setFormula(`=SUM(${colLetra}65:${colLetra}74)`)
+    // FAMILIA = SUM de las 10 cuentas (filas 68-77)
+    sheet.getRange(filaMes, 2).setFormula(`=SUM(${colLetra}68:${colLetra}77)`)
       .setNumberFormat('#,##0')
       .setBackground(C.FAM_FONDO)
       .setFontWeight('bold');
-    // NEUROTEA = SUM de las 2 cuentas (filas 79-80)
-    sheet.getRange(filaMes, 3).setFormula(`=SUM(${colLetra}79:${colLetra}80)`)
+    // NEUROTEA = SUM de las 2 cuentas (filas 82-83)
+    sheet.getRange(filaMes, 3).setFormula(`=SUM(${colLetra}82:${colLetra}83)`)
       .setNumberFormat('#,##0')
       .setBackground(C.NT_FONDO)
       .setFontWeight('bold');
@@ -192,7 +193,7 @@ function crearHojaCONFIG() {
 
   // ─── SALDOS INICIALES POR CUENTA - FAMILIA ───
   // v7.4: Cada cuenta tiene su saldo inicial por mes
-  const filaSaldosCuentasFam = 63;
+  const filaSaldosCuentasFam = 66;
   sheet.getRange(filaSaldosCuentasFam, 1, 1, 14).merge()
     .setValue('💰 SALDOS INICIALES POR CUENTA - FAMILIA')
     .setFontSize(12).setFontWeight('bold')
@@ -467,7 +468,7 @@ function crearHojaPRESUPUESTO() {
   row++;
 
   // Semáforo de estado
-  // v7.6: Usa referencia a CONFIG!$B$40 (Meta Ganancia Mínima %) en lugar de valor hardcodeado
+  // v7.6: Usa referencia a CONFIG!$B$43 (Meta Ganancia Mínima %) en lugar de valor hardcodeado
   sheet.getRange(row, 1).setValue('Estado Meta').setFontWeight('bold');
   sheet.getRange(row, 2).setValue('Calculado');
   sheet.getRange(row, 3).setValue('-');
@@ -476,7 +477,7 @@ function crearHojaPRESUPUESTO() {
     // Semáforo: <0% = Rojo (Pérdida), 0-META% = Amarillo, >=META% = Verde
     // FIX: Usar VALUE() para comparación numérica
     sheet.getRange(row, col).setFormula(
-      `=IF(${colLetra}${filaPctGanancia}<0;"🔴 PÉRDIDA";IF(${colLetra}${filaPctGanancia}<VALUE(CONFIG!$B$40)/100;"🟡 <"&CONFIG!$B$40&"%";"🟢 META"))`
+      `=IF(${colLetra}${filaPctGanancia}<0;"🔴 PÉRDIDA";IF(${colLetra}${filaPctGanancia}<VALUE(CONFIG!$B$43)/100;"🟡 <"&CONFIG!$B$43&"%";"🟢 META"))`
     );
   }
   const filaEstadoMeta = row;
@@ -858,11 +859,10 @@ function crearHojaCARGA_FAMILIA() {
   sheet.setColumnWidth(10, 80);  // VÁLIDO (v7.26)
 
   // v7.26: Fórmula ARRAYFORMULA en J4 que valida cada fila
-  // Replica las mismas condiciones del SUMPRODUCT en MOVIMIENTO:
-  // 1. MONTH(fecha) debe ser válido (no texto)
-  // 2. YEAR(fecha) debe ser AÑO (2026)
-  // 3. MONTO debe ser numérico y no vacío
-  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";"✓")))))';
+  // Validaciones VÁLIDO (v7.28):
+  // 1. MONTH(fecha) válido  2. YEAR = 2026  3. MONTO numérico
+  // 4. TIPO no vacío  5. Egreso con CATEGORÍA="-"  6. Egreso VARIABLES con SUBCATEGORÍA inválida
+  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";IF(B4:B500="";"⚠ Tipo";IF((B4:B500="Egreso Familiar")*(C4:C500="-")>0;"⚠ Cat";IF((B4:B500="Egreso Familiar")*(C4:C500="VARIABLES")*(COUNTIF(CONFIG!$C$21:$C$39;D4:D500)=0)>0;"⚠ Subcat";"✓"))))))))';
   sheet.getRange('J4').setFormula(formulaValido);
   sheet.getRange('J4:J500').setHorizontalAlignment('center');
 
@@ -979,8 +979,8 @@ function crearHojaCARGA_NT() {
   sheet.setColumnWidth(9, 140);  // LINK_ID (v7.12)
   sheet.setColumnWidth(10, 80);  // VÁLIDO (v7.26)
 
-  // v7.26: Fórmula ARRAYFORMULA en J4 que valida cada fila
-  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";"✓")))))';
+  // Validaciones VÁLIDO (v7.28): fecha, año, monto, tipo, categoría, subcategoría
+  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";IF(B4:B500="";"⚠ Tipo";IF((B4:B500="Egreso NT")*(C4:C500="-")>0;"⚠ Cat";IF((B4:B500="Egreso NT")*(C4:C500="VARIABLES")*(COUNTIF(CONFIG!$G$21:$G$35;D4:D500)=0)>0;"⚠ Subcat";"✓"))))))))';
   sheet.getRange('J4').setFormula(formulaValido);
   sheet.getRange('J4:J500').setHorizontalAlignment('center');
 
@@ -1256,18 +1256,18 @@ function crearHojaMOVIMIENTO() {
   row++;
 
   // GANANCIA NT (Ingresos - Egresos)
-  // v7.6: El texto muestra el % de meta leído de CONFIG!$B$40
-  sheet.getRange(row, 1).setFormula('="📈 GANANCIA (META "&CONFIG!$B$40&"%)"').setFontWeight('bold');
+  // v7.6: El texto muestra el % de meta leído de CONFIG!$B$43
+  sheet.getRange(row, 1).setFormula('="📈 GANANCIA (META "&CONFIG!$B$43&"%)"').setFontWeight('bold');
   sheet.getRange(row, 6).setFormula(`=F${filaTotalIngresosNT}-(F${filaTotalEgresosPagadosNT}+F${filaTotalEgresosPendientesNT})`).setFontWeight('bold');
   const filaGananciaNT = row;
   row++;
 
   // % Ganancia
-  // v7.6: El semáforo compara contra CONFIG!$B$40/100
+  // v7.6: El semáforo compara contra CONFIG!$B$43/100
   // FIX: Usar VALUE() para comparación numérica
   sheet.getRange(row, 1).setValue('  % Ganancia sobre Ingresos').setFontStyle('italic');
   sheet.getRange(row, 6).setFormula(`=IFERROR(IF(F${filaTotalIngresosNT}>0;F${filaGananciaNT}/F${filaTotalIngresosNT};0);0)`).setNumberFormat('0,00%');
-  sheet.getRange(row, 9).setFormula(`=IF(F${row}>=VALUE(CONFIG!$B$40)/100;"🟢 META";"🟡 <"&CONFIG!$B$40&"%")`);
+  sheet.getRange(row, 9).setFormula(`=IF(F${row}>=VALUE(CONFIG!$B$43)/100;"🟢 META";"🟡 <"&CONFIG!$B$43&"%")`);
   row++;
 
   // Distribución de Ganancia (solo si > 0)

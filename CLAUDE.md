@@ -216,15 +216,15 @@ gs/
 
 | Parámetro | Valor Default | Ubicación CONFIG |
 |-----------|---------------|------------------|
-| Meta Ganancia Mínima | **7%** sobre ingresos | CONFIG!$B$40 |
-| Meta Máximo Gastos | **93%** de ingresos | CONFIG!$B$41 |
-| Distribución Utilidad Dueño | 33.33% | CONFIG!$B$42 |
-| Distribución Fondo Emergencia | 33.33% | CONFIG!$B$43 |
-| Distribución Fondo Inversión | 33.34% | CONFIG!$B$44 |
+| Meta Ganancia Mínima | **7%** sobre ingresos | CONFIG!$B$43 |
+| Meta Máximo Gastos | **93%** de ingresos | CONFIG!$B$44 |
+| Distribución Utilidad Dueño | 33.33% | CONFIG!$B$45 |
+| Distribución Fondo Emergencia | 33.33% | CONFIG!$B$46 |
+| Distribución Fondo Inversión | 33.34% | CONFIG!$B$47 |
 
 > **v7.6**: Todas las METAS son editables desde CONFIG (sección "🎯 METAS NEUROTEA").
 > Las fórmulas en PRESUPUESTO, MOVIMIENTO y TABLERO leen estos valores con referencias
-> como `CONFIG!$B$40/100` en lugar de valores hardcodeados.
+> como `CONFIG!$B$43/100` en lugar de valores hardcodeados.
 
 **IMPORTANTE**: Los fondos son **VIRTUALES** (asignación contable, no cuentas bancarias separadas).
 
@@ -380,13 +380,13 @@ MOVIMIENTO (columna D=DÍA, J=EST.PAGO, F=REAL)
 
 ### Ubicación de los saldos iniciales GLOBALES (v7.5 - ahora son FÓRMULAS):
 ```
-CONFIG → Sección "SALDOS INICIALES POR MES" (filas 46-59)
+CONFIG → Sección "SALDOS INICIALES POR MES" (filas 50-63)
 | MES       | FAMILIA           | NEUROTEA          |
 |-----------|-------------------|-------------------|
-| Enero     | =SUM(B65:B74)     | =SUM(B79:B80)     |  ← Fórmula automática
-| Febrero   | =SUM(C65:C74)     | =SUM(C79:C80)     |
+| Enero     | =SUM(B68:B77)     | =SUM(B82:B83)     |  ← Fórmula automática
+| Febrero   | =SUM(C68:C77)     | =SUM(C82:C83)     |
 | ...       | ...               | ...               |
-| Diciembre | =SUM(M65:M74)     | =SUM(M79:M80)     |
+| Diciembre | =SUM(M68:M77)     | =SUM(M82:M83)     |
 ```
 
 > **v7.5**: Los saldos globales ya NO son editables. Se calculan automáticamente
@@ -406,7 +406,7 @@ CONFIG → Sección "SALDOS INICIALES POR MES" (filas 46-59)
 
 ### Ubicación en CONFIG:
 ```
-CONFIG → "SALDOS INICIALES POR CUENTA - FAMILIA" (filas 63-75)
+CONFIG → "SALDOS INICIALES POR CUENTA - FAMILIA" (filas 66-78)
 | CUENTA              | ENE | FEB | MAR | ... | DIC |
 |---------------------|-----|-----|-----|-----|-----|
 | ITAU Marco          |  0  |  0  |  0  | ... |  0  |
@@ -420,7 +420,7 @@ CONFIG → "SALDOS INICIALES POR CUENTA - FAMILIA" (filas 63-75)
 | Gourmed             |  0  |  0  |  0  | ... |  0  |
 | Efectivo            |  0  |  0  |  0  | ... |  0  |
 
-CONFIG → "SALDOS INICIALES POR CUENTA - NEUROTEA" (filas 77-81)
+CONFIG → "SALDOS INICIALES POR CUENTA - NEUROTEA" (filas 80-84)
 | CUENTA              | ENE | FEB | MAR | ... | DIC |
 |---------------------|-----|-----|-----|-----|-----|
 | Atlas NeuroTEA      |  0  |  0  |  0  | ... |  0  |
@@ -436,15 +436,15 @@ ESPERADO_CUENTA = Saldo Inicial Cuenta (CONFIG)
                 - AHORRO de esa cuenta  ← FIX v7.5
                 - Gastos fijos PAGADOS de esa cuenta
 
-// FAMILIA (filas 65-74):
-=INDEX(CONFIG!$B$65:$M$74;MATCH("cuenta";CONFIG!$A$65:$A$74;0);MES)
+// FAMILIA (filas 68-77):
+=INDEX(CONFIG!$B$68:$M$77;MATCH("cuenta";CONFIG!$A$68:$A$77;0);MES)
   + SUMPRODUCT(CARGA donde CUENTA=cuenta Y TIPO<>"Egreso" Y TIPO<>"Ahorro")
   - SUMPRODUCT(CARGA donde CUENTA=cuenta Y TIPO="Egreso Familiar")
   - SUMPRODUCT(CARGA donde CUENTA=cuenta Y TIPO="Ahorro")
   - SUMPRODUCT(GASTOS_FIJOS donde CUENTA=cuenta Y EST.PAGO="Pagado")
 
-// NEUROTEA (filas 79-80):
-=INDEX(CONFIG!$B$79:$M$80;MATCH("cuenta";CONFIG!$A$79:$A$80;0);MES)
+// NEUROTEA (filas 82-83):
+=INDEX(CONFIG!$B$82:$M$83;MATCH("cuenta";CONFIG!$A$82:$A$83;0);MES)
   + Ingresos a esa cuenta - Egresos de esa cuenta
 ```
 
@@ -709,8 +709,8 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 1. **PRESUPUESTO tiene cálculos automáticos** - Subtotales, totales, ganancia NT y semáforo
 2. **GASTOS_FIJOS sin BASE** - Cada mes tiene su valor directo (columnas G-R = ENE-DIC)
 3. **MOVIMIENTO tiene columna DÍA** - Columna D copia el día de vencimiento para acceso directo
-4. **SALDO_INICIAL independiente por mes** - Cada mes tiene su saldo en CONFIG (filas 48-59)
-5. **SALDO_INICIAL por cuenta (v7.4)** - Cada cuenta tiene saldo inicial por mes en CONFIG (FAMILIA: 65-74, NT: 79-80)
+4. **SALDO_INICIAL independiente por mes** - Cada mes tiene su saldo en CONFIG (filas 52-63)
+5. **SALDO_INICIAL por cuenta (v7.4)** - Cada cuenta tiene saldo inicial por mes en CONFIG (FAMILIA: 68-77, NT: 82-83)
 6. **TABLERO usa "Saldo Banco"** - Columna editable para verificar saldo real en banco
 7. **Variables PUROS van a CARGA** - Solo Supermercado, Combustible, etc.
 8. **AHORRO va a CARGA** - Se registra cuando realmente se hace la transferencia
@@ -872,18 +872,18 @@ No se puede prestar a quien ya te debe. Primero debe devolver.
 
 ### METAS NEUROTEA configurables desde CONFIG
 - **Solicitud**: Las metas (7%, 93%, 33.33%) estaban hardcodeadas en las fórmulas
-- **Mejora**: Ahora son editables desde CONFIG (filas 40-44, columna B)
+- **Mejora**: Ahora son editables desde CONFIG (filas 43-47, columna B)
 - **Ubicación**:
-  - CONFIG!$B$40: Meta Ganancia Mínima (%)
-  - CONFIG!$B$41: Meta Máximo Gastos (%)
-  - CONFIG!$B$42: Distribución Utilidad Dueño (%)
-  - CONFIG!$B$43: Distribución Fondo Emergencia (%)
-  - CONFIG!$B$44: Distribución Fondo Inversión (%)
+  - CONFIG!$B$43: Meta Ganancia Mínima (%)
+  - CONFIG!$B$44: Meta Máximo Gastos (%)
+  - CONFIG!$B$45: Distribución Utilidad Dueño (%)
+  - CONFIG!$B$46: Distribución Fondo Emergencia (%)
+  - CONFIG!$B$47: Distribución Fondo Inversión (%)
 - **Archivos modificados**:
   - Sheets.gs (PRESUPUESTO y MOVIMIENTO)
   - Tablero.gs (indicadores NT)
   - WebApp.gs (dashboard HTML)
-- **Fórmulas ahora usan**: `CONFIG!$B$40/100` en lugar de `0,07`
+- **Fórmulas ahora usan**: `CONFIG!$B$43/100` en lugar de `0,07`
 
 ---
 
@@ -1033,11 +1033,14 @@ LINK_ID: 6 caracteres alfanuméricos (ej: A7K2M1)
 - No incluye prefijos ni fechas
 - Identificador breve y único
 
-VÁLIDO (v7.26): ARRAYFORMULA que valida cada fila
+VÁLIDO (v7.28): ARRAYFORMULA que valida cada fila
 - "✓" = Fila será contada en TABLERO
 - "⚠ Fecha" = Fecha inválida (texto/malformada)
 - "⚠ Año" = Año diferente a 2026
 - "⚠ Monto" = Monto vacío o texto
+- "⚠ Tipo" = TIPO vacío
+- "⚠ Cat" = Egreso con CATEGORÍA="-"
+- "⚠ Subcat" = Egreso VARIABLES con SUBCATEGORÍA inválida
 - Filas con ⚠ se resaltan en rojo claro
 ```
 
@@ -1285,7 +1288,7 @@ function estaEnModoAutoCreacion() {
 - **Archivos**: Code.gs (6 puntos de clearDataValidations añadidos)
 
 ### Fórmulas distribución ganancia NT simplificadas
-- **Problema**: Fórmulas usaban `VALUE(CONFIG!$B$42)/100` etc. (innecesariamente complejo)
+- **Problema**: Fórmulas usaban `VALUE(CONFIG!$B$45)/100` etc. (innecesariamente complejo)
 - **Solución**: `=IF(ganancia>0;ganancia/3;0)` - dividir entre 3 si es positiva, 0 si negativa
 - **Archivos**: Sheets.gs (PRESUPUESTO y MOVIMIENTO)
 - **Nota**: Tablero.gs ya usaba la fórmula simple
@@ -1385,18 +1388,26 @@ function estaEnModoAutoCreacion() {
   - "⚠ Fecha" = Fecha inválida (texto, malformada, no es fecha)
   - "⚠ Año" = Año diferente a 2026
   - "⚠ Monto" = Monto vacío o texto (no numérico)
+  - "⚠ Tipo" = TIPO vacío (v7.28)
+  - "⚠ Cat" = Egreso con CATEGORÍA="-" (v7.28)
+  - "⚠ Subcat" = Egreso VARIABLES con SUBCATEGORÍA inválida (v7.28)
 - **Formato visual**:
   - Filas con ⚠: fondo rojo claro (#fde8e8), texto rojo oscuro (#991b1b)
   - ✓: texto verde
   - ⚠: texto rojo negrita
-- **Fórmula (locale español)**:
+- **Fórmula FAMILIA (locale español, v7.28)**:
   ```
-  =ARRAYFORMULA(IF(A4:A500="";""
-    ;IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha"
-      ;IF(IFERROR(YEAR(A4:A500);0)<>2026;"⚠ Año"
-        ;IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto"
-          ;"✓")))))
+  =ARRAYFORMULA(IF(A4:A500="";"";
+    IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";
+      IF(IFERROR(YEAR(A4:A500);0)<>2026;"⚠ Año";
+        IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";
+          IF(B4:B500="";"⚠ Tipo";
+            IF((B4:B500="Egreso Familiar")*(C4:C500="-")>0;"⚠ Cat";
+              IF((B4:B500="Egreso Familiar")*(C4:C500="VARIABLES")
+                *(COUNTIF(CONFIG!$C$21:$C$39;D4:D500)=0)>0;"⚠ Subcat";
+                  "✓"))))))))
   ```
+- **Fórmula NT**: Igual pero con `"Egreso NT"` y `CONFIG!$G$21:$G$35`
 - **Utilidad de menú**: "✓ Agregar columna VÁLIDO a CARGA" - agrega la columna a hojas
   existentes sin reinicializar (no pierde datos)
 - **Archivos modificados**:
@@ -1424,6 +1435,26 @@ function estaEnModoAutoCreacion() {
 - **Archivos modificados**:
   - Sheets.gs: crearHojaCARGA_FAMILIA, crearHojaCARGA_NT (fila 2 dividida, dropdown)
   - Code.gs: onEdit (detección J2), filtrarCargaPorMes(), agregarFiltroMes(), menú
+
+---
+
+## Bug Fixes [2026-01-26] - v7.28 (CRÍTICO)
+
+### METAS sobrescribía últimas 2 reservas VARIABLES_FAMILIA en CONFIG
+- **Problema**: `filaMetas = 38` (METAS NEUROTEA section) se solapaba con VARIABLES_FAMILIA
+  (19 items en C21:C39). La merged cell A38:D38 sobrescribía C38, y los headers de METAS
+  en fila 39 ponían "Unidad" en C39.
+- **Impacto**: MOVIMIENTO filas 111-112 mostraban vacío/"Unidad" en lugar de
+  "Reserva Var. 4"/"Reserva Var. 5" (fórmulas `=CONFIG!$C$38` y `=CONFIG!$C$39`)
+- **Causa raíz**: Al agregar 5 reservas en v7.25, VARIABLES_FAMILIA creció de 14 a 19 items,
+  extendiendo C21:C39 y sobrepasando la fila 38 donde empezaba METAS
+- **Solución**: Mover `filaMetas` de 38 a 41, y cascadear todos los desplazamientos:
+  - METAS: filas 41-48 (antes 38-45) → B43-B47 (antes B40-B44)
+  - SALDOS POR MES: filas 50-63 (antes 46-59) → B52:B63 (antes B48:B59)
+  - SALDOS CUENTA FAM: filas 66-78 (antes 63-75) → cuentas en 68-77 (antes 65-74)
+  - SALDOS CUENTA NT: filas 80-84 (antes 77-81) → cuentas en 82-83 (antes 79-80)
+- **Referencias actualizadas**: 29 ocurrencias en Sheets.gs, Tablero.gs y CLAUDE.md
+- **Archivos modificados**: Sheets.gs (crearHojaCONFIG), Tablero.gs (fórmulas Esperado, Saldo Inicial, Metas), Config.gs (versión)
 
 ---
 
@@ -1471,4 +1502,4 @@ function estaEnModoAutoCreacion() {
 ---
 
 *Última actualización: 2026-01-26*
-*Versión: 7.27 - Filtro por mes en CARGA + columna VÁLIDO*
+*Versión: 7.28 - Fix CONFIG overlap: METAS sobre VARIABLES_FAMILIA*

@@ -4,6 +4,23 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.28] - 2026-01-26
+
+### Fixed
+- **CRÍTICO: METAS sobrescribía VARIABLES_FAMILIA en CONFIG** - `filaMetas=38` se solapaba con las últimas 2 reservas variables (C38:C39). MOVIMIENTO filas 111-112 mostraban vacío/"Unidad" en vez de "Reserva Var. 4"/"Reserva Var. 5"
+- Movido `filaMetas` de 38 a 41 para evitar overlap (19 items en C21:C39)
+- Cascadeados todos los desplazamientos: SALDOS POR MES (50-63), CUENTA FAM (68-77), CUENTA NT (82-83)
+- Actualizadas 29 referencias hardcodeadas en Sheets.gs, Tablero.gs y CLAUDE.md
+
+### Enhanced
+- **VÁLIDO ahora valida TIPO, CATEGORÍA y SUBCATEGORÍA** (no solo fecha/año/monto)
+  - "⚠ Tipo": TIPO vacío
+  - "⚠ Cat": Egreso con CATEGORÍA="-"
+  - "⚠ Subcat": Egreso VARIABLES con SUBCATEGORÍA que no existe en CONFIG
+- Fórmulas VÁLIDO diferenciadas por entidad (FAMILIA vs NT, diferentes rangos CONFIG)
+
+---
+
 ## [7.27] - 2026-01-26
 
 ### Added

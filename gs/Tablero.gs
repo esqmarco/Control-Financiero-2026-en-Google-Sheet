@@ -209,7 +209,7 @@ function crearHojaTABLERO() {
     // ESTRUCTURA CONFIG v7.4: A=Cuenta, B-M=ENE-DIC (saldos iniciales por mes)
     // ESTRUCTURA CARGA_FAMILIA: A=Fecha, B=Tipo, F=Monto, G=Cuenta
     // ESTRUCTURA MOVIMIENTO v7.8: J=EST.PAGO, F=REAL, N=CUENTA (nueva columna oculta)
-    const formulaSaldoInicialFam = `IFERROR(INDEX(CONFIG!$B$65:$M$74;MATCH("${cuenta}";CONFIG!$A$65:$A$74;0);MOVIMIENTO!$N$3);0)`;
+    const formulaSaldoInicialFam = `IFERROR(INDEX(CONFIG!$B$68:$M$77;MATCH("${cuenta}";CONFIG!$A$68:$A$77;0);MOVIMIENTO!$N$3);0)`;
     // Fórmula desglosada:
     // + Saldo inicial de la cuenta (CONFIG)
     // + Ingresos a esta cuenta desde CARGA (TIPO no es Egreso ni Ahorro)
@@ -467,7 +467,7 @@ function crearHojaTABLERO() {
     // ESTRUCTURA CONFIG v7.4: A=Cuenta, B-M=ENE-DIC (saldos iniciales por mes)
     // ESTRUCTURA CARGA_NT: A=Fecha, B=Tipo, F=Monto, G=Cuenta
     // ESTRUCTURA MOVIMIENTO v7.8: J=EST.PAGO, F=REAL, N=CUENTA (nueva columna oculta)
-    const formulaSaldoInicialNT = `IFERROR(INDEX(CONFIG!$B$79:$M$80;MATCH("${cuenta}";CONFIG!$A$79:$A$80;0);MOVIMIENTO!$N$3);0)`;
+    const formulaSaldoInicialNT = `IFERROR(INDEX(CONFIG!$B$82:$M$83;MATCH("${cuenta}";CONFIG!$A$82:$A$83;0);MOVIMIENTO!$N$3);0)`;
     // Fórmula desglosada:
     // + Saldo inicial de la cuenta (CONFIG)
     // + Ingresos a esta cuenta desde CARGA (TIPO no es Egreso NT)
@@ -664,9 +664,9 @@ function crearHojaTABLERO() {
     .setBorder(true, true, true, true, false, false, UI.VERDE, SpreadsheetApp.BorderStyle.SOLID);
 
   // Label Meta
-  // v7.6: El % se lee de CONFIG!$B$40
+  // v7.6: El % se lee de CONFIG!$B$43
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula('="META "&CONFIG!$B$40&"%"')
+    .setFormula('="META "&CONFIG!$B$43&"%"')
     .setFontSize(9)
     .setFontColor(UI.AMARILLO)
     .setBackground(UI.AMARILLO_FONDO)
@@ -690,11 +690,11 @@ function crearHojaTABLERO() {
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, false, false, UI.VERDE, SpreadsheetApp.BorderStyle.SOLID);
 
-  // Valor Meta (% leído de CONFIG!$B$40)
-  // v7.6: El % se lee de CONFIG!$B$40 y se divide por 100
+  // Valor Meta (% leído de CONFIG!$B$43)
+  // v7.6: El % se lee de CONFIG!$B$43 y se divide por 100
   // FIX: Usar VALUE() para asegurar conversión numérica
   sheet.getRange(rowNT, 10, 1, 2).merge()
-    .setFormula(`=IFERROR(H${filaIngresosNT}*VALUE(CONFIG!$B$40)/100;0)`)
+    .setFormula(`=IFERROR(H${filaIngresosNT}*VALUE(CONFIG!$B$43)/100;0)`)
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -712,9 +712,9 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // Barra de progreso: % Gastos sobre Ingresos
-  // v7.6: El % máximo se lee de CONFIG!$B$41
+  // v7.6: El % máximo se lee de CONFIG!$B$44
   sheet.getRange(rowNT, 8, 1, 4).merge()
-    .setFormula(`="📊 % Gastos: "&TEXT(IFERROR(IF(H${filaIngresosNT}>0;J${filaIngresosNT}/H${filaIngresosNT};0);0);"0%")&" de "&CONFIG!$B$41&"% máximo"`)
+    .setFormula(`="📊 % Gastos: "&TEXT(IFERROR(IF(H${filaIngresosNT}>0;J${filaIngresosNT}/H${filaIngresosNT};0);0);"0%")&" de "&CONFIG!$B$44&"% máximo"`)
     .setFontSize(11)
     .setBackground('#E0F2FE')
     .setHorizontalAlignment('center')
@@ -831,7 +831,7 @@ function crearHojaTABLERO() {
   rowFam++;
 
   // SALDO INICIAL (desde CONFIG - independiente por mes)
-  // Decisión [2026-01-06]: Cada mes tiene su saldo inicial en CONFIG!A48:C59
+  // Decisión [2026-01-06]: Cada mes tiene su saldo inicial en CONFIG!A52:C63
   // La fórmula usa INDEX/MATCH para traer el valor del mes seleccionado
   sheet.getRange(rowFam, 2).setValue('📥 SALDO INICIAL')
     .setBackground(UI.GRIS_INFO)
@@ -842,7 +842,7 @@ function crearHojaTABLERO() {
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   // Fórmula: Lee el saldo inicial del mes desde CONFIG (columna B = FAMILIA)
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(INDEX(CONFIG!$B$48:$B$59;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$48:$A$59;0));0)')
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(INDEX(CONFIG!$B$52:$B$63;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$52:$A$63;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.GRIS_INFO)
     .setHorizontalAlignment('right')
@@ -1045,7 +1045,7 @@ function crearHojaTABLERO() {
   rowNT++;
 
   // SALDO INICIAL NT (desde CONFIG - independiente por mes)
-  // Decisión [2026-01-06]: Cada mes tiene su saldo inicial en CONFIG!A48:C59
+  // Decisión [2026-01-06]: Cada mes tiene su saldo inicial en CONFIG!A52:C63
   sheet.getRange(rowNT, 8).setValue('📥 SALDO INICIAL')
     .setBackground(UI.GRIS_INFO)
     .setFontWeight('bold')
@@ -1055,7 +1055,7 @@ function crearHojaTABLERO() {
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   // Fórmula: Lee el saldo inicial del mes desde CONFIG (columna C = NEUROTEA)
-  sheet.getRange(rowNT, 10).setFormula('=IFERROR(INDEX(CONFIG!$C$48:$C$59;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$48:$A$59;0));0)')
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(INDEX(CONFIG!$C$52:$C$63;MATCH(MOVIMIENTO!$B$3;CONFIG!$A$52:$A$63;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.GRIS_INFO)
     .setHorizontalAlignment('right')
