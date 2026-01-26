@@ -4,6 +4,34 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.29] - 2026-01-26
+
+### Added
+- **Dashboard v2.0** - Reescritura completa de WebApp.gs con Google Charts Visualization API
+- **3 pestañas**: FAMILIA, NEUROTEA, BALANCE CRUZADO (tabs con redraw al cambiar)
+- **10 gráficos interactivos**:
+  - FAMILIA: Tendencia 12 meses (ComboChart), Desglose egresos (BarChart), Distribución (PieChart donut), Presupuesto vs Real (BarChart)
+  - NEUROTEA: Estado de resultados (ComboChart dual axis), Desglose egresos, Distribución, Distribución ganancia (ColumnChart), Presupuesto vs Real
+- **KPI cards** con indicadores visuales (colores por tipo: azul=ingreso, rojo=egreso, verde=positivo, amber=pendiente)
+- **Tendencia 12 meses**: datos combinados de CARGA + GASTOS_FIJOS + PRESUPUESTO
+- **Tabla cuentas bancarias** con esperado/banco/diferencia (FAMILIA) y esperado/acumulado (NT)
+- **Liquidez visual**: disponible → semanas → saldo fin de mes
+- **Balance cruzado**: KPIs + tabla detallada + alerta visual de estado
+
+### Fixed
+- **CONFIG refs**: B40-B44 → B43-B47 (METAS desplazadas por v7.28)
+- **MOVIMIENTO ranges**: A9:F70 → A9:F116 (FAMILIA), A73:F150 → A122:F206 (NEUROTEA)
+- **Unicode**: ► (U+25BA) → ▶ (U+25B6) en detección de secciones MOVIMIENTO
+
+### Technical
+- `obtenerDatosDashboard()` - nueva función de datos comprehensiva (lee 7 hojas)
+- `generarHTMLDashboard()` - HTML completo con CSS embebido + Google Charts JS
+- Charts se renderizan client-side via `google.visualization` (paquete: corechart)
+- Datos embebidos como JSON en la página (no requiere llamadas adicionales)
+- Layout responsive con CSS Grid y media queries
+
+---
+
 ## [7.28] - 2026-01-26
 
 ### Fixed
