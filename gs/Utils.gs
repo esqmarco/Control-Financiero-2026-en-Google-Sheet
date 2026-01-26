@@ -468,13 +468,12 @@ function mostrarToast(mensaje, titulo = 'Info', duracion = 5) {
 
 /**
  * Repara fechas y montos en CARGA_FAMILIA y CARGA_NT que estén almacenados como texto.
- * Esto puede ocurrir al pegar datos desde Excel u otra fuente externa.
+ * Esto puede ocurrir al pegar datos desde otro Google Sheet o fuente externa.
  *
- * Problemas que resuelve:
- * - Fechas como texto ("02/01/2026") → Date object
- * - Fechas con typos ("24/012026") → corregido a "24/01/2026"
- * - Montos como texto ("68.416.658") → Number 68416658
- * - Años incorrectos fuera de rango → corregido a AÑO (2026)
+ * Comportamiento:
+ * - Fechas texto bien formadas ("02/01/2026") → auto-convierte a Date
+ * - Montos texto ("68.416.658") → auto-convierte a Number
+ * - Fechas MALFORMADAS ("24/012026", año incorrecto) → NO toca, ALERTA al usuario
  */
 function repararDatosCarga() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -482,11 +481,14 @@ function repararDatosCarga() {
 
   const resultado = ui.alert(
     '🔧 Reparar Datos de CARGA',
-    'Esta función repara fechas y montos que estén almacenados como texto en CARGA_FAMILIA y CARGA_NT.\n\n' +
-    'Esto corrige problemas como:\n' +
-    '• Fechas pegadas que no son reconocidas por MONTH()/YEAR()\n' +
-    '• Montos con formato incorrecto\n' +
-    '• Fechas con typos (barras faltantes, año incorrecto)\n\n' +
+    'Esta función revisa CARGA_FAMILIA y CARGA_NT:\n\n' +
+    '✅ Auto-repara:\n' +
+    '• Fechas pegadas como texto (formato correcto dd/mm/' + AÑO + ')\n' +
+    '• Montos pegados como texto\n\n' +
+    '⚠️ Solo alerta (NO modifica):\n' +
+    '• Fechas con barras faltantes ("24/012026")\n' +
+    '• Fechas con año incorrecto\n' +
+    '• Fechas no reconocibles\n\n' +
     '¿Continuar?',
     ui.ButtonSet.YES_NO
   );
@@ -494,6 +496,7 @@ function repararDatosCarga() {
   if (resultado !== ui.Button.YES) return;
 
   let totalReparadas = 0;
+  const alertas = []; // Fechas malformadas que requieren revisión manual
 
   // Reparar ambas hojas
   [NOMBRES_HOJAS.CARGA_FAMILIA, NOMBRES_HOJAS.CARGA_NT].forEach(nombreHoja => {
@@ -514,16 +517,21 @@ function repararDatosCarga() {
       // ── COLUMNA A: FECHA ──
       const fechaVal = fila[0];
       if (fechaVal && !(fechaVal instanceof Date)) {
-        // Es texto, intentar parsear
+        // Es texto - analizar qué tipo de problema tiene
         const fechaStr = String(fechaVal).trim();
-        const fechaParseada = parsearFechaTexto(fechaStr);
-        if (fechaParseada) {
-          sheet.getRange(filaSheet, 1).setValue(fechaParseada);
+        const analisis = analizarFechaTexto(fechaStr);
+
+        if (analisis.tipo === 'ok') {
+          // Fecha bien formada, solo es texto → auto-reparar
+          sheet.getRange(filaSheet, 1).setValue(analisis.fecha);
           sheet.getRange(filaSheet, 1).setNumberFormat('dd/mm/yyyy');
           huboCambio = true;
+        } else {
+          // Fecha malformada → NO tocar, agregar a alertas
+          alertas.push(`${nombreHoja} fila ${filaSheet}: "${fechaStr}" → ${analisis.problema}`);
         }
       } else if (fechaVal instanceof Date) {
-        // Es fecha pero verificar formato
+        // Es fecha correcta, solo asegurar formato visual
         sheet.getRange(filaSheet, 1).setNumberFormat('dd/mm/yyyy');
       }
 
@@ -546,67 +554,70 @@ function repararDatosCarga() {
     }
   });
 
+  // Mostrar resultado
+  let mensaje = '';
+
   if (totalReparadas > 0) {
-    ui.alert('✅ Reparación completada',
-      `Se repararon ${totalReparadas} filas con datos incorrectos.\n\n` +
-      'Las fórmulas de MOVIMIENTO y TABLERO deberían actualizarse automáticamente.',
-      ui.ButtonSet.OK);
+    mensaje += `✅ Se repararon ${totalReparadas} filas (texto → fecha/número).\n`;
+    mensaje += 'Las fórmulas deberían actualizarse automáticamente.\n';
   } else {
-    ui.alert('✅ Todo OK',
-      'No se encontraron datos que necesiten reparación.\nTodas las fechas y montos están correctamente formateados.',
-      ui.ButtonSet.OK);
+    mensaje += '✅ No se encontraron datos texto que reparar.\n';
   }
+
+  if (alertas.length > 0) {
+    mensaje += `\n⚠️ ${alertas.length} fecha(s) con problemas (NO modificadas):\n\n`;
+    // Mostrar máximo 15 alertas para no desbordar el cuadro
+    const mostrar = alertas.slice(0, 15);
+    mensaje += mostrar.join('\n');
+    if (alertas.length > 15) {
+      mensaje += `\n... y ${alertas.length - 15} más. Ver log para lista completa.`;
+      alertas.forEach(a => log(a, 'warning'));
+    }
+    mensaje += '\n\nCorregí estas fechas manualmente en la hoja.';
+  }
+
+  ui.alert(
+    alertas.length > 0 ? '⚠️ Reparación con alertas' : '✅ Reparación completada',
+    mensaje,
+    ui.ButtonSet.OK
+  );
 }
 
 /**
- * Parsea una fecha en texto al formato Date
- * Maneja formatos: dd/mm/yyyy, dd/mm/yy, ddmmyyyy (sin barras), dd/mmyyyy (barra faltante)
- * @param {string} texto - El texto a parsear
- * @returns {Date|null} La fecha parseada o null si no se pudo parsear
+ * Analiza una fecha en texto y determina si es reparable automáticamente o necesita revisión.
+ *
+ * @param {string} texto - El texto a analizar
+ * @returns {Object} { tipo: 'ok'|'error', fecha?: Date, problema?: string }
+ *   - tipo 'ok': fecha bien formada, se puede auto-reparar
+ *   - tipo 'error': fecha malformada, requiere revisión manual
  */
-function parsearFechaTexto(texto) {
-  if (!texto) return null;
+function analizarFechaTexto(texto) {
+  if (!texto) return { tipo: 'error', problema: 'Vacío' };
 
-  let dia, mes, anio;
+  // Solo auto-reparar formato estándar: dd/mm/yyyy con año correcto
+  const match = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match) {
+    const dia = parseInt(match[1]);
+    const mes = parseInt(match[2]);
+    const anio = parseInt(match[3]);
 
-  // Formato estándar: dd/mm/yyyy
-  const match1 = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (match1) {
-    dia = parseInt(match1[1]);
-    mes = parseInt(match1[2]);
-    anio = parseInt(match1[3]);
+    if (dia < 1 || dia > 31) return { tipo: 'error', problema: `Día ${dia} fuera de rango` };
+    if (mes < 1 || mes > 12) return { tipo: 'error', problema: `Mes ${mes} fuera de rango` };
+    if (anio !== AÑO) return { tipo: 'error', problema: `Año ${anio} (esperado ${AÑO})` };
+
+    return { tipo: 'ok', fecha: new Date(anio, mes - 1, dia) };
   }
 
-  // Formato con barra faltante: dd/mmyyyy (ej: "24/012026")
-  if (!dia) {
-    const match2 = texto.match(/^(\d{1,2})\/(\d{2})(\d{4})$/);
-    if (match2) {
-      dia = parseInt(match2[1]);
-      mes = parseInt(match2[2]);
-      anio = parseInt(match2[3]);
-    }
+  // Detectar patrones malformados conocidos para dar mejor mensaje
+  const matchBarraFaltante = texto.match(/^(\d{1,2})\/(\d{2})(\d{4})$/);
+  if (matchBarraFaltante) {
+    return { tipo: 'error', problema: `Falta "/" → ¿debería ser ${matchBarraFaltante[1]}/${matchBarraFaltante[2]}/${matchBarraFaltante[3]}?` };
   }
 
-  // Formato sin barras: ddmmyyyy (ej: "02012026")
-  if (!dia) {
-    const match3 = texto.match(/^(\d{2})(\d{2})(\d{4})$/);
-    if (match3) {
-      dia = parseInt(match3[1]);
-      mes = parseInt(match3[2]);
-      anio = parseInt(match3[3]);
-    }
+  const matchSinBarras = texto.match(/^(\d{2})(\d{2})(\d{4})$/);
+  if (matchSinBarras) {
+    return { tipo: 'error', problema: `Sin barras → ¿debería ser ${matchSinBarras[1]}/${matchSinBarras[2]}/${matchSinBarras[3]}?` };
   }
 
-  if (!dia || !mes || !anio) return null;
-
-  // Validar rangos
-  if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return null;
-
-  // Corregir año si está fuera de rango (ej: 2027 → 2026)
-  if (anio !== AÑO && anio > AÑO) {
-    anio = AÑO;
-  }
-
-  // Crear fecha (mes es 0-indexed en JavaScript)
-  return new Date(anio, mes - 1, dia);
+  return { tipo: 'error', problema: 'Formato no reconocido' };
 }
