@@ -727,23 +727,32 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
  * @returns {string[]} Lista de subcategorías válidas
  */
 function obtenerVariablesDesdeConfig(entidad) {
+  const codeArray = entidad === 'FAMILIA' ? VARIABLES_FAMILIA : VARIABLES_NT;
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const config = ss.getSheetByName(NOMBRES_HOJAS.CONFIG);
 
   if (!config) {
-    // Fallback a arrays hardcodeados si CONFIG no existe
-    return entidad === 'FAMILIA' ? VARIABLES_FAMILIA : VARIABLES_NT;
+    return codeArray;
   }
 
   // VARIABLES FAMILIA: col 3, VARIABLES NT: col 7
   const col = entidad === 'FAMILIA' ? 3 : 7;
-  const maxItems = 20; // margen suficiente para las reservas
+  const maxItems = 25; // v7.25: margen ampliado (19 items FAM, 15 items NT)
 
-  const valores = config.getRange(21, col, maxItems, 1).getValues()
-    .map(function(r) { return r[0]; })
-    .filter(function(v) { return v !== '' && v !== null; });
+  const configValues = config.getRange(21, col, maxItems, 1).getValues()
+    .map(function(r) { return (r[0] || '').toString().trim(); })
+    .filter(function(v) { return v !== ''; });
 
-  return valores.length > 0 ? valores : (entidad === 'FAMILIA' ? VARIABLES_FAMILIA : VARIABLES_NT);
+  // v7.25: Combinar ambas fuentes (CONFIG + código) para evitar rechazos
+  // cuando dropdown (del código) y CONFIG tienen diferencias sutiles
+  var combined = codeArray.slice(); // copia del array del código
+  for (var i = 0; i < configValues.length; i++) {
+    if (combined.indexOf(configValues[i]) === -1) {
+      combined.push(configValues[i]);
+    }
+  }
+
+  return combined;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
