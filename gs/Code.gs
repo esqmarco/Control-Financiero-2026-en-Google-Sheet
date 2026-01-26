@@ -364,12 +364,16 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
       sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else {
-      sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
-      sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
-      // v7.22: Restaurar validación SUBCATEGORÍA apuntando a CONFIG
+      // v7.22: Restaurar validaciones CATEGORÍA y SUBCATEGORÍA para egresos
+      sheet.getRange(row, 3).setBackground(COLORES.BLANCO).setDataValidation(
+        SpreadsheetApp.newDataValidation()
+          .requireValueInList(['-', ...CARGA_CATEGORIAS_FAMILIA, ...CATEGORIAS_AHORRO_FAMILIA], true)
+          .setAllowInvalid(false)
+          .build()
+      );
       const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRES_HOJAS.CONFIG);
       const rangoVarFam = configSheet.getRange(21, 3, VARIABLES_FAMILIA.length, 1);
-      sheet.getRange(row, 4).setDataValidation(
+      sheet.getRange(row, 4).setBackground(COLORES.BLANCO).setDataValidation(
         SpreadsheetApp.newDataValidation()
           .requireValueInRange(rangoVarFam, true)
           .setAllowInvalid(true)
@@ -429,8 +433,9 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
         'La CATEGORÍA solo aplica para egresos ("Egreso Familiar") o ahorro ("Ahorro").',
         SpreadsheetApp.getUi().ButtonSet.OK
       );
-      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
-      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      // v7.22: clearDataValidations para que "-" no muestre warning
+      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
       return;
     }
 
@@ -450,7 +455,8 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
         return;
       }
       // AHORRO: SUBCATEGORÍA siempre bloqueada
-      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      // v7.22: clearDataValidations para que "-" no muestre warning
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
       return;
     }
 
@@ -463,7 +469,8 @@ function procesarEdicionCargaFamilia(sheet, row, col, valor, oldValue) {
       }
     } else {
       // Deshabilitar subcategoría para otras categorías de egreso
-      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      // v7.22: clearDataValidations para que "-" no muestre warning
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     }
   }
 
@@ -551,12 +558,16 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
       sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
       sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     } else {
-      sheet.getRange(row, 3).setBackground(COLORES.BLANCO);
-      sheet.getRange(row, 4).setBackground(COLORES.BLANCO);
-      // v7.22: Restaurar validación SUBCATEGORÍA apuntando a CONFIG
+      // v7.22: Restaurar validaciones CATEGORÍA y SUBCATEGORÍA para egresos
+      sheet.getRange(row, 3).setBackground(COLORES.BLANCO).setDataValidation(
+        SpreadsheetApp.newDataValidation()
+          .requireValueInList(['-', ...CARGA_CATEGORIAS_NT], true)
+          .setAllowInvalid(false)
+          .build()
+      );
       const configSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRES_HOJAS.CONFIG);
       const rangoVarNT = configSheet.getRange(21, 7, VARIABLES_NT.length, 1);
-      sheet.getRange(row, 4).setDataValidation(
+      sheet.getRange(row, 4).setBackground(COLORES.BLANCO).setDataValidation(
         SpreadsheetApp.newDataValidation()
           .requireValueInRange(rangoVarNT, true)
           .setAllowInvalid(true)
@@ -615,8 +626,9 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
         'La CATEGORÍA solo aplica para egresos ("Egreso NT").',
         SpreadsheetApp.getUi().ButtonSet.OK
       );
-      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO);
-      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      // v7.22: clearDataValidations para que "-" no muestre warning
+      sheet.getRange(row, 3).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
       return;
     }
 
@@ -627,7 +639,8 @@ function procesarEdicionCargaNT(sheet, row, col, valor, oldValue) {
         intentarAutoCreacionNT(sheet, row);
       }
     } else {
-      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO);
+      // v7.22: clearDataValidations para que "-" no muestre warning
+      sheet.getRange(row, 4).setValue('-').setBackground(COLORES.GRIS_FONDO).clearDataValidations();
     }
   }
 
