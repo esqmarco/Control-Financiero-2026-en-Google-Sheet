@@ -801,19 +801,20 @@ function crearHojaCARGA_FAMILIA() {
   const C = COLORES;
 
   // ─── HEADER PRINCIPAL ───
-  sheet.getRange('A1:I1').merge()
+  sheet.getRange('A1:J1').merge()
     .setValue('👨‍👩‍👧‍👦 CARGA FAMILIA - Variables y Ahorro')
     .setFontSize(16).setFontWeight('bold')
     .setBackground(C.FAM_HEADER).setFontColor(C.BLANCO)
     .setHorizontalAlignment('center');
 
-  sheet.getRange('A2:I2').merge()
+  sheet.getRange('A2:J2').merge()
     .setValue('VARIABLES puros (Supermercado, Combustible) y AHORRO (Clara, Marco, Fondo Emergencia). Los fijos van en GASTOS_FIJOS.')
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
 
   // ─── HEADERS DE COLUMNAS ───
   // v7.12: Columna I = LINK_ID para vincular transacciones cruzadas (préstamos/devoluciones)
-  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCATEGORÍA', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'NOTAS', 'LINK_ID'];
+  // v7.26: Columna J = VÁLIDO - indica si la fila será contada en TABLERO
+  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCATEGORÍA', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'NOTAS', 'LINK_ID', 'VÁLIDO'];
 
   headers.forEach((h, i) => {
     sheet.getRange(3, i + 1)
@@ -841,6 +842,16 @@ function crearHojaCARGA_FAMILIA() {
   sheet.setColumnWidth(7, 130);  // CUENTA
   sheet.setColumnWidth(8, 150);  // NOTAS
   sheet.setColumnWidth(9, 140);  // LINK_ID (v7.12)
+  sheet.setColumnWidth(10, 80);  // VÁLIDO (v7.26)
+
+  // v7.26: Fórmula ARRAYFORMULA en J4 que valida cada fila
+  // Replica las mismas condiciones del SUMPRODUCT en MOVIMIENTO:
+  // 1. MONTH(fecha) debe ser válido (no texto)
+  // 2. YEAR(fecha) debe ser AÑO (2026)
+  // 3. MONTO debe ser numérico y no vacío
+  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";"✓")))))';
+  sheet.getRange('J4').setFormula(formulaValido);
+  sheet.getRange('J4:J500').setHorizontalAlignment('center');
 
   sheet.setFrozenRows(3);
 
@@ -899,19 +910,20 @@ function crearHojaCARGA_NT() {
   const C = COLORES;
 
   // ─── HEADER PRINCIPAL ───
-  sheet.getRange('A1:I1').merge()
+  sheet.getRange('A1:J1').merge()
     .setValue('🏥 CARGA NEUROTEA - Variables')
     .setFontSize(16).setFontWeight('bold')
     .setBackground(C.NT_HEADER).setFontColor(C.BLANCO)
     .setHorizontalAlignment('center');
 
-  sheet.getRange('A2:I2').merge()
+  sheet.getRange('A2:J2').merge()
     .setValue('Solo para gastos VARIABLES puros. Los gastos fijos y EVENTOS van en GASTOS_FIJOS.')
     .setFontSize(10).setFontColor(C.TEXTO_CLARO).setFontStyle('italic');
 
   // ─── HEADERS DE COLUMNAS ───
   // v7.12: Columna I = LINK_ID para vincular transacciones cruzadas (préstamos/devoluciones)
-  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCAT/EVENTO', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'NOTAS', 'LINK_ID'];
+  // v7.26: Columna J = VÁLIDO - indica si la fila será contada en TABLERO
+  const headers = ['FECHA', 'TIPO', 'CATEGORÍA', 'SUBCAT/EVENTO', 'DESCRIPCIÓN', 'MONTO', 'CUENTA', 'NOTAS', 'LINK_ID', 'VÁLIDO'];
 
   headers.forEach((h, i) => {
     sheet.getRange(3, i + 1)
@@ -939,6 +951,12 @@ function crearHojaCARGA_NT() {
   sheet.setColumnWidth(7, 130);  // CUENTA
   sheet.setColumnWidth(8, 150);  // NOTAS
   sheet.setColumnWidth(9, 140);  // LINK_ID (v7.12)
+  sheet.setColumnWidth(10, 80);  // VÁLIDO (v7.26)
+
+  // v7.26: Fórmula ARRAYFORMULA en J4 que valida cada fila
+  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";"✓")))))';
+  sheet.getRange('J4').setFormula(formulaValido);
+  sheet.getRange('J4:J500').setHorizontalAlignment('center');
 
   sheet.setFrozenRows(3);
 
@@ -990,14 +1008,39 @@ function aplicarFormatoCondicionalCarga(sheet, entidad) {
   const C = COLORES;
   const color = entidad === 'FAMILIA' ? C.FAM_FONDO : C.NT_FONDO;
 
-  // Alternar colores de filas
+  // Alternar colores de filas (v7.26: extendido a columna J)
   const reglaAlternada = SpreadsheetApp.newConditionalFormatRule()
     .whenFormulaSatisfied('=ISEVEN(ROW())')
     .setBackground(color)
-    .setRanges([sheet.getRange('A4:I500')])
+    .setRanges([sheet.getRange('A4:J500')])
     .build();
 
-  sheet.setConditionalFormatRules([reglaAlternada]);
+  // v7.26: Columna VÁLIDO - resaltar filas con problemas
+  // Fila completa en rojo claro si VÁLIDO muestra ⚠
+  const reglaFilaInvalida = SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied('=LEFT($J4;1)="⚠"')
+    .setBackground('#fde8e8')  // Rojo muy claro
+    .setFontColor('#991b1b')   // Rojo oscuro
+    .setRanges([sheet.getRange('A4:J500')])
+    .build();
+
+  // Columna J: ✓ en verde
+  const reglaValido = SpreadsheetApp.newConditionalFormatRule()
+    .whenTextEqualTo('✓')
+    .setFontColor(C.VERDE)
+    .setRanges([sheet.getRange('J4:J500')])
+    .build();
+
+  // Columna J: ⚠ en rojo
+  const reglaInvalido = SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied('=LEFT(J4;1)="⚠"')
+    .setFontColor('#dc2626')
+    .setFontWeight('bold')
+    .setRanges([sheet.getRange('J4:J500')])
+    .build();
+
+  // Orden: reglas específicas primero, luego alternada
+  sheet.setConditionalFormatRules([reglaFilaInvalida, reglaInvalido, reglaValido, reglaAlternada]);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

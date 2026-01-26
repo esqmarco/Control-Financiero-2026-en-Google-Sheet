@@ -55,7 +55,8 @@ function onOpen() {
       .addItem('🧹 Limpiar Datos de Prueba', 'limpiarDatosPrueba')
       .addItem('🔍 Verificar Contrapartes Huérfanas', 'limpiarContrapartesHuerfanas')
       .addItem('⚡ Instalar Auto-limpieza (onChange)', 'instalarTriggerOnChange')
-      .addItem('🩹 Reparar Datos Pegados en CARGA', 'repararDatosCarga'))
+      .addItem('🩹 Reparar Datos Pegados en CARGA', 'repararDatosCarga')
+      .addItem('✓ Agregar columna VÁLIDO a CARGA', 'agregarColumnaValido'))
     .addSeparator()
 
     // Info
@@ -246,6 +247,68 @@ function actualizarTodasValidaciones() {
 
   SpreadsheetApp.getUi().alert('✅ Validaciones Actualizadas',
     'Las validaciones de CARGA_FAMILIA y CARGA_NT han sido actualizadas.',
+    SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+// v7.26: Agrega columna VÁLIDO (J) a hojas CARGA existentes sin perder datos
+function agregarColumnaValido() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const C = COLORES;
+
+  const formulaValido = '=ARRAYFORMULA(IF(A4:A500="";"";IF(IFERROR(MONTH(A4:A500);0)=0;"⚠ Fecha";IF(IFERROR(YEAR(A4:A500);0)<>' + AÑO + ';"⚠ Año";IF((F4:F500="")+(NOT(ISNUMBER(F4:F500)))>0;"⚠ Monto";"✓")))))';
+
+  let actualizadas = 0;
+
+  [NOMBRES_HOJAS.CARGA_FAMILIA, NOMBRES_HOJAS.CARGA_NT].forEach(nombre => {
+    const sheet = ss.getSheetByName(nombre);
+    if (!sheet) return;
+
+    // Header J3
+    sheet.getRange('J3')
+      .setValue('VÁLIDO')
+      .setFontWeight('bold')
+      .setHorizontalAlignment('center');
+
+    // ARRAYFORMULA en J4
+    sheet.getRange('J4').setFormula(formulaValido);
+    sheet.getRange('J4:J500').setHorizontalAlignment('center');
+    sheet.setColumnWidth(10, 80);
+
+    // Formato condicional para filas inválidas
+    const reglasExistentes = sheet.getConditionalFormatRules();
+
+    const reglaFilaInvalida = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied('=LEFT($J4;1)="⚠"')
+      .setBackground('#fde8e8')
+      .setFontColor('#991b1b')
+      .setRanges([sheet.getRange('A4:J500')])
+      .build();
+
+    const reglaInvalido = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied('=LEFT(J4;1)="⚠"')
+      .setFontColor('#dc2626')
+      .setFontWeight('bold')
+      .setRanges([sheet.getRange('J4:J500')])
+      .build();
+
+    const reglaValido = SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('✓')
+      .setFontColor(C.VERDE)
+      .setRanges([sheet.getRange('J4:J500')])
+      .build();
+
+    // Agregar nuevas reglas al inicio (mayor prioridad)
+    sheet.setConditionalFormatRules([reglaFilaInvalida, reglaInvalido, reglaValido, ...reglasExistentes]);
+
+    actualizadas++;
+  });
+
+  SpreadsheetApp.getUi().alert('✅ Columna VÁLIDO Agregada',
+    actualizadas + ' hoja(s) actualizada(s).\n\n' +
+    '✓ = Fila será contada en TABLERO\n' +
+    '⚠ Fecha = Fecha inválida (texto)\n' +
+    '⚠ Año = Año diferente a ' + AÑO + '\n' +
+    '⚠ Monto = Monto vacío o texto',
     SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
