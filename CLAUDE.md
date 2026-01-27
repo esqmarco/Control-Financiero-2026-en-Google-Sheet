@@ -25,7 +25,7 @@ gs/
 ├── Config.gs      → Datos maestros, cuentas, categorías, colores
 ├── Sheets.gs      → Creación de las 8 hojas principales
 ├── Tablero.gs     → Dashboard en Google Sheets (fórmulas dinámicas)
-├── WebApp.gs      → Dashboard HTML/CSS (lee datos en tiempo real)
+├── WebApp.gs      → Dashboard HTML/Chart.js separado FAMILIA/NEUROTEA (v3.0)
 └── Utils.gs       → Funciones utilitarias
 ```
 
@@ -1501,5 +1501,65 @@ function estaEnModoAutoCreacion() {
 
 ---
 
-*Última actualización: 2026-01-26*
-*Versión: 7.28 - Fix CONFIG overlap: METAS sobre VARIABLES_FAMILIA*
+## Dashboard Web v3.0 (WebApp.gs) - v7.30
+
+### Arquitectura
+- **Librería**: Chart.js via CDN (reemplaza Google Charts de v2.0)
+- **Compatibilidad**: ES5 (string concatenation, `var` en lugar de `const`/`let`)
+- **Renderizado**: Client-side, datos embebidos como JSON en la página
+- **Tabs**: 2 pestañas independientes (FAMILIA, NEUROTEA)
+- **Charts por tab**: 8 gráficos + 1 flujo entre entidades (sección compartida)
+- **Destroy/Recreate**: Al cambiar de tab, se destruyen y recrean los charts
+
+### Funciones principales
+- `obtenerDatosDashboard()`: Lee 7 hojas y recopila todos los datos necesarios
+  - Campos nuevos en v3.0: `subcategoriasFam[]`, `subcategoriasNT[]`, `flujoMensual{}`
+- `generarHTMLDashboard()`: Genera HTML completo con CSS + Chart.js
+  - Helper: `buildFlujoSection(chartId)` → genera sección flujo con IDs SVG únicos
+
+### Gráficos FAMILIA (8 + 1 flujo)
+1. **Balance Mensual** (combo bar+line): Ingresos vs Egresos vs Ahorro por mes
+2. **Ahorro Acumulado** (line): Clara + Marco + Fondo Emergencia acumulados
+3. **Gastos por Categoría** (donut): Distribución % de egresos pagados
+4. **Composición Egresos** (horizontal bar): Desglose por categoría en Gs.
+5. **% Gastos vs Ingresos** (bar): Porcentaje mensual de ejecución
+6. **Subcategorías Variables** (donut): Desglose de gastos variables
+7. **Presupuesto vs Ejecución** (area): Comparación acumulada 12 meses
+8. **Flujo entre Entidades** (bar): Préstamos NT↔FAM mensuales
+
+### Gráficos NEUROTEA (8 + 1 flujo)
+1. **Estado de Resultados** (combo): Ingresos vs Egresos + línea % ganancia + meta 7%
+2. **Ganancia Acumulada** (line): Acumulado mensual
+3. **Gastos por Categoría** (donut): Distribución % de egresos pagados
+4. **Composición Egresos** (horizontal bar): Desglose por categoría en Gs.
+5. **Evolución % Ganancia** (line + meta): % mensual con línea de meta
+6. **Distribución Ganancia** (column): Meta vs Real para 3 fondos
+7. **Presupuesto vs Ejecución** (area): Comparación acumulada 12 meses
+8. **Flujo entre Entidades** (bar): Préstamos NT↔FAM mensuales
+
+### Sección Flujo entre Entidades (común en ambos tabs)
+- Diagrama SVG vertical con flechas bidireccionales NT↔FAM
+- Alert box con estado del balance (DEBE/EQUILIBRADO)
+- Tabla detallada: Préstamos, Devoluciones, Balance por dirección
+- Gráfico de barras: flujo mensual (12 meses)
+
+### Datos recopilados por `obtenerDatosDashboard()`
+| Campo | Fuente | Descripción |
+|-------|--------|-------------|
+| `mes`, `mesNum` | MOVIMIENTO!B3 | Mes seleccionado |
+| `famIngresos/Egresos/etc` | MOVIMIENTO (INDEX/MATCH) | KPIs FAMILIA |
+| `ntIngresos/Egresos/etc` | MOVIMIENTO (INDEX/MATCH) | KPIs NEUROTEA |
+| `cuentasFam/NT` | TABLERO | Saldos por cuenta |
+| `categoriasFam/NT` | MOVIMIENTO (L,M,F,J) | % por categoría |
+| `presupFam/NT` | PRESUPUESTO | Presupuesto mensual |
+| `tendenciaFam/NT` | CARGA + GASTOS_FIJOS | Datos 12 meses |
+| `subcategoriasFam/NT` | CARGA (v3.0) | Subcategorías variables del mes |
+| `flujoMensual` | CARGA (v3.0) | ntToFam[12] + famToNT[12] |
+| `balanceCruzado` | Utils.calcularBalanceCruzado() | Balance NT↔FAM |
+| `liquidezFam/NT` | TABLERO | Liquidez por semana |
+| `gananciaNT` | MOVIMIENTO/TABLERO | Ganancia + distribución |
+
+---
+
+*Última actualización: 2026-01-27*
+*Versión: 7.30 - Dashboard v3.0: Chart.js + dashboards separados FAMILIA/NEUROTEA*

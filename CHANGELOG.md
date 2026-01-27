@@ -4,6 +4,37 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.30] - 2026-01-27
+
+### Added
+- **Dashboard v3.0** - Reescritura completa de WebApp.gs con Chart.js (reemplaza Google Charts v2.0)
+- **Dashboards separados**: 2 pestañas independientes (FAMILIA, NEUROTEA) en lugar de 3
+- **18 gráficos Chart.js interactivos** con tooltips y descripciones interpretativas:
+  - **FAMILIA (8+1)**: Balance Mensual (combo), Ahorro Acumulado (línea), Gastos por Categoría (donut), Composición Egresos (barra horizontal), % Gastos vs Ingresos (barras), Subcategorías Variables (donut), Presupuesto vs Ejecución (área), Flujo entre Entidades (barras)
+  - **NEUROTEA (8+1)**: Estado de Resultados (combo con línea % ganancia), Ganancia Acumulada (línea), Gastos por Categoría (donut), Composición Egresos (barra horizontal), Evolución % Ganancia (línea con meta), Distribución Ganancia (columnas meta vs real), Presupuesto vs Ejecución (área), Flujo entre Entidades (barras)
+- **Flujo entre entidades**: sección común en ambos tabs con diagrama SVG vertical (NT↔FAM con flechas), alerta de balance, tabla detallada y gráfico mensual
+- **Guías de interpretación**: cada gráfico tiene un párrafo `<p class="desc">` que explica cómo leer el gráfico
+- **KPI cards mejorados**: grid responsive con border-left por tipo (azul=ingreso, rojo=egreso, verde=positivo, amber=pendiente)
+- **Nuevos datos**: subcategorías variables (FAMILIA y NT), flujo mensual cruzado (12 meses)
+
+### Changed
+- **Chart.js** via CDN reemplaza Google Charts Visualization API (más ligero, más flexible)
+- **2 tabs** (FAMILIA, NEUROTEA) en lugar de 3 (FAMILIA, NEUROTEA, BALANCE CRUZADO)
+- Dialog modal: `setHeight(950)` → `setHeight(1000)` para mejor visualización
+- `obtenerDatosDashboard()` ahora recopila 3 nuevos campos: `subcategoriasFam`, `subcategoriasNT`, `flujoMensual`
+- Charts se destruyen y recrean al cambiar de tab (evita "Canvas already in use")
+- IDs SVG únicos por instancia de flujo para evitar colisiones de markers
+
+### Technical
+- `generarHTMLDashboard()` - HTML completo con CSS embebido + Chart.js via CDN
+- String concatenation (ES5 compatible) en lugar de template literals
+- Tab-based SPA con destroy/recreate pattern para Chart.js
+- Datos embebidos como JSON en la página (sin llamadas adicionales)
+- Layout responsive con CSS Grid
+- Paleta de colores consistente con `references/colors.md`
+
+---
+
 ## [7.29] - 2026-01-26
 
 ### Added

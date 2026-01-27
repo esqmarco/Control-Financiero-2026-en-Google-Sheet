@@ -1,34 +1,138 @@
-# Tipos de Graficos - Dashboard Financiero
+# Tipos de Graficos - Dashboard Financiero v3.0
 
-## Visualizaciones del Dashboard
+> Libreria: Chart.js via CDN. Todos los graficos incluyen descripcion interpretativa.
 
-### 1. Barras de Progreso (KPI Cards)
+## Graficos FAMILIA
 
-Usadas para mostrar ejecucion presupuestaria.
+### 1. Balance Mensual (Combo: bar + line)
+- **Tipo Chart.js**: bar + line en mismo canvas
+- **Datos**: Ingresos (barras azules), Egresos (barras rojas), Ahorro (linea verde)
+- **Eje X**: 12 meses (ENE-DIC)
+- **Eje Y**: Guaranies
+- **Interpretacion**: Barras muestran flujo mensual, linea muestra tendencia de ahorro
 
-```
-INGRESOS    ████████████████░░░░  80%
-EGRESOS     ██████████░░░░░░░░░░  50%
-```
+### 2. Ahorro Acumulado (Line)
+- **Tipo Chart.js**: line con area fill
+- **Datos**: 3 lineas - Ahorro Clara, Ahorro Marco, Fondo Emergencia (acumulados)
+- **Colores**: #3b82f6 (Clara), #22c55e (Marco), #f59e0b (Fondo)
+- **Interpretacion**: Lineas ascendentes = ahorro creciente. Mesetas = meses sin ahorro
 
-- Color barra: Azul `#3b82f6` para ingresos, Rojo `#ef4444` para egresos
-- Fondo barra: Gris claro `#e5e7eb`
-- Porcentaje: `REAL / PRESUPUESTO * 100`
+### 3. Gastos por Categoria (Donut)
+- **Tipo Chart.js**: doughnut (cutout: 60%)
+- **Datos**: % de egresos pagados por categoria (GASTOS FIJOS, CUOTAS, OBLIGACIONES, SUSCRIPCIONES, VARIABLES)
+- **Colores**: Paleta distinguible por categoria
+- **Interpretacion**: Segmentos grandes = categorias con mayor peso en el gasto total
 
-### 2. Semaforo de Estado
+### 4. Composicion Egresos (Horizontal Bar)
+- **Tipo Chart.js**: bar horizontal (indexAxis: 'y')
+- **Datos**: Monto en Gs. por cada categoria de egreso
+- **Interpretacion**: Barras largas = categorias mas costosas. Complementa el donut con valores absolutos
 
-Indicador visual circular para estados criticos.
+### 5. % Gastos vs Ingresos (Bar)
+- **Tipo Chart.js**: bar
+- **Datos**: Porcentaje mensual de egresos sobre ingresos
+- **Linea de referencia**: 100% (horizontal dashed)
+- **Colores**: Verde si < 100%, Rojo si >= 100%
+- **Interpretacion**: Barras bajo 100% = meses con superavit. Sobre 100% = deficit
 
-| Estado | Icono | Color |
-|--------|-------|-------|
-| OK / Meta cumplida | Circulo verde | `#22c55e` |
-| Advertencia | Circulo amarillo | `#f59e0b` |
-| Alerta / Deficit | Circulo rojo | `#dc2626` |
+### 6. Subcategorias Variables (Donut)
+- **Tipo Chart.js**: doughnut
+- **Datos**: Desglose de gastos VARIABLES del mes actual (Supermercado, Combustible, etc.)
+- **Interpretacion**: Identifica donde se va el gasto variable. Solo muestra subcategorias con monto > 0
 
-### 3. Tabla de Saldos por Cuenta
+### 7. Presupuesto vs Ejecucion (Area)
+- **Tipo Chart.js**: line con area fill
+- **Datos**: 2 lineas - Presupuesto acumulado vs Ejecucion acumulada (12 meses)
+- **Colores**: Gris (presupuesto), Azul (ejecucion)
+- **Interpretacion**: Si ejecucion esta sobre presupuesto = sobreejecutado. Debajo = subejecucion
 
-Muestra saldo esperado vs saldo real (banco) por cuenta.
+### 8. Flujo entre Entidades (Bar)
+- **Tipo Chart.js**: bar
+- **Datos**: Prestamos NT→FAM vs FAM→NT por mes
+- **Colores**: #3b82f6 (NT→FAM), #ef4444 (FAM→NT)
+- **Interpretacion**: Barras muestran transferencias mensuales entre entidades
 
+## Graficos NEUROTEA
+
+### 1. Estado de Resultados (Combo: bar + line)
+- **Tipo Chart.js**: bar + line con eje Y secundario
+- **Datos**: Ingresos (barras azules), Egresos (barras rojas), % Ganancia (linea verde), Meta 7% (linea punteada)
+- **Interpretacion**: Barras muestran flujo, linea muestra rentabilidad. Linea sobre meta = mes rentable
+
+### 2. Ganancia Acumulada (Line)
+- **Tipo Chart.js**: line con area fill
+- **Datos**: Ganancia acumulada mes a mes
+- **Color**: Verde #22c55e (positiva), Rojo #dc2626 (negativa)
+- **Interpretacion**: Linea ascendente = ganancia creciente. Puntos bajo 0 = acumulado negativo
+
+### 3. Gastos por Categoria (Donut)
+- **Tipo Chart.js**: doughnut (cutout: 60%)
+- **Datos**: % de egresos pagados por categoria (CLINICA, SUELDOS, TELEFONIA, OBLIGACIONES, EVENTOS, VARIABLES)
+- **Interpretacion**: Segmentos grandes = categorias con mayor peso
+
+### 4. Composicion Egresos (Horizontal Bar)
+- **Tipo Chart.js**: bar horizontal (indexAxis: 'y')
+- **Datos**: Monto en Gs. por categoria
+- **Interpretacion**: Valores absolutos complementan el donut
+
+### 5. Evolucion % Ganancia (Line + Meta)
+- **Tipo Chart.js**: line
+- **Datos**: % ganancia mensual + linea horizontal de meta (7%)
+- **Colores**: #22c55e (ganancia), #f59e0b dashed (meta)
+- **Interpretacion**: Meses sobre la linea meta = meta cumplida. Debajo = no cumplida
+
+### 6. Distribucion Ganancia (Column)
+- **Tipo Chart.js**: bar (grouped)
+- **Datos**: 3 fondos (Propietario, Emergencia, Inversion) - Meta (1/3 cada uno) vs Real
+- **Colores**: Gris claro (meta), Color del fondo (real)
+- **Interpretacion**: Si real >= meta, el fondo esta bien capitalizado
+
+### 7. Presupuesto vs Ejecucion (Area)
+- **Tipo Chart.js**: line con area fill
+- **Datos**: Presupuesto acumulado vs Ejecucion acumulada
+- **Interpretacion**: Igual que FAMILIA - sobre/sub ejecucion
+
+### 8. Flujo entre Entidades (Bar)
+- **Mismo que FAMILIA** - Prestamos NT↔FAM mensuales
+
+## Seccion Flujo entre Entidades
+
+### Diagrama SVG
+- Layout vertical: NT arriba, FAM abajo
+- Flechas bidireccionales con etiquetas de monto
+- Color NT→FAM: #3b82f6 (azul), FAM→NT: #ef4444 (rojo)
+- IDs unicos por instancia (suffix con chartId)
+
+### Alert Box
+- Verde si EQUILIBRADO
+- Rojo si FAMILIA DEBE A NT
+- Amarillo si NT DEBE A FAMILIA
+
+### Tabla Detallada
+| Columna | Descripcion |
+|---------|-------------|
+| Concepto | Prestamos/Devoluciones por direccion |
+| Mes Actual | Monto del mes seleccionado |
+| Acumulado | Monto acumulado anual |
+
+## KPI Cards
+
+### Formato
+- Border-left 4px con color segun tipo:
+  - Azul `#3b82f6`: Ingresos
+  - Rojo `#ef4444`: Egresos
+  - Verde `#22c55e`: Positivo (disponible, ganancia, ahorro)
+  - Amber `#f59e0b`: Pendiente/advertencia
+- Valor principal en formato `Gs. X.XXX.XXX`
+- Label descriptivo debajo
+
+### Layout
+- CSS Grid: 4 columnas en desktop, responsive
+- Gap: 16px entre cards
+
+## Tabla de Saldos por Cuenta
+
+### FAMILIA (10 cuentas)
 | Columna | Descripcion |
 |---------|-------------|
 | Cuenta | Nombre de la cuenta bancaria |
@@ -37,77 +141,17 @@ Muestra saldo esperado vs saldo real (banco) por cuenta.
 | Saldo Banco | Editable: saldo real verificado en banco |
 | Diferencia | Esperado - Banco |
 
-- Diferencia positiva: Verde (hay mas de lo esperado)
-- Diferencia negativa: Rojo (falta dinero)
-
-### 4. Distribucion por Categoria (FAMILIA)
-
-Muestra % de egresos pagados por categoria.
-
-Categorias:
-1. GASTOS FIJOS
-2. CUOTAS Y PRESTAMOS
-3. OBLIGACIONES LEGALES
-4. SUSCRIPCIONES
-5. VARIABLES
-
-Formula: `SUMIFS(MOVIMIENTO!F:F; MOVIMIENTO!L:L; categoria; MOVIMIENTO!J:J; "Pagado") / TOTAL_EGRESOS_PAGADOS`
-
-### 5. Distribucion por Categoria (NEUROTEA)
-
-Categorias:
-1. CLINICA
-2. SUELDOS Y HONORARIOS
-3. TELEFONIA E INTERNET
-4. OBLIGACIONES LEGALES
-5. EVENTOS
-6. VARIABLES
-
-### 6. Indicador de Liquidez
-
-Muestra flujo de caja por ventanas temporales.
-
-```
-ATRASADOS      Gs. 500.000    (rojo)
-ESTA SEMANA    Gs. 1.200.000  (amarillo)
-PROX SEMANA    Gs. 800.000    (verde)
-SEMANA 3       Gs. 600.000    (azul)
-```
-
-- Solo muestra gastos con EST.PAGO = "Pendiente"
-- Filtra por DIA de vencimiento vs DAY(TODAY())
-
-### 7. Balance Cruzado NT <-> FAMILIA
-
-Muestra estado de prestamos entre entidades.
-
-```
-FAMILIA debe a NT:     Gs. 2.000.000
-NT debe a FAMILIA:     Gs. 500.000
-BALANCE NETO:          Gs. 1.500.000 (FAMILIA DEBE A NT)
-```
-
-Estados:
-- Balance > 0: "FAMILIA DEBE A NT" (rojo)
-- Balance = 0: "EQUILIBRADO" (verde)
-- Balance < 0: "NT DEBE A FAMILIA" (amarillo)
-
-### 8. Ganancia NT (Indicador Especial)
-
-```
-GANANCIA REAL:    Gs. 3.500.000
-% GANANCIA:       8.2%
-ESTADO META:      META CUMPLIDA (>= 7%)
-
-Distribucion:
-  Propietario:       Gs. 1.166.667  (33.33%)
-  Fondo Emergencia:  Gs. 1.166.667  (33.33%)
-  Fondo Inversion:   Gs. 1.166.666  (33.34%)
-```
+### NEUROTEA (2 cuentas)
+| Columna | Descripcion |
+|---------|-------------|
+| Cuenta | Atlas NeuroTEA / UENO Marco |
+| Esperado | Calculado desde TABLERO |
 
 ## Notas de Implementacion
 
-- **Google Sheets (Tablero.gs)**: Usa formulas nativas y formato condicional
-- **WebApp (WebApp.gs)**: Usa HTML/CSS con datos leidos via `google.script.run`
+- **Chart.js via CDN**: `https://cdn.jsdelivr.net/npm/chart.js` (cargado en `<script>`)
+- **ES5 compatible**: No usar template literals ni const/let en WebApp.gs
+- **Destroy/Recreate**: Llamar `chart.destroy()` antes de crear nuevo chart en mismo canvas
 - **Formato numeros**: Siempre `Gs. X.XXX.XXX` (puntos como separador de miles)
-- **Responsive**: WebApp debe funcionar en desktop y mobile
+- **Responsive**: CSS Grid con media queries
+- **Descripcion interpretativa**: Cada chart card tiene `<p class="desc">` con guia de lectura
