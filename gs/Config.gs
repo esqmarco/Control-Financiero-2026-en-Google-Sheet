@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CONFIG.GS - DATOS MAESTROS Y CONFIGURACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 7.29 - Dashboard v2.0: Google Charts + tabs + tendencia 12 meses
+ * Versión 7.30 - Dashboard v3.0: Chart.js + dashboards separados FAMILIA/NEUROTEA
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '7.29';
+const VERSION = '7.30';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];

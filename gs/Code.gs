@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * CODE.GS - MENÚ PRINCIPAL E INICIALIZACIÓN
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Versión 7.24 - SUMPRODUCT resiliente + requireValueInList para paste
+ * Versión 7.30 - Dashboard v3.0: Chart.js + dashboards separados FAMILIA/NEUROTEA
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ARQUITECTURA DE ARCHIVOS:
@@ -203,7 +203,7 @@ function ordenarHojas() {
 function abrirDashboard() {
   const html = HtmlService.createHtmlOutput(generarHTMLDashboard())
     .setWidth(1500)
-    .setHeight(950);
+    .setHeight(1000);
   SpreadsheetApp.getUi().showModalDialog(html, '📊 Dashboard Control Financiero 2026');
 }
 

@@ -1,8 +1,9 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * WEBAPP.GS - DASHBOARD FINANCIERO v2.0
+ * WEBAPP.GS - DASHBOARD FINANCIERO v3.0
  * Sistema de Control Financiero 2026 - NeuroTEA & Familia
- * Google Charts Visualization API + Tabs + 12-month trends
+ * Dashboards separados FAMILIA y NEUROTEA con Chart.js
+ * Flujo entre entidades como seccion comun
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -16,7 +17,7 @@ function formatearGuaranies(num) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DATA COLLECTION - Comprehensive data for dashboard
+// DATA COLLECTION - Comprehensive data for both dashboards
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function obtenerDatosDashboard() {
@@ -218,7 +219,7 @@ function obtenerDatosDashboard() {
     }
   }
 
-  // ═══ 12-MONTH TREND DATA ═══
+  // ═══ 12-MONTH TREND DATA + SUBCATEGORÍAS + FLUJO CRUZADO ═══
   var tendencia = {
     familia: {
       ingresos: new Array(12).fill(0), egresos: new Array(12).fill(0),
@@ -231,38 +232,94 @@ function obtenerDatosDashboard() {
     }
   };
 
-  // CARGA_FAMILIA monthly sums
+  // NEW: Subcategorías variables del mes actual
+  var subcatFamObj = {};
+  var subcatNTObj = {};
+
+  // NEW: Flujo mensual entre entidades (préstamos/devoluciones)
+  var flujoMensual = { ntToFam: new Array(12).fill(0), famToNT: new Array(12).fill(0) };
+
+  // CARGA_FAMILIA monthly sums + subcategorías + flujo
   if (cargaFam) {
     var dataCF = cargaFam.getRange('A4:F500').getValues();
     for (var ci = 0; ci < dataCF.length; ci++) {
       var fecha = dataCF[ci][0];
       var tipoC = (dataCF[ci][1] || '').toString();
+      var catC = (dataCF[ci][2] || '').toString();
+      var subcatC = (dataCF[ci][3] || '').toString();
       var montoC = Number(dataCF[ci][5]) || 0;
       if (!fecha || montoC === 0) continue;
       var mesC, yearC;
       try { mesC = fecha.getMonth(); yearC = fecha.getFullYear(); } catch(e) { continue; }
       if (yearC !== AÑO) continue;
+
+      // Tendencia mensual
       if (tipoC === 'Egreso Familiar') tendencia.familia.egresos[mesC] += montoC;
       else if (tipoC === 'Ahorro') tendencia.familia.ahorro[mesC] += montoC;
       else if (tipoC) tendencia.familia.ingresos[mesC] += montoC;
+
+      // Subcategorías variables del mes actual
+      if (mesC + 1 === mesNum && tipoC === 'Egreso Familiar' && catC === 'VARIABLES' && subcatC && subcatC !== '-') {
+        subcatFamObj[subcatC] = (subcatFamObj[subcatC] || 0) + montoC;
+      }
+
+      // Flujo cruzado NT→FAM (ingresos en FAM provenientes de NT)
+      if (tipoC === 'Préstamo NeuroTEA' || tipoC === 'Devolución NeuroTEA') {
+        flujoMensual.ntToFam[mesC] += montoC;
+      }
+      // Flujo cruzado FAM→NT (egresos de FAM hacia NT)
+      if (subcatC === 'Préstamo Familia → NT' || subcatC === 'Devolución Familia → NT') {
+        flujoMensual.famToNT[mesC] += montoC;
+      }
     }
   }
 
-  // CARGA_NT monthly sums
+  // CARGA_NT monthly sums + subcategorías + flujo
   if (cargaNT) {
     var dataCN = cargaNT.getRange('A4:F500').getValues();
     for (var ni = 0; ni < dataCN.length; ni++) {
       var fechaN = dataCN[ni][0];
       var tipoN = (dataCN[ni][1] || '').toString();
+      var catN = (dataCN[ni][2] || '').toString();
+      var subcatN = (dataCN[ni][3] || '').toString();
       var montoN = Number(dataCN[ni][5]) || 0;
       if (!fechaN || montoN === 0) continue;
       var mesN, yearN;
       try { mesN = fechaN.getMonth(); yearN = fechaN.getFullYear(); } catch(e) { continue; }
       if (yearN !== AÑO) continue;
+
+      // Tendencia mensual
       if (tipoN === 'Egreso NT') tendencia.neurotea.egresos[mesN] += montoN;
       else if (tipoN) tendencia.neurotea.ingresos[mesN] += montoN;
+
+      // Subcategorías variables del mes actual
+      if (mesN + 1 === mesNum && tipoN === 'Egreso NT' && catN === 'VARIABLES' && subcatN && subcatN !== '-') {
+        subcatNTObj[subcatN] = (subcatNTObj[subcatN] || 0) + montoN;
+      }
+
+      // Flujo cruzado FAM→NT (ingresos en NT provenientes de FAM)
+      if (tipoN === 'Préstamo Familia' || tipoN === 'Devolución Familia → NT') {
+        flujoMensual.famToNT[mesN] += montoN;
+      }
+      // Flujo cruzado NT→FAM (egresos de NT hacia FAM)
+      if (subcatN === 'Préstamo NT → Familia' || subcatN === 'Devolución NT → Familia') {
+        flujoMensual.ntToFam[mesN] += montoN;
+      }
     }
   }
+
+  // Convertir subcategorías a arrays ordenados
+  var subcategoriasFam = [];
+  for (var keyF in subcatFamObj) {
+    subcategoriasFam.push({ nombre: keyF, monto: subcatFamObj[keyF] });
+  }
+  subcategoriasFam.sort(function(a, b) { return b.monto - a.monto; });
+
+  var subcategoriasNT = [];
+  for (var keyN in subcatNTObj) {
+    subcategoriasNT.push({ nombre: keyN, monto: subcatNTObj[keyN] });
+  }
+  subcategoriasNT.sort(function(a, b) { return b.monto - a.monto; });
 
   // GASTOS_FIJOS monthly sums (add to egresos)
   if (gastosFijos) {
@@ -287,11 +344,11 @@ function obtenerDatosDashboard() {
       if (cp.indexOf('TOTAL INGRESOS FAMILIA') >= 0) {
         for (var pm = 0; pm < 12; pm++) tendencia.familia.presupIngresos[pm] = Number(dataP[pi][3 + pm]) || 0;
       } else if (cp.indexOf('TOTAL EGRESOS FAMILIA') >= 0) {
-        for (var pm = 0; pm < 12; pm++) tendencia.familia.presupEgresos[pm] = Number(dataP[pi][3 + pm]) || 0;
+        for (var pm2 = 0; pm2 < 12; pm2++) tendencia.familia.presupEgresos[pm2] = Number(dataP[pi][3 + pm2]) || 0;
       } else if (cp.indexOf('TOTAL INGRESOS NEUROTEA') >= 0) {
-        for (var pm = 0; pm < 12; pm++) tendencia.neurotea.presupIngresos[pm] = Number(dataP[pi][3 + pm]) || 0;
+        for (var pm3 = 0; pm3 < 12; pm3++) tendencia.neurotea.presupIngresos[pm3] = Number(dataP[pi][3 + pm3]) || 0;
       } else if (cp.indexOf('TOTAL EGRESOS NEUROTEA') >= 0) {
-        for (var pm = 0; pm < 12; pm++) tendencia.neurotea.presupEgresos[pm] = Number(dataP[pi][3 + pm]) || 0;
+        for (var pm4 = 0; pm4 < 12; pm4++) tendencia.neurotea.presupEgresos[pm4] = Number(dataP[pi][3 + pm4]) || 0;
       }
     }
   }
@@ -330,114 +387,277 @@ function obtenerDatosDashboard() {
     tendencia: tendencia,
     liquidez: liquidez,
     balanceCruzado: balanceCruzado,
-    metas: metas
+    metas: metas,
+    subcategoriasFam: subcategoriasFam,
+    subcategoriasNT: subcategoriasNT,
+    flujoMensual: flujoMensual
   };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// HTML GENERATION - Complete dashboard with Google Charts
+// HTML GENERATION - Complete dashboard with Chart.js
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function generarHTMLDashboard() {
   var datos = obtenerDatosDashboard();
   var dataJson = JSON.stringify(datos);
 
-  // ═══ CSS ═══
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CSS
+  // ═══════════════════════════════════════════════════════════════════════════
+
   var css = ''
-  + '* { margin:0; padding:0; box-sizing:border-box; }'
-  + 'body { font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#f1f5f9; color:#1e293b; }'
-  + '.header { background:#1e293b; color:white; padding:16px 24px; display:flex; justify-content:space-between; align-items:center; }'
-  + '.header h1 { font-size:1.3em; font-weight:700; }'
-  + '.header-right { display:flex; align-items:center; gap:16px; font-size:0.9em; }'
-  + '.header select { padding:6px 12px; border:none; border-radius:6px; font-weight:600; background:white; color:#1e293b; }'
-  + '.tabs { display:flex; background:#e2e8f0; border-bottom:2px solid #cbd5e1; }'
-  + '.tab { padding:12px 28px; cursor:pointer; font-weight:600; font-size:0.95em; border:none; background:transparent; color:#64748b; transition:all 0.2s; }'
-  + '.tab:hover { background:#f1f5f9; color:#334155; }'
-  + '.tab.active { background:white; color:#1e293b; border-bottom:3px solid #3b82f6; margin-bottom:-2px; }'
-  + '.tab-content { display:none; padding:20px; max-width:1500px; margin:0 auto; }'
-  + '.tab-content.active { display:block; }'
-  + '.grid { display:grid; gap:16px; margin-bottom:16px; }'
-  + '.grid-5 { grid-template-columns:repeat(5,1fr); }'
-  + '.grid-2 { grid-template-columns:1fr 1fr; }'
-  + '.grid-1 { grid-template-columns:1fr; }'
-  + '.grid-3 { grid-template-columns:1fr 1fr 1fr; }'
-  + '.card { background:white; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }'
-  + '.card-title { font-weight:700; font-size:0.85em; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #f1f5f9; }'
-  + '.kpi { border-left:4px solid #e2e8f0; padding:14px 16px; border-radius:8px; background:white; box-shadow:0 1px 3px rgba(0,0,0,0.06); }'
-  + '.kpi-label { font-size:0.75em; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }'
-  + '.kpi-value { font-size:1.5em; font-weight:700; }'
-  + '.kpi-sub { font-size:0.8em; margin-top:4px; }'
-  + '.kpi-blue { border-left-color:#3b82f6; } .kpi-blue .kpi-value { color:#1d4ed8; }'
-  + '.kpi-red { border-left-color:#ef4444; } .kpi-red .kpi-value { color:#dc2626; }'
-  + '.kpi-green { border-left-color:#22c55e; } .kpi-green .kpi-value { color:#16a34a; }'
-  + '.kpi-amber { border-left-color:#f59e0b; } .kpi-amber .kpi-value { color:#d97706; }'
-  + '.kpi-gray { border-left-color:#6b7280; } .kpi-gray .kpi-value { color:#374151; }'
-  + '.chart-box { min-height:300px; }'
-  + 'table { width:100%; border-collapse:collapse; font-size:0.88em; }'
-  + 'th { background:#f8fafc; padding:10px 8px; text-align:left; font-weight:600; color:#475569; border-bottom:2px solid #e2e8f0; }'
-  + 'td { padding:9px 8px; border-bottom:1px solid #f1f5f9; }'
-  + 'tr:hover td { background:#f8fafc; }'
-  + '.text-right { text-align:right; } .text-center { text-align:center; } .font-bold { font-weight:600; }'
-  + '.text-green { color:#16a34a; } .text-red { color:#dc2626; } .text-blue { color:#2563eb; } .text-amber { color:#d97706; } .text-gray { color:#6b7280; }'
-  + '.badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.78em; font-weight:600; }'
-  + '.badge-green { background:#dcfce7; color:#166534; } .badge-red { background:#fef2f2; color:#991b1b; } .badge-amber { background:#fef3c7; color:#92400e; }'
-  + '.alert-card { padding:20px; border-radius:10px; text-align:center; }'
-  + '.alert-card .icon { font-size:2.5em; margin-bottom:8px; }'
-  + '.alert-card .title { font-size:1.1em; font-weight:700; margin-bottom:4px; }'
-  + '.alert-card .value { font-size:1.8em; font-weight:700; margin-bottom:8px; }'
-  + '.alert-card .desc { font-size:0.88em; color:#64748b; }'
-  + '.liq-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:8px; margin-bottom:6px; }'
-  + '.liq-rojo { background:#fef2f2; } .liq-amarillo { background:#fef3c7; } .liq-verde { background:#f0fdf4; } .liq-azul { background:#eff6ff; }'
-  + '.section-title { font-size:0.95em; font-weight:700; color:#334155; margin-bottom:12px; display:flex; align-items:center; gap:6px; }'
-  + '.footer { text-align:center; padding:16px; color:#94a3b8; font-size:0.8em; border-top:1px solid #e2e8f0; background:white; margin-top:20px; }'
-  + '@media(max-width:1200px) { .grid-5{grid-template-columns:repeat(3,1fr);} .grid-2{grid-template-columns:1fr;} .grid-3{grid-template-columns:1fr;} }'
-  + '@media(max-width:768px) { .grid-5{grid-template-columns:repeat(2,1fr);} .tab{padding:10px 16px;font-size:0.85em;} }';
+  + '*{margin:0;padding:0;box-sizing:border-box;}'
+  + 'body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f9fafb;color:#1f2937;}'
+  // Header
+  + '.header{background:#1e293b;color:white;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;}'
+  + '.header h1{font-size:1.3em;font-weight:700;}'
+  + '.header-right{display:flex;align-items:center;gap:16px;font-size:0.9em;}'
+  // Tabs
+  + '.tabs{display:flex;background:#e2e8f0;border-bottom:2px solid #cbd5e1;}'
+  + '.tab{padding:14px 32px;cursor:pointer;font-weight:600;font-size:0.95em;border:none;background:transparent;color:#64748b;transition:all 0.2s;}'
+  + '.tab:hover{background:#f1f5f9;color:#334155;}'
+  + '.tab.active{background:white;color:#1e293b;border-bottom:3px solid #3b82f6;margin-bottom:-2px;}'
+  + '.tab-content{display:none;padding:20px 24px;max-width:1500px;margin:0 auto;}'
+  + '.tab-content.active{display:block;}'
+  // Section titles
+  + '.section-title{background:#1f2937;color:white;padding:10px 18px;margin:24px 0 14px 0;border-radius:8px;font-size:0.92em;font-weight:600;letter-spacing:0.5px;}'
+  // Grid
+  + '.grid{display:grid;gap:16px;margin-bottom:16px;}'
+  + '.grid-2{grid-template-columns:1fr 1fr;}'
+  + '.grid-1{grid-template-columns:1fr;}'
+  + '.grid-3{grid-template-columns:1fr 1fr 1fr;}'
+  // Cards
+  + '.card{background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);border:2px solid #e5e7eb;transition:all 0.2s;}'
+  + '.card:hover{border-color:#d1d5db;box-shadow:0 4px 12px rgba(0,0,0,0.1);}'
+  + '.card h3{color:#1f2937;margin-bottom:4px;font-size:1em;font-weight:600;}'
+  + '.card .desc{color:#6b7280;font-size:0.78em;margin-bottom:14px;font-weight:400;line-height:1.4;}'
+  + '.chart-container{position:relative;height:270px;}'
+  + '.chart-container.short{height:200px;}'
+  // KPI cards
+  + '.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px;}'
+  + '.kpi-card{background:white;border-radius:12px;padding:18px;text-align:center;border:2px solid #e5e7eb;transition:all 0.2s;}'
+  + '.kpi-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.08);}'
+  + '.kpi-card.blue{border-left:4px solid #3b82f6;}'
+  + '.kpi-card.red{border-left:4px solid #dc2626;}'
+  + '.kpi-card.green{border-left:4px solid #047857;}'
+  + '.kpi-card.amber{border-left:4px solid #b45309;}'
+  + '.kpi-card.gray{border-left:4px solid #1f2937;}'
+  + '.kpi-value{font-size:1.5em;font-weight:700;color:#1f2937;}'
+  + '.kpi-card.blue .kpi-value{color:#1d4ed8;}'
+  + '.kpi-card.red .kpi-value{color:#dc2626;}'
+  + '.kpi-card.green .kpi-value{color:#047857;}'
+  + '.kpi-card.amber .kpi-value{color:#b45309;}'
+  + '.kpi-label{font-size:0.72em;color:#6b7280;margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;}'
+  + '.kpi-sub{font-size:0.78em;margin-top:6px;font-weight:500;}'
+  + '.kpi-sub.up{color:#047857;}'
+  + '.kpi-sub.down{color:#dc2626;}'
+  + '.kpi-sub.neutral{color:#6b7280;}'
+  // Tables
+  + 'table{width:100%;border-collapse:collapse;font-size:0.88em;}'
+  + 'th{background:#f8fafc;padding:10px 8px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0;}'
+  + 'td{padding:9px 8px;border-bottom:1px solid #f1f5f9;}'
+  + 'tr:hover td{background:#f8fafc;}'
+  + '.text-right{text-align:right;}.text-center{text-align:center;}.font-bold{font-weight:600;}'
+  + '.text-green{color:#047857;}.text-red{color:#dc2626;}.text-blue{color:#1d4ed8;}.text-amber{color:#b45309;}.text-gray{color:#6b7280;}'
+  // Flow diagram
+  + '.flow-diagram{display:flex;flex-direction:column;align-items:center;padding:24px;background:#f3f4f6;border-radius:8px;margin-bottom:14px;gap:0;}'
+  + '.flow-box{background:white;border:2px solid #1f2937;border-radius:12px;padding:14px 36px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);min-width:170px;}'
+  + '.flow-box.nt{border-color:#0369a1;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);}'
+  + '.flow-box.familia{border-color:#1f2937;background:linear-gradient(135deg,#f9fafb,#f3f4f6);}'
+  + '.flow-box .icon{font-size:1.8em;margin-bottom:4px;}'
+  + '.flow-box .title{font-weight:600;color:#1f2937;font-size:1em;}'
+  + '.flow-box .amount{font-weight:500;font-size:0.82em;margin-top:3px;}'
+  + '.flow-box.nt .amount{color:#0369a1;}'
+  + '.flow-box.familia .amount{color:#047857;}'
+  + '.flow-arrow{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:16px;padding:6px 0;}'
+  + '.flow-arrow .arrow-line{display:flex;flex-direction:column;align-items:center;}'
+  + '.flow-arrow .arrow-line svg{width:24px;height:46px;}'
+  + '.flow-arrow .transfer-info{text-align:left;}'
+  + '.flow-arrow .transfer-amount{font-weight:700;font-size:1.2em;color:#1f2937;}'
+  + '.flow-arrow .transfer-label{font-size:0.78em;color:#6b7280;margin-top:2px;}'
+  // Liquidez items
+  + '.liq-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:8px;margin-bottom:5px;}'
+  + '.liq-verde{background:#f0fdf4;}.liq-amarillo{background:#fef3c7;}.liq-azul{background:#eff6ff;}'
+  + '.liq-dark{background:#1e293b;color:white;margin-top:6px;}'
+  // Alert card
+  + '.alert-box{padding:18px;border-radius:10px;text-align:center;}'
+  + '.alert-box .a-icon{font-size:2.2em;margin-bottom:6px;}'
+  + '.alert-box .a-title{font-size:1em;font-weight:700;margin-bottom:4px;}'
+  + '.alert-box .a-value{font-size:1.6em;font-weight:700;margin-bottom:6px;}'
+  + '.alert-box .a-desc{font-size:0.85em;color:#64748b;}'
+  // Balance cruzado table
+  + '.bc-table{font-size:0.85em;}'
+  + '.bc-table td,.bc-table th{padding:7px 8px;}'
+  + '.bc-section{font-weight:600;padding:6px 8px !important;}'
+  // Footer
+  + '.footer{text-align:center;padding:14px;color:#94a3b8;font-size:0.78em;border-top:1px solid #e2e8f0;background:white;margin-top:24px;}'
+  // Responsive
+  + '@media(max-width:1200px){.grid-2{grid-template-columns:1fr;}.grid-3{grid-template-columns:1fr;}}'
+  + '@media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr);}.tab{padding:10px 16px;font-size:0.85em;}}';
 
-  // ═══ HTML BODY ═══
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HELPER: KPI card builder
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  // --- KPI helper ---
-  function kpi(clase, label, valor, sub) {
-    return '<div class="kpi ' + clase + '"><div class="kpi-label">' + label + '</div>'
+  function kpi(cls, label, valor, sub, subCls) {
+    return '<div class="kpi-card ' + cls + '">'
       + '<div class="kpi-value">Gs. ' + formatearGuaranies(valor) + '</div>'
-      + (sub ? '<div class="kpi-sub">' + sub + '</div>' : '') + '</div>';
+      + '<div class="kpi-label">' + label + '</div>'
+      + (sub ? '<div class="kpi-sub ' + (subCls || 'neutral') + '">' + sub + '</div>' : '')
+      + '</div>';
   }
 
-  function pctBadge(pres, real, esIngreso) {
-    if (pres === 0) return '';
-    var pct = Math.round(real / pres * 100);
-    var cls = esIngreso ? (pct >= 100 ? 'badge-green' : pct >= 90 ? 'badge-amber' : 'badge-red')
-                        : (pct <= 100 ? 'badge-green' : pct <= 110 ? 'badge-amber' : 'badge-red');
-    return '<span class="badge ' + cls + '">' + pct + '% ejecutado</span>';
+  function kpiPct(cls, label, valor, sub, subCls) {
+    return '<div class="kpi-card ' + cls + '">'
+      + '<div class="kpi-value">' + valor + '%</div>'
+      + '<div class="kpi-label">' + label + '</div>'
+      + (sub ? '<div class="kpi-sub ' + (subCls || 'neutral') + '">' + sub + '</div>' : '')
+      + '</div>';
   }
 
-  // --- FAMILIA TAB ---
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HELPER: Flujo entre entidades (common section)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  var bc = datos.balanceCruzado;
+  var balNeto = bc.balanceNeto;
+  var estadoTxt = balNeto > 0 ? 'FAMILIA DEBE A NT' : balNeto < 0 ? 'NT DEBE A FAMILIA' : 'EQUILIBRADO';
+  var estadoIcon = balNeto > 0 ? '\uD83D\uDD34' : balNeto < 0 ? '\uD83D\uDFE1' : '\u2705';
+  var estadoBg = balNeto > 0 ? '#fef2f2' : balNeto < 0 ? '#fefce8' : '#f0fdf4';
+  var estadoColor = balNeto > 0 ? '#dc2626' : balNeto < 0 ? '#b45309' : '#047857';
+
+  function buildFlujoSection(chartId) {
+    var html = '';
+    html += '<div class="section-title">\uD83D\uDD04 FLUJO ENTRE ENTIDADES</div>';
+
+    // Flow diagram + Alert
+    html += '<div class="grid grid-2">';
+
+    // SVG flow diagram
+    html += '<div class="card"><h3>Transferencias entre entidades</h3>';
+    html += '<p class="desc">Flujo de prestamos y devoluciones entre FAMILIA y NEUROTEA. El diagrama muestra el movimiento acumulado del a\u00F1o.</p>';
+    html += '<div class="flow-diagram">';
+    html += '<div class="flow-box nt"><div class="icon">\uD83C\uDFE5</div><div class="title">NeuroTEA</div>';
+    html += '<div class="amount">Gs. ' + formatearGuaranies(datos.neurotea.ingresos) + ' ingresos</div></div>';
+
+    // Arrow NT→FAM (down)
+    html += '<div class="flow-arrow"><div class="arrow-line">';
+    html += '<svg viewBox="0 0 24 46"><defs><marker id="ah1' + chartId + '" markerWidth="10" markerHeight="7" refX="5" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#1f2937"/></marker></defs>';
+    html += '<line x1="12" y1="0" x2="12" y2="38" stroke="#1f2937" stroke-width="3" marker-end="url(#ah1' + chartId + ')"/></svg></div>';
+    html += '<div class="transfer-info"><div class="transfer-amount">Gs. ' + formatearGuaranies(bc.prestamoNTAcum) + '</div>';
+    html += '<div class="transfer-label">Prestamos NT \u2192 Familia</div></div></div>';
+
+    // Arrow FAM→NT (up)
+    html += '<div class="flow-arrow"><div class="arrow-line">';
+    html += '<svg viewBox="0 0 24 46"><defs><marker id="ah2' + chartId + '" markerWidth="10" markerHeight="7" refX="5" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#047857"/></marker></defs>';
+    html += '<line x1="12" y1="46" x2="12" y2="8" stroke="#047857" stroke-width="3" marker-end="url(#ah2' + chartId + ')"/></svg></div>';
+    html += '<div class="transfer-info"><div class="transfer-amount text-green">Gs. ' + formatearGuaranies(bc.prestamoFamAcum) + '</div>';
+    html += '<div class="transfer-label">Prestamos Familia \u2192 NT</div></div></div>';
+
+    html += '<div class="flow-box familia"><div class="icon">\uD83C\uDFE0</div><div class="title">Familia</div>';
+    html += '<div class="amount">Gs. ' + formatearGuaranies(datos.familia.ingresos) + ' ingresos</div></div>';
+    html += '</div></div>'; // close flow-diagram, close card
+
+    // Alert box
+    html += '<div class="card" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;">';
+    html += '<div class="alert-box" style="background:' + estadoBg + ';width:100%;padding:24px;">';
+    html += '<div class="a-icon">' + estadoIcon + '</div>';
+    html += '<div class="a-title" style="color:' + estadoColor + '">' + estadoTxt + '</div>';
+    html += '<div class="a-value" style="color:' + estadoColor + '">Gs. ' + formatearGuaranies(Math.abs(balNeto)) + '</div>';
+    if (balNeto > 0) html += '<div class="a-desc">NeuroTEA ha prestado mas a Familia de lo que Familia ha devuelto.</div>';
+    else if (balNeto < 0) html += '<div class="a-desc">Familia ha prestado mas a NeuroTEA de lo que NT ha devuelto.</div>';
+    else html += '<div class="a-desc">No hay deudas pendientes entre entidades.</div>';
+    html += '</div>';
+
+    // Balance cruzado table
+    html += '<table class="bc-table" style="margin-top:8px;"><thead><tr><th>Concepto</th><th class="text-right">Mes</th><th class="text-right">Acumulado</th></tr></thead><tbody>';
+    html += '<tr><td class="bc-section" style="background:#fef2f2" colspan="3">NT \u2192 FAMILIA</td></tr>';
+    html += '<tr><td>Prestamo NT \u2192 Familia</td><td class="text-right">' + formatearGuaranies(bc.prestamoNTMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.prestamoNTAcum) + '</td></tr>';
+    html += '<tr><td>Devolucion Familia \u2192 NT</td><td class="text-right text-green">' + formatearGuaranies(bc.devFamMes) + '</td><td class="text-right text-green font-bold">' + formatearGuaranies(bc.devFamAcum) + '</td></tr>';
+    html += '<tr style="background:#f1f5f9"><td class="font-bold">Deuda FAM \u2192 NT</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaFamMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaFamAcum) + '</td></tr>';
+    html += '<tr><td class="bc-section" style="background:#fefce8" colspan="3">FAMILIA \u2192 NT</td></tr>';
+    html += '<tr><td>Prestamo Familia \u2192 NT</td><td class="text-right">' + formatearGuaranies(bc.prestamoFamMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.prestamoFamAcum) + '</td></tr>';
+    html += '<tr><td>Devolucion NT \u2192 Familia</td><td class="text-right text-green">' + formatearGuaranies(bc.devNTMes) + '</td><td class="text-right text-green font-bold">' + formatearGuaranies(bc.devNTAcum) + '</td></tr>';
+    html += '<tr style="background:#f1f5f9"><td class="font-bold">Deuda NT \u2192 FAM</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaNTMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaNTAcum) + '</td></tr>';
+    html += '</tbody></table></div>'; // close card
+
+    html += '</div>'; // close grid-2
+
+    // Monthly flujo bar chart
+    html += '<div class="card"><h3>Flujo mensual entre entidades</h3>';
+    html += '<p class="desc">Barras: prestamos y devoluciones entre entidades por mes. Permite ver la tendencia del flujo cruzado a lo largo del a\u00F1o.</p>';
+    html += '<div class="chart-container short"><canvas id="' + chartId + '"></canvas></div></div>';
+
+    return html;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB FAMILIA
+  // ═══════════════════════════════════════════════════════════════════════════
+
   var famTab = '';
 
-  // KPIs
-  famTab += '<div class="grid grid-5">';
-  famTab += kpi('kpi-blue', 'Ingresos del mes', datos.familia.ingresos, '');
-  famTab += kpi('kpi-red', 'Egresos pagados', datos.familia.egresos, '');
-  famTab += kpi('kpi-green', 'Ahorro', datos.familia.ahorro, '');
-  famTab += kpi('kpi-gray', 'Disponible', datos.familia.disponible, '');
-  famTab += kpi('kpi-amber', 'Pendientes', datos.familia.pendientes, '');
+  // --- KPIs ---
+  famTab += '<div class="kpi-grid">';
+  famTab += kpi('blue', 'Ingresos del mes', datos.familia.ingresos, '');
+  famTab += kpi('red', 'Egresos pagados', datos.familia.egresos, '');
+  famTab += kpi('green', 'Ahorro total', datos.familia.ahorro, 'Incluye fondo emergencia', 'neutral');
+  famTab += kpi('gray', 'Disponible', datos.familia.disponible, 'Ing - Egr - Ahorro', 'neutral');
+  famTab += kpi('amber', 'Pendientes', datos.familia.pendientes, datos.familia.pendientes > 0 ? 'Egresos sin pagar' : 'Todo al dia', datos.familia.pendientes > 0 ? 'down' : 'up');
   famTab += '</div>';
 
-  // Trend chart
-  famTab += '<div class="card"><div class="card-title">Ingresos vs Egresos - Evolucion Mensual ' + AÑO + '</div><div id="chart_fam_trend" class="chart-box"></div></div>';
-
-  // Category bars + Donut
+  // --- 1. Balance Mensual (Combo: bars + line) ---
+  famTab += '<div class="section-title">\u2696\uFE0F BALANCE MENSUAL</div>';
   famTab += '<div class="grid grid-2">';
-  famTab += '<div class="card"><div class="card-title">Detalle de egresos del mes</div><div id="chart_fam_cat_bars" class="chart-box"></div></div>';
-  famTab += '<div class="card"><div class="card-title">Distribucion de egresos</div><div id="chart_fam_donut" class="chart-box"></div></div>';
-  famTab += '</div>';
+  famTab += '<div class="card"><h3>Ingresos vs Egresos</h3>';
+  famTab += '<p class="desc">Barras: ingresos (verde) y egresos (rojo) por mes. Linea: balance neto. Si la linea baja de 0, hay deficit ese mes.</p>';
+  famTab += '<div class="chart-container"><canvas id="chart_fam_balance"></canvas></div></div>';
 
-  // Budget vs Real
-  famTab += '<div class="card"><div class="card-title">Presupuesto vs Real por categoria</div><div id="chart_fam_budget" class="chart-box"></div></div>';
+  // --- 2. Ahorro Acumulado ---
+  famTab += '<div class="card"><h3>Ahorro Acumulado Anual</h3>';
+  famTab += '<p class="desc">Evolucion del ahorro familiar a lo largo del a\u00F1o. Incluye Ahorro Clara, Marco y Fondo de Emergencia. La curva debe subir constantemente.</p>';
+  famTab += '<div class="chart-container"><canvas id="chart_fam_ahorro"></canvas></div></div>';
+  famTab += '</div>'; // close grid-2
 
-  // Accounts + Liquidez
+  // --- 3. Distribución de Gastos ---
+  famTab += '<div class="section-title">\uD83E\uDD67 DISTRIBUCION DE GASTOS</div>';
   famTab += '<div class="grid grid-2">';
+  famTab += '<div class="card"><h3>Gastos por Categoria</h3>';
+  famTab += '<p class="desc">Porcentaje de egresos por categoria sobre el total de gastos. Identifica donde se concentra el gasto familiar.</p>';
+  famTab += '<div class="chart-container"><canvas id="chart_fam_donut"></canvas></div></div>';
+
+  famTab += '<div class="card"><h3>Composicion: monto por categoria</h3>';
+  famTab += '<p class="desc">Monto real gastado en cada categoria. Las barras muestran cuanto se gasto en cada rubro del hogar.</p>';
+  famTab += '<div class="chart-container"><canvas id="chart_fam_comp"></canvas></div></div>';
+  famTab += '</div>'; // close grid-2
+
+  // --- 4. % Gastos vs Ingresos + Subcategorías ---
+  famTab += '<div class="section-title">\uD83D\uDCCA ANALISIS DETALLADO</div>';
+  famTab += '<div class="grid grid-2">';
+  famTab += '<div class="card"><h3>Cada categoria como % de ingresos</h3>';
+  famTab += '<p class="desc">Que porcentaje de tus ingresos consume cada rubro? Permite identificar las areas que mas impactan al presupuesto familiar.</p>';
+  famTab += '<div class="chart-container"><canvas id="chart_fam_pct"></canvas></div></div>';
+
+  famTab += '<div class="card"><h3>Gastos Variables por Subcategoria</h3>';
+  famTab += '<p class="desc">Detalle de gastos variables del mes: supermercado, combustible, recreacion, etc. Estos son los gastos mas controlables.</p>';
+  famTab += '<div class="chart-container"><canvas id="chart_fam_subcat"></canvas></div></div>';
+  famTab += '</div>'; // close grid-2
+
+  // --- 5. Presupuesto vs Ejecución ---
+  famTab += '<div class="section-title">\uD83C\uDFAF PRESUPUESTO VS EJECUCION</div>';
+  famTab += '<div class="card"><h3>Plan vs Real - Evolucion Mensual</h3>';
+  famTab += '<p class="desc">Area gris = egresos presupuestados. Area coloreada = egresos reales ejecutados. Si el area coloreada supera la gris, hay sobregasto.</p>';
+  famTab += '<div class="chart-container"><canvas id="chart_fam_presup"></canvas></div></div>';
+
+  // --- 6. Cuentas + Liquidez ---
+  famTab += '<div class="section-title">\uD83C\uDFE6 CUENTAS Y LIQUIDEZ</div>';
+  famTab += '<div class="grid grid-2">';
+
   // Accounts table
-  famTab += '<div class="card"><div class="card-title">Saldos por cuenta bancaria</div><table><thead><tr><th>Cuenta</th><th class="text-right">Esperado</th><th class="text-right">Banco</th><th class="text-right">Dif.</th></tr></thead><tbody>';
+  famTab += '<div class="card"><h3>Saldos por cuenta bancaria</h3>';
+  famTab += '<p class="desc">Esperado = saldo calculado por el sistema. Banco = saldo real verificado. Diferencia positiva = mas dinero del esperado.</p>';
+  famTab += '<table><thead><tr><th>Cuenta</th><th class="text-right">Esperado</th><th class="text-right">Banco</th><th class="text-right">Dif.</th></tr></thead><tbody>';
   for (var ai = 0; ai < datos.cuentasFamilia.length; ai++) {
     var ct = datos.cuentasFamilia[ai];
     var difCls = ct.diferencia > 0 ? 'text-green' : ct.diferencia < 0 ? 'text-red' : 'text-gray';
@@ -446,47 +666,92 @@ function generarHTMLDashboard() {
   famTab += '</tbody></table></div>';
 
   // Liquidez
-  famTab += '<div class="card"><div class="card-title">Liquidez - Gastos pendientes</div>';
+  famTab += '<div class="card"><h3>Liquidez - Gastos pendientes</h3>';
+  famTab += '<p class="desc">Disponible menos gastos por vencer cada semana. Si el saldo fin de mes es negativo, no alcanza para cubrir todos los compromisos.</p>';
   famTab += '<div class="liq-item liq-verde"><span>Disponible</span><span class="font-bold text-green">Gs. ' + formatearGuaranies(datos.liquidez.cajaDisponible) + '</span></div>';
   for (var li = 0; li < datos.liquidez.semanas.length; li++) {
     var sem = datos.liquidez.semanas[li];
-    var liqCls = li === 0 ? 'liq-amarillo' : li === 1 ? 'liq-azul' : 'liq-azul';
+    var liqCls = li === 0 ? 'liq-amarillo' : 'liq-azul';
     famTab += '<div class="liq-item ' + liqCls + '"><span>' + sem.nombre + '</span><span class="font-bold">- Gs. ' + formatearGuaranies(sem.gastos) + '</span></div>';
   }
-  var saldoFinCls = datos.liquidez.saldoFinal >= 0 ? 'text-green' : 'text-red';
-  famTab += '<div class="liq-item" style="background:#1e293b;color:white;margin-top:6px"><span class="font-bold">Saldo fin de mes</span><span class="font-bold">Gs. ' + formatearGuaranies(datos.liquidez.saldoFinal) + '</span></div>';
+  famTab += '<div class="liq-item liq-dark"><span class="font-bold">Saldo fin de mes</span><span class="font-bold">Gs. ' + formatearGuaranies(datos.liquidez.saldoFinal) + '</span></div>';
   famTab += '</div>';
   famTab += '</div>'; // close grid-2
 
-  // --- NEUROTEA TAB ---
+  // --- 7. Flujo entre entidades (COMMON) ---
+  famTab += buildFlujoSection('chart_flujo_fam');
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB NEUROTEA
+  // ═══════════════════════════════════════════════════════════════════════════
+
   var ntTab = '';
 
-  // KPIs
-  ntTab += '<div class="grid grid-5">';
-  ntTab += kpi('kpi-blue', 'Ingresos del mes', datos.neurotea.ingresos, '');
-  ntTab += kpi('kpi-red', 'Egresos pagados', datos.neurotea.egresos, '');
-  ntTab += kpi('kpi-green', 'Ganancia real', datos.neurotea.ganancia, (datos.neurotea.ganancia >= datos.neurotea.meta ? '<span class="text-green">Meta cumplida</span>' : '<span class="text-red">Meta no cumplida</span>'));
-  ntTab += kpi('kpi-amber', 'Pendientes', datos.neurotea.pendientes, '');
-  ntTab += kpi('kpi-gray', '% Gastos / Ingresos', 0, '').replace('Gs. 0', datos.neurotea.pctGastos + '%').replace('kpi-gray', datos.neurotea.pctGastos <= datos.metas.maxGastos ? 'kpi-green' : 'kpi-red');
+  // --- KPIs ---
+  var pctGNT = datos.neurotea.pctGastos;
+  var ganOk = datos.neurotea.ganancia >= datos.neurotea.meta;
+  ntTab += '<div class="kpi-grid">';
+  ntTab += kpi('blue', 'Ingresos del mes', datos.neurotea.ingresos, '');
+  ntTab += kpi('red', 'Egresos pagados', datos.neurotea.egresos, '');
+  ntTab += kpi(ganOk ? 'green' : 'red', 'Ganancia real', datos.neurotea.ganancia, ganOk ? 'Meta cumplida' : 'Meta no cumplida', ganOk ? 'up' : 'down');
+  ntTab += kpi('amber', 'Pendientes', datos.neurotea.pendientes, datos.neurotea.pendientes > 0 ? 'Egresos sin pagar' : 'Todo al dia', datos.neurotea.pendientes > 0 ? 'down' : 'up');
+  ntTab += kpiPct(pctGNT <= datos.metas.maxGastos ? 'green' : 'red', '% Gastos / Ingresos', pctGNT, 'Meta: \u2264' + datos.metas.maxGastos + '%', pctGNT <= datos.metas.maxGastos ? 'up' : 'down');
   ntTab += '</div>';
 
-  // Trend chart
-  ntTab += '<div class="card"><div class="card-title">Estado de Resultados Mensual - NeuroTEA ' + AÑO + '</div><div id="chart_nt_trend" class="chart-box"></div></div>';
-
-  // Category bars + Donut
+  // --- 1. Estado de Resultados Mensual ---
+  ntTab += '<div class="section-title">\uD83D\uDCC8 ESTADO DE RESULTADOS</div>';
   ntTab += '<div class="grid grid-2">';
-  ntTab += '<div class="card"><div class="card-title">Detalle de egresos del mes</div><div id="chart_nt_cat_bars" class="chart-box"></div></div>';
-  ntTab += '<div class="card"><div class="card-title">Distribucion de egresos</div><div id="chart_nt_donut" class="chart-box"></div></div>';
-  ntTab += '</div>';
+  ntTab += '<div class="card"><h3>Ingresos vs Egresos - Mensual</h3>';
+  ntTab += '<p class="desc">Barras: ingresos y egresos por mes. Linea: % de ganancia. La linea punteada marca la meta del ' + datos.metas.ganancia + '%. Si la linea esta por encima, el negocio es rentable.</p>';
+  ntTab += '<div class="chart-container"><canvas id="chart_nt_estado"></canvas></div></div>';
 
-  // Ganancia distribution
-  ntTab += '<div class="card"><div class="card-title">Distribucion de ganancia (Meta: Gs. ' + formatearGuaranies(datos.neurotea.meta) + ')</div><div id="chart_nt_ganancia" class="chart-box" style="min-height:250px"></div></div>';
+  // --- 2. Ganancia Acumulada ---
+  ntTab += '<div class="card"><h3>Ganancia Acumulada Anual</h3>';
+  ntTab += '<p class="desc">Si la curva sube, la clinica genera superavit mes a mes. Una curva plana o descendente indica problemas de rentabilidad.</p>';
+  ntTab += '<div class="chart-container"><canvas id="chart_nt_ganancia_acum"></canvas></div></div>';
+  ntTab += '</div>'; // close grid-2
 
-  // Budget vs Real
-  ntTab += '<div class="card"><div class="card-title">Presupuesto vs Real por categoria</div><div id="chart_nt_budget" class="chart-box"></div></div>';
+  // --- 3. Distribución de Gastos ---
+  ntTab += '<div class="section-title">\uD83E\uDD67 DISTRIBUCION DE GASTOS</div>';
+  ntTab += '<div class="grid grid-2">';
+  ntTab += '<div class="card"><h3>Gastos por Categoria</h3>';
+  ntTab += '<p class="desc">Porcentaje de egresos por area operativa. Identifica las areas de la clinica con mayor consumo de recursos.</p>';
+  ntTab += '<div class="chart-container"><canvas id="chart_nt_donut"></canvas></div></div>';
 
-  // Accounts table
-  ntTab += '<div class="card"><div class="card-title">Cuentas NeuroTEA</div><table><thead><tr><th>Cuenta</th><th class="text-right">Esperado</th><th class="text-right">Acumulado</th></tr></thead><tbody>';
+  ntTab += '<div class="card"><h3>Composicion: monto por categoria</h3>';
+  ntTab += '<p class="desc">Monto real gastado en cada area operativa de la clinica. Las barras muestran el peso de cada rubro.</p>';
+  ntTab += '<div class="chart-container"><canvas id="chart_nt_comp"></canvas></div></div>';
+  ntTab += '</div>'; // close grid-2
+
+  // --- 4. Evolución % Ganancia + Distribución Ganancia ---
+  ntTab += '<div class="section-title">\uD83D\uDCC9 RENTABILIDAD</div>';
+  ntTab += '<div class="grid grid-2">';
+  ntTab += '<div class="card"><h3>Evolucion % Ganancia</h3>';
+  ntTab += '<p class="desc">Evolucion del margen de ganancia mensual. La linea punteada verde marca la meta del ' + datos.metas.ganancia + '%. Mientras la linea azul este por encima, el negocio es sostenible.</p>';
+  ntTab += '<div class="chart-container"><canvas id="chart_nt_pct_ganancia"></canvas></div></div>';
+
+  ntTab += '<div class="card"><h3>Distribucion de Ganancia</h3>';
+  ntTab += '<p class="desc">Distribucion de la ganancia en 3 fondos virtuales: Utilidad Due\u00F1o (' + datos.metas.distUtilidad + '%), Fondo Emergencia (' + datos.metas.distEmergencia + '%), Fondo Inversion (' + datos.metas.distInversion + '%). Columna gris = meta, coloreada = real.</p>';
+  ntTab += '<div class="chart-container"><canvas id="chart_nt_dist"></canvas></div></div>';
+  ntTab += '</div>'; // close grid-2
+
+  // --- 5. Presupuesto vs Ejecución + Subcategorías ---
+  ntTab += '<div class="section-title">\uD83C\uDFAF PRESUPUESTO Y DETALLE</div>';
+  ntTab += '<div class="grid grid-2">';
+  ntTab += '<div class="card"><h3>Plan vs Real - Evolucion Mensual</h3>';
+  ntTab += '<p class="desc">Controla si la clinica opera dentro del presupuesto planificado. Area gris = plan, area coloreada = ejecucion real.</p>';
+  ntTab += '<div class="chart-container"><canvas id="chart_nt_presup"></canvas></div></div>';
+
+  ntTab += '<div class="card"><h3>Gastos Variables por Subcategoria</h3>';
+  ntTab += '<p class="desc">Detalle de gastos variables de la clinica: insumos, reparaciones, gastos varios, etc. Estos son los gastos mas controlables de la operacion.</p>';
+  ntTab += '<div class="chart-container"><canvas id="chart_nt_subcat"></canvas></div></div>';
+  ntTab += '</div>'; // close grid-2
+
+  // --- 6. Cuentas NT ---
+  ntTab += '<div class="section-title">\uD83C\uDFE6 CUENTAS NEUROTEA</div>';
+  ntTab += '<div class="card"><h3>Saldos por cuenta</h3>';
+  ntTab += '<p class="desc">Esperado = saldo calculado. Acumulado = movimiento total del a\u00F1o. Permite verificar el estado de cada cuenta de la clinica.</p>';
+  ntTab += '<table><thead><tr><th>Cuenta</th><th class="text-right">Esperado</th><th class="text-right">Acumulado</th></tr></thead><tbody>';
   for (var nai = 0; nai < datos.cuentasNT.length; nai++) {
     var cnt = datos.cuentasNT[nai];
     ntTab += '<tr><td>' + cnt.nombre + '</td><td class="text-right text-blue font-bold">' + formatearGuaranies(cnt.saldo) + '</td><td class="text-right">' + formatearGuaranies(cnt.acumulado) + '</td></tr>';
@@ -494,202 +759,337 @@ function generarHTMLDashboard() {
   ntTab += '<tr style="background:#f1f5f9"><td class="font-bold">TOTAL</td><td class="text-right font-bold text-blue">' + formatearGuaranies(datos.totalCuentasNT) + '</td><td></td></tr>';
   ntTab += '</tbody></table></div>';
 
-  // --- BALANCE CRUZADO TAB ---
-  var balTab = '';
-  var bc = datos.balanceCruzado;
-  var balNeto = bc.balanceNeto;
-  var estadoTxt = balNeto > 0 ? 'FAMILIA DEBE A NT' : balNeto < 0 ? 'NT DEBE A FAMILIA' : 'EQUILIBRADO';
-  var estadoIcon = balNeto > 0 ? '\uD83D\uDD34' : balNeto < 0 ? '\uD83D\uDFE1' : '\u2705';
-  var estadoBg = balNeto > 0 ? '#fef2f2' : balNeto < 0 ? '#fefce8' : '#f0fdf4';
-  var estadoColor = balNeto > 0 ? '#dc2626' : balNeto < 0 ? '#d97706' : '#16a34a';
+  // --- 7. Flujo entre entidades (COMMON) ---
+  ntTab += buildFlujoSection('chart_flujo_nt');
 
-  // KPIs
-  balTab += '<div class="grid grid-3">';
-  balTab += kpi('kpi-red', 'Deuda FAMILIA a NT', bc.deudaFamAcum, 'Acumulado a\u00F1o');
-  balTab += kpi('kpi-amber', 'Deuda NT a FAMILIA', bc.deudaNTAcum, 'Acumulado a\u00F1o');
-  balTab += '<div class="kpi" style="border-left-color:' + estadoColor + '"><div class="kpi-label">Balance neto</div><div class="kpi-value" style="color:' + estadoColor + '">Gs. ' + formatearGuaranies(Math.abs(balNeto)) + '</div><div class="kpi-sub">' + estadoTxt + '</div></div>';
-  balTab += '</div>';
+  // ═══════════════════════════════════════════════════════════════════════════
+  // JAVASCRIPT - Chart.js rendering
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  // Alert + Table
-  balTab += '<div class="grid grid-2">';
-  // Table
-  balTab += '<div class="card"><div class="card-title">Detalle de flujos cruzados</div><table><thead><tr><th>Concepto</th><th class="text-right">Este mes</th><th class="text-right">Acumulado</th></tr></thead><tbody>';
-  balTab += '<tr style="background:#fef2f2"><td colspan="3" class="font-bold">NT \u2192 FAMILIA</td></tr>';
-  balTab += '<tr><td>Prestamo NT \u2192 Familia</td><td class="text-right">' + formatearGuaranies(bc.prestamoNTMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.prestamoNTAcum) + '</td></tr>';
-  balTab += '<tr><td>Devolucion Familia \u2192 NT</td><td class="text-right text-green">' + formatearGuaranies(bc.devFamMes) + '</td><td class="text-right text-green font-bold">' + formatearGuaranies(bc.devFamAcum) + '</td></tr>';
-  balTab += '<tr style="background:#f1f5f9"><td class="font-bold">Deuda FAM \u2192 NT</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaFamMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaFamAcum) + '</td></tr>';
-  balTab += '<tr style="background:#fefce8"><td colspan="3" class="font-bold">FAMILIA \u2192 NT</td></tr>';
-  balTab += '<tr><td>Prestamo Familia \u2192 NT</td><td class="text-right">' + formatearGuaranies(bc.prestamoFamMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.prestamoFamAcum) + '</td></tr>';
-  balTab += '<tr><td>Devolucion NT \u2192 Familia</td><td class="text-right text-green">' + formatearGuaranies(bc.devNTMes) + '</td><td class="text-right text-green font-bold">' + formatearGuaranies(bc.devNTAcum) + '</td></tr>';
-  balTab += '<tr style="background:#f1f5f9"><td class="font-bold">Deuda NT \u2192 FAM</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaNTMes) + '</td><td class="text-right font-bold">' + formatearGuaranies(bc.deudaNTAcum) + '</td></tr>';
-  balTab += '</tbody></table></div>';
-
-  // Alert box
-  balTab += '<div class="card" style="display:flex;align-items:center;justify-content:center"><div class="alert-card" style="background:' + estadoBg + '">';
-  balTab += '<div class="icon">' + estadoIcon + '</div>';
-  balTab += '<div class="title" style="color:' + estadoColor + '">' + estadoTxt + '</div>';
-  balTab += '<div class="value" style="color:' + estadoColor + '">Gs. ' + formatearGuaranies(Math.abs(balNeto)) + '</div>';
-  if (balNeto > 0) balTab += '<div class="desc">NeuroTEA ha prestado mas a Familia de lo que Familia ha devuelto.</div>';
-  else if (balNeto < 0) balTab += '<div class="desc">Familia ha prestado mas a NeuroTEA de lo que NT ha devuelto.</div>';
-  else balTab += '<div class="desc">No hay deudas pendientes entre entidades.</div>';
-  balTab += '</div></div>';
-  balTab += '</div>'; // close grid-2
-
-  // ═══ JAVASCRIPT FOR CHARTS ═══
   var js = ''
+
+  // --- Global config ---
+  + 'Chart.defaults.font.family="\'Inter\',sans-serif";'
+  + 'Chart.defaults.color="#4b5563";'
+
+  // --- Colors ---
+  + 'var C={primary:"#1f2937",positive:"#047857",negative:"#dc2626",balance:"#b45309",'
+  + 'navy:"#1e3a5f",teal:"#0d9488",amber:"#d97706",indigo:"#4338ca",rose:"#be123c",'
+  + 'emerald:"#059669",sky:"#0369a1",violet:"#7c3aed",orange:"#c2410c",cyan:"#0891b2"};'
+  + 'var DONUT1=["#1e3a5f","#be123c","#d97706","#4338ca","#0d9488","#7c3aed"];'
+  + 'var DONUT2=["#047857","#b45309","#0369a1","#7c3aed","#c2410c","#0891b2","#059669","#4338ca","#0d9488","#1e3a5f"];'
+
+  // --- Format helper ---
+  + 'function fmtGs(n){if(!n&&n!==0)return"0";return new Intl.NumberFormat("es-PY").format(Math.round(n));}'
+  + 'function fmtM(n){if(!n)return"0";var m=n/1000000;return m>=1?m.toFixed(1)+"M":(n/1000).toFixed(0)+"K";}'
+
+  // --- Common tooltip config ---
+  + 'var TT={backgroundColor:"rgba(31,41,55,0.95)",titleColor:"#fff",bodyColor:"#fff",padding:12,displayColors:true};'
+
+  // --- Chart storage ---
+  + 'var famCharts={};var ntCharts={};'
+
+  // --- Destroy helper ---
+  + 'function destroyCharts(obj){for(var k in obj){if(obj[k]&&obj[k].destroy)obj[k].destroy();}}'
+
   // --- Tab switching ---
   + 'function showTab(name){'
   + '  document.querySelectorAll(".tab-content").forEach(function(t){t.classList.remove("active");});'
   + '  document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("active");});'
   + '  document.getElementById("tab-"+name).classList.add("active");'
   + '  document.querySelector("[data-tab=\\""+name+"\\"]").classList.add("active");'
-  + '  if(name==="familia") drawFamiliaCharts();'
-  + '  else if(name==="neurotea") drawNeuroteaCharts();'
+  + '  if(name==="familia"){destroyCharts(famCharts);drawFamiliaCharts();}'
+  + '  else if(name==="neurotea"){destroyCharts(ntCharts);drawNeuroteaCharts();}'
   + '}'
-
-  // --- Format helper ---
-  + 'function fmtGs(n){if(!n)return"0";return new Intl.NumberFormat("es-PY").format(Math.round(n));}'
-
-  // --- Google Charts load ---
-  + 'google.charts.load("current",{packages:["corechart"]});'
-  + 'google.charts.setOnLoadCallback(function(){drawFamiliaCharts();});'
-
-  // --- Common chart options ---
-  + 'var BASE_OPT={fontName:"Inter",backgroundColor:"transparent",chartArea:{left:60,top:40,right:20,bottom:50,width:"85%",height:"70%"},legend:{position:"top",textStyle:{fontSize:11}},animation:{startup:true,duration:600,easing:"out"},titleTextStyle:{color:"#334155",fontSize:13,bold:true}};'
 
   // ═══ FAMILIA CHARTS ═══
   + 'function drawFamiliaCharts(){'
-  + '  drawFamTrend();drawFamCatBars();drawFamDonut();drawFamBudget();'
+  + '  drawFamBalance();drawFamAhorro();drawFamDonut();drawFamComp();drawFamPct();drawFamSubcat();drawFamPresup();drawFlujoChart("chart_flujo_fam");'
   + '}'
 
-  // Combo: 12-month trend
-  + 'function drawFamTrend(){'
-  + '  var d=new google.visualization.DataTable();'
-  + '  d.addColumn("string","Mes");d.addColumn("number","Ingresos");d.addColumn("number","Egresos");d.addColumn("number","Balance");'
-  + '  for(var i=0;i<12;i++){'
-  + '    var ing=DATA.tendencia.familia.ingresos[i];var egr=DATA.tendencia.familia.egresos[i];'
-  + '    var bal=ing-egr-DATA.tendencia.familia.ahorro[i];'
-  + '    d.addRow([DATA.meses[i],ing||null,egr||null,(ing||egr)?bal:null]);'
-  + '  }'
-  + '  var o=Object.assign({},BASE_OPT,{seriesType:"bars",series:{2:{type:"line",lineWidth:3,pointSize:5,color:"#22c55e"}},colors:["#3b82f6","#ef4444"],vAxes:{0:{title:"Gs.",format:"short"}},bar:{groupWidth:"60%"}});'
-  + '  new google.visualization.ComboChart(document.getElementById("chart_fam_trend")).draw(d,o);'
+  // 1. Balance Mensual (Combo)
+  + 'function drawFamBalance(){'
+  + '  var ctx=document.getElementById("chart_fam_balance");if(!ctx)return;'
+  + '  var balData=[];for(var i=0;i<12;i++){balData.push(DATA.tendencia.familia.ingresos[i]-DATA.tendencia.familia.egresos[i]-DATA.tendencia.familia.ahorro[i]);}'
+  + '  famCharts.balance=new Chart(ctx,{'
+  + '    type:"bar",'
+  + '    data:{labels:DATA.meses,datasets:['
+  + '      {label:"Ingresos",data:DATA.tendencia.familia.ingresos,backgroundColor:C.positive,borderRadius:4,order:2},'
+  + '      {label:"Egresos",data:DATA.tendencia.familia.egresos,backgroundColor:C.negative,borderRadius:4,order:2},'
+  + '      {label:"Balance",data:balData,type:"line",borderColor:C.balance,backgroundColor:"rgba(180,83,9,0.1)",borderWidth:3,pointRadius:5,pointBackgroundColor:C.balance,pointBorderColor:"#fff",pointBorderWidth:2,tension:0.4,fill:false,order:1,yAxisID:"y1"}'
+  + '    ]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:"index"},'
+  + '      plugins:{legend:{position:"top",labels:{usePointStyle:true,padding:14}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ctx.dataset.label+": Gs. "+fmtGs(ctx.raw);}}})},'
+  + '      scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return fmtM(v);}},grid:{color:"#f3f4f6"}},y1:{position:"right",ticks:{callback:function(v){return fmtM(v);},color:C.balance},grid:{display:false}}}}'
+  + '  });'
   + '}'
 
-  // Bar: Category breakdown
-  + 'function drawFamCatBars(){'
-  + '  var cats=DATA.categorias.familia;var gastos=[];var total=0;'
-  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("AHORRO")===-1&&c.real>0){gastos.push(c);total+=c.real;}}'
-  + '  gastos.sort(function(a,b){return b.real-a.real;});'
-  + '  var d=new google.visualization.DataTable();d.addColumn("string","Categoria");d.addColumn("number","Monto");d.addColumn({type:"string",role:"annotation"});'
-  + '  var colors=["#ef4444","#f97316","#eab308","#06b6d4","#8b5cf6","#6b7280"];'
-  + '  for(var i=0;i<gastos.length;i++){var g=gastos[i];var pct=total>0?Math.round(g.real/total*100):0;d.addRow([g.nombre,g.real,"Gs. "+fmtGs(g.real)+" | "+pct+"%"]);}'
-  + '  if(gastos.length===0){document.getElementById("chart_fam_cat_bars").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin egresos registrados</p>";return;}'
-  + '  var o=Object.assign({},BASE_OPT,{bars:"horizontal",legend:"none",colors:colors,chartArea:{left:130,top:20,right:80,bottom:20,width:"60%",height:"85%"},annotations:{textStyle:{fontSize:11,color:"#334155"},alwaysOutside:true}});'
-  + '  new google.visualization.BarChart(document.getElementById("chart_fam_cat_bars")).draw(d,o);'
+  // 2. Ahorro Acumulado
+  + 'function drawFamAhorro(){'
+  + '  var ctx=document.getElementById("chart_fam_ahorro");if(!ctx)return;'
+  + '  var acum=[];var sum=0;for(var i=0;i<12;i++){sum+=DATA.tendencia.familia.ahorro[i];acum.push(sum||null);}'
+  + '  famCharts.ahorro=new Chart(ctx,{'
+  + '    type:"line",'
+  + '    data:{labels:DATA.meses,datasets:[{label:"Ahorro Acumulado",data:acum,borderColor:C.positive,backgroundColor:"rgba(4,120,87,0.1)",fill:true,tension:0.4,borderWidth:3,pointRadius:4,pointHoverRadius:7}]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,'
+  + '      plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return"Acumulado: Gs. "+fmtGs(ctx.raw);}}})},'
+  + '      scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return fmtM(v);}},grid:{color:"#f3f4f6"}}}}'
+  + '  });'
   + '}'
 
-  // Donut: Expense distribution
+  // 3. Donut categorías FAMILIA
   + 'function drawFamDonut(){'
-  + '  var cats=DATA.categorias.familia;var d=[["Categoria","Monto"]];'
-  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("AHORRO")===-1&&c.real>0)d.push([c.nombre,c.real]);}'
-  + '  if(d.length===1){document.getElementById("chart_fam_donut").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
-  + '  var o=Object.assign({},BASE_OPT,{pieHole:0.4,pieSliceText:"percentage",colors:["#ef4444","#f97316","#eab308","#06b6d4","#8b5cf6","#6b7280"],chartArea:{left:10,top:30,right:10,bottom:10,width:"90%",height:"85%"},legend:{position:"right",textStyle:{fontSize:11}}});'
-  + '  new google.visualization.PieChart(document.getElementById("chart_fam_donut")).draw(google.visualization.arrayToDataTable(d),o);'
+  + '  var ctx=document.getElementById("chart_fam_donut");if(!ctx)return;'
+  + '  var cats=DATA.categorias.familia;var labels=[];var values=[];'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("AHORRO")===-1&&c.real>0){labels.push(c.nombre);values.push(c.real);}}'
+  + '  if(values.length===0){ctx.parentElement.innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin egresos registrados</p>";return;}'
+  + '  famCharts.donut=new Chart(ctx,{'
+  + '    type:"doughnut",'
+  + '    data:{labels:labels,datasets:[{data:values,backgroundColor:DONUT1,borderWidth:3,borderColor:"#fff",hoverOffset:8}]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,cutout:"60%",'
+  + '      plugins:{legend:{position:"right",labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){var t=0;ctx.dataset.data.forEach(function(v){t+=v;});return ctx.label+": "+Math.round(ctx.raw/t*100)+"%";}}})}}'
+  + '  });'
   + '}'
 
-  // Budget vs Real grouped bars
-  + 'function drawFamBudget(){'
-  + '  var cats=DATA.categorias.familia;var d=[["Categoria","Presupuesto","Real"]];'
-  + '  for(var i=0;i<cats.length;i++){var c=cats[i];if(c.presupuesto>0||c.real>0)d.push([c.nombre,c.presupuesto,c.real]);}'
-  + '  if(d.length===1){document.getElementById("chart_fam_budget").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
-  + '  var o=Object.assign({},BASE_OPT,{bars:"horizontal",colors:["#94a3b8","#3b82f6"],chartArea:{left:150,top:40,right:30,bottom:20,width:"65%",height:"80%"},bar:{groupWidth:"70%"}});'
-  + '  new google.visualization.BarChart(document.getElementById("chart_fam_budget")).draw(google.visualization.arrayToDataTable(d),o);'
+  // 4. Composición horizontal bar FAMILIA
+  + 'function drawFamComp(){'
+  + '  var ctx=document.getElementById("chart_fam_comp");if(!ctx)return;'
+  + '  var cats=DATA.categorias.familia;var gastos=[];'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("AHORRO")===-1&&c.real>0)gastos.push(c);}'
+  + '  gastos.sort(function(a,b){return b.real-a.real;});'
+  + '  var labels=[];var values=[];var colors=[];'
+  + '  for(var j=0;j<gastos.length;j++){labels.push(gastos[j].nombre);values.push(gastos[j].real);colors.push(DONUT1[j%DONUT1.length]);}'
+  + '  if(values.length===0){ctx.parentElement.innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
+  + '  famCharts.comp=new Chart(ctx,{'
+  + '    type:"bar",'
+  + '    data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderRadius:4}]},'
+  + '    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,'
+  + '      plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return"Gs. "+fmtGs(ctx.raw);}}})},scales:{x:{ticks:{callback:function(v){return fmtM(v);}},grid:{color:"#f3f4f6"}},y:{grid:{display:false}}}}'
+  + '  });'
+  + '}'
+
+  // 5. % Gastos vs Ingresos FAMILIA
+  + 'function drawFamPct(){'
+  + '  var ctx=document.getElementById("chart_fam_pct");if(!ctx)return;'
+  + '  var cats=DATA.categorias.familia;var labels=[];var values=[];var colors=[];var ing=DATA.familia.ingresos||1;'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("AHORRO")===-1&&c.real>0){labels.push(c.nombre);values.push(Math.round(c.real/ing*100));colors.push(DONUT1[labels.length%DONUT1.length]);}}'
+  + '  if(values.length===0){ctx.parentElement.innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
+  + '  famCharts.pct=new Chart(ctx,{'
+  + '    type:"bar",'
+  + '    data:{labels:labels,datasets:[{label:"% de Ingresos",data:values,backgroundColor:colors,borderRadius:4}]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,'
+  + '      plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ctx.raw+"% de los ingresos";}}})},scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return v+"%";}},grid:{color:"#f3f4f6"},max:Math.max.apply(null,values)+10}}}'
+  + '  });'
+  + '}'
+
+  // 6. Subcategorías Variables FAMILIA
+  + 'function drawFamSubcat(){'
+  + '  var ctx=document.getElementById("chart_fam_subcat");if(!ctx)return;'
+  + '  var subs=DATA.subcategoriasFam;'
+  + '  if(!subs||subs.length===0){ctx.parentElement.innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin gastos variables este mes</p>";return;}'
+  + '  var labels=[];var values=[];for(var i=0;i<subs.length;i++){labels.push(subs[i].nombre);values.push(subs[i].monto);}'
+  + '  famCharts.subcat=new Chart(ctx,{'
+  + '    type:"doughnut",'
+  + '    data:{labels:labels,datasets:[{data:values,backgroundColor:DONUT2,borderWidth:3,borderColor:"#fff",hoverOffset:8}]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,cutout:"55%",'
+  + '      plugins:{legend:{position:"right",labels:{usePointStyle:true,padding:10,font:{size:10}}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ctx.label+": Gs. "+fmtGs(ctx.raw);}}})}}'
+  + '  });'
+  + '}'
+
+  // 7. Presupuesto vs Ejecución FAMILIA
+  + 'function drawFamPresup(){'
+  + '  var ctx=document.getElementById("chart_fam_presup");if(!ctx)return;'
+  + '  var presup=DATA.tendencia.familia.presupEgresos;var real=DATA.tendencia.familia.egresos;'
+  + '  var realData=[];for(var i=0;i<12;i++){realData.push(real[i]||null);}'
+  + '  famCharts.presup=new Chart(ctx,{'
+  + '    type:"line",'
+  + '    data:{labels:DATA.meses,datasets:['
+  + '      {label:"Presupuestado",data:presup,borderColor:C.primary,backgroundColor:"rgba(31,41,55,0.12)",fill:true,tension:0.1,borderWidth:2},'
+  + '      {label:"Ejecutado",data:realData,borderColor:C.teal,backgroundColor:"rgba(13,148,136,0.12)",fill:true,tension:0.4,borderWidth:3}'
+  + '    ]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,'
+  + '      plugins:{legend:{position:"top",labels:{usePointStyle:true,padding:14}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ctx.dataset.label+": Gs. "+fmtGs(ctx.raw);}}})},'
+  + '      scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return fmtM(v);}},grid:{color:"#f3f4f6"}}}}'
+  + '  });'
   + '}'
 
   // ═══ NEUROTEA CHARTS ═══
   + 'function drawNeuroteaCharts(){'
-  + '  drawNTTrend();drawNTCatBars();drawNTDonut();drawNTGanancia();drawNTBudget();'
+  + '  drawNTEstado();drawNTGananciaAcum();drawNTDonut();drawNTComp();drawNTPctGanancia();drawNTDist();drawNTPresup();drawNTSubcat();drawFlujoChart("chart_flujo_nt");'
   + '}'
 
-  // Combo: 12-month Income Statement
-  + 'function drawNTTrend(){'
-  + '  var d=new google.visualization.DataTable();'
-  + '  d.addColumn("string","Mes");d.addColumn("number","Ingresos");d.addColumn("number","Egresos");d.addColumn("number","% Ganancia");'
-  + '  for(var i=0;i<12;i++){'
-  + '    var ing=DATA.tendencia.neurotea.ingresos[i];var egr=DATA.tendencia.neurotea.egresos[i];'
-  + '    var pct=ing>0?Math.round((ing-egr)/ing*100):null;'
-  + '    d.addRow([DATA.meses[i],ing||null,egr||null,(ing>0)?pct:null]);'
-  + '  }'
-  + '  var o=Object.assign({},BASE_OPT,{seriesType:"bars",series:{2:{type:"line",targetAxisIndex:1,lineWidth:3,pointSize:5,color:"#22c55e"}},colors:["#3b82f6","#ef4444"],vAxes:{0:{title:"Gs.",format:"short"},1:{title:"% Ganancia",viewWindow:{min:0,max:30}}},bar:{groupWidth:"60%"}});'
-  + '  new google.visualization.ComboChart(document.getElementById("chart_nt_trend")).draw(d,o);'
+  // 1. Estado de Resultados NT (Combo)
+  + 'function drawNTEstado(){'
+  + '  var ctx=document.getElementById("chart_nt_estado");if(!ctx)return;'
+  + '  var pctData=[];for(var i=0;i<12;i++){var ing=DATA.tendencia.neurotea.ingresos[i];var egr=DATA.tendencia.neurotea.egresos[i];pctData.push(ing>0?Math.round((ing-egr)/ing*100):null);}'
+  + '  ntCharts.estado=new Chart(ctx,{'
+  + '    type:"bar",'
+  + '    data:{labels:DATA.meses,datasets:['
+  + '      {label:"Ingresos",data:DATA.tendencia.neurotea.ingresos,backgroundColor:C.sky,borderRadius:4,order:2},'
+  + '      {label:"Egresos",data:DATA.tendencia.neurotea.egresos,backgroundColor:C.negative,borderRadius:4,order:2},'
+  + '      {label:"% Ganancia",data:pctData,type:"line",borderColor:C.positive,backgroundColor:"rgba(4,120,87,0.1)",borderWidth:3,pointRadius:5,pointBackgroundColor:C.positive,tension:0.4,fill:false,order:1,yAxisID:"y1"},'
+  + '      {label:"Meta "+DATA.metas.ganancia+"%",data:new Array(12).fill(DATA.metas.ganancia),type:"line",borderColor:C.positive,borderDash:[8,4],borderWidth:2,pointRadius:0,fill:false,order:0,yAxisID:"y1"}'
+  + '    ]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:"index"},'
+  + '      plugins:{legend:{position:"top",labels:{usePointStyle:true,padding:12}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){if(ctx.dataset.label.indexOf("%")>=0)return ctx.dataset.label+": "+ctx.raw+"%";return ctx.dataset.label+": Gs. "+fmtGs(ctx.raw);}}})},'
+  + '      scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return fmtM(v);}},grid:{color:"#f3f4f6"}},y1:{position:"right",ticks:{callback:function(v){return v+"%";},color:C.positive},grid:{display:false},min:0,max:40}}}'
+  + '  });'
   + '}'
 
-  // Bar: NT category breakdown
-  + 'function drawNTCatBars(){'
-  + '  var cats=DATA.categorias.neurotea;var gastos=[];var total=0;'
-  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("GANANCIA")===-1&&c.real>0){gastos.push(c);total+=c.real;}}'
-  + '  gastos.sort(function(a,b){return b.real-a.real;});'
-  + '  var d=new google.visualization.DataTable();d.addColumn("string","Categoria");d.addColumn("number","Monto");d.addColumn({type:"string",role:"annotation"});'
-  + '  var colors=["#3b82f6","#6366f1","#8b5cf6","#06b6d4","#14b8a6","#6b7280"];'
-  + '  for(var i=0;i<gastos.length;i++){var g=gastos[i];var pct=total>0?Math.round(g.real/total*100):0;d.addRow([g.nombre,g.real,"Gs. "+fmtGs(g.real)+" | "+pct+"%"]);}'
-  + '  if(gastos.length===0){document.getElementById("chart_nt_cat_bars").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin egresos registrados</p>";return;}'
-  + '  var o=Object.assign({},BASE_OPT,{bars:"horizontal",legend:"none",colors:colors,chartArea:{left:160,top:20,right:100,bottom:20,width:"50%",height:"85%"},annotations:{textStyle:{fontSize:11,color:"#334155"},alwaysOutside:true}});'
-  + '  new google.visualization.BarChart(document.getElementById("chart_nt_cat_bars")).draw(d,o);'
+  // 2. Ganancia Acumulada NT
+  + 'function drawNTGananciaAcum(){'
+  + '  var ctx=document.getElementById("chart_nt_ganancia_acum");if(!ctx)return;'
+  + '  var acum=[];var sum=0;for(var i=0;i<12;i++){var g=DATA.tendencia.neurotea.ingresos[i]-DATA.tendencia.neurotea.egresos[i];sum+=g;acum.push(sum||null);}'
+  + '  ntCharts.gananciaAcum=new Chart(ctx,{'
+  + '    type:"line",'
+  + '    data:{labels:DATA.meses,datasets:[{label:"Ganancia Acumulada",data:acum,borderColor:C.emerald,backgroundColor:"rgba(5,150,105,0.1)",fill:true,tension:0.4,borderWidth:3,pointRadius:4,pointHoverRadius:7}]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,'
+  + '      plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return"Acumulado: Gs. "+fmtGs(ctx.raw);}}})},'
+  + '      scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return fmtM(v);}},grid:{color:"#f3f4f6"}}}}'
+  + '  });'
   + '}'
 
-  // Donut: NT expense distribution
+  // 3. Donut categorías NT
   + 'function drawNTDonut(){'
-  + '  var cats=DATA.categorias.neurotea;var d=[["Categoria","Monto"]];'
-  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("GANANCIA")===-1&&c.real>0)d.push([c.nombre,c.real]);}'
-  + '  if(d.length===1){document.getElementById("chart_nt_donut").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
-  + '  var o=Object.assign({},BASE_OPT,{pieHole:0.4,pieSliceText:"percentage",colors:["#3b82f6","#6366f1","#8b5cf6","#06b6d4","#14b8a6","#6b7280"],chartArea:{left:10,top:30,right:10,bottom:10,width:"90%",height:"85%"},legend:{position:"right",textStyle:{fontSize:11}}});'
-  + '  new google.visualization.PieChart(document.getElementById("chart_nt_donut")).draw(google.visualization.arrayToDataTable(d),o);'
+  + '  var ctx=document.getElementById("chart_nt_donut");if(!ctx)return;'
+  + '  var cats=DATA.categorias.neurotea;var labels=[];var values=[];'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("GANANCIA")===-1&&c.real>0){labels.push(c.nombre);values.push(c.real);}}'
+  + '  if(values.length===0){ctx.parentElement.innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin egresos registrados</p>";return;}'
+  + '  ntCharts.donut=new Chart(ctx,{'
+  + '    type:"doughnut",'
+  + '    data:{labels:labels,datasets:[{data:values,backgroundColor:["#0369a1","#6366f1","#8b5cf6","#06b6d4","#14b8a6","#1e3a5f"],borderWidth:3,borderColor:"#fff",hoverOffset:8}]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,cutout:"60%",'
+  + '      plugins:{legend:{position:"right",labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){var t=0;ctx.dataset.data.forEach(function(v){t+=v;});return ctx.label+": "+Math.round(ctx.raw/t*100)+"%";}}})}}'
+  + '  });'
   + '}'
 
-  // Column: Ganancia distribution
-  + 'function drawNTGanancia(){'
+  // 4. Composición horizontal bar NT
+  + 'function drawNTComp(){'
+  + '  var ctx=document.getElementById("chart_nt_comp");if(!ctx)return;'
+  + '  var cats=DATA.categorias.neurotea;var gastos=[];'
+  + '  for(var i=0;i<cats.length;i++){var c=cats[i];var n=c.nombre.toUpperCase();if(n.indexOf("INGRESO")===-1&&n.indexOf("BALANCE")===-1&&n.indexOf("GANANCIA")===-1&&c.real>0)gastos.push(c);}'
+  + '  gastos.sort(function(a,b){return b.real-a.real;});'
+  + '  var labels=[];var values=[];var colors=["#0369a1","#6366f1","#8b5cf6","#06b6d4","#14b8a6","#1e3a5f"];'
+  + '  for(var j=0;j<gastos.length;j++){labels.push(gastos[j].nombre);values.push(gastos[j].real);}'
+  + '  if(values.length===0){ctx.parentElement.innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
+  + '  ntCharts.comp=new Chart(ctx,{'
+  + '    type:"bar",'
+  + '    data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderRadius:4}]},'
+  + '    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,'
+  + '      plugins:{legend:{display:false},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return"Gs. "+fmtGs(ctx.raw);}}})},scales:{x:{ticks:{callback:function(v){return fmtM(v);}},grid:{color:"#f3f4f6"}},y:{grid:{display:false}}}}'
+  + '  });'
+  + '}'
+
+  // 5. Evolución % Ganancia NT
+  + 'function drawNTPctGanancia(){'
+  + '  var ctx=document.getElementById("chart_nt_pct_ganancia");if(!ctx)return;'
+  + '  var pctData=[];for(var i=0;i<12;i++){var ing=DATA.tendencia.neurotea.ingresos[i];var egr=DATA.tendencia.neurotea.egresos[i];pctData.push(ing>0?Math.round((ing-egr)/ing*100):null);}'
+  + '  ntCharts.pctGanancia=new Chart(ctx,{'
+  + '    type:"line",'
+  + '    data:{labels:DATA.meses,datasets:['
+  + '      {label:"% Ganancia",data:pctData,borderColor:C.sky,backgroundColor:"rgba(3,105,161,0.08)",fill:true,tension:0.4,borderWidth:3,pointRadius:5,pointBackgroundColor:C.sky},'
+  + '      {label:"Meta ("+DATA.metas.ganancia+"%)",data:new Array(12).fill(DATA.metas.ganancia),borderColor:C.positive,borderDash:[8,4],borderWidth:2,pointRadius:0,fill:false}'
+  + '    ]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,'
+  + '      plugins:{legend:{position:"top",labels:{usePointStyle:true,padding:14}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ctx.dataset.label+": "+ctx.raw+"%";}}})},scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return v+"%";}},grid:{color:"#f3f4f6"},min:0,max:40}}}'
+  + '  });'
+  + '}'
+
+  // 6. Distribución Ganancia NT (Column)
+  + 'function drawNTDist(){'
+  + '  var ctx=document.getElementById("chart_nt_dist");if(!ctx)return;'
   + '  var dist=DATA.neurotea.distribucion;var metas=DATA.metas;var metaTotal=DATA.neurotea.meta;'
   + '  var metaUtil=Math.round(metaTotal*metas.distUtilidad/100);var metaEmerg=Math.round(metaTotal*metas.distEmergencia/100);var metaInv=Math.round(metaTotal*metas.distInversion/100);'
-  + '  var d=google.visualization.arrayToDataTable(['
-  + '    ["Fondo","Meta","Real"],'
-  + '    ["Utilidad Dueno ("+metas.distUtilidad+"%)",metaUtil,dist.utilidad],'
-  + '    ["Fondo Emergencia ("+metas.distEmergencia+"%)",metaEmerg,dist.emergencia],'
-  + '    ["Fondo Inversion ("+metas.distInversion+"%)",metaInv,dist.inversion]'
-  + '  ]);'
-  + '  var o=Object.assign({},BASE_OPT,{colors:["#94a3b8","#22c55e"],bar:{groupWidth:"50%"},vAxis:{format:"short"}});'
-  + '  new google.visualization.ColumnChart(document.getElementById("chart_nt_ganancia")).draw(d,o);'
+  + '  ntCharts.dist=new Chart(ctx,{'
+  + '    type:"bar",'
+  + '    data:{labels:["Utilidad Due\\u00F1o","Fondo Emergencia","Fondo Inversion"],'
+  + '      datasets:[{label:"Meta",data:[metaUtil,metaEmerg,metaInv],backgroundColor:"#94a3b8",borderRadius:4},{label:"Real",data:[dist.utilidad,dist.emergencia,dist.inversion],backgroundColor:C.emerald,borderRadius:4}]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,'
+  + '      plugins:{legend:{position:"top",labels:{usePointStyle:true,padding:14}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ctx.dataset.label+": Gs. "+fmtGs(ctx.raw);}}})},scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return fmtM(v);}},grid:{color:"#f3f4f6"}}}}'
+  + '  });'
   + '}'
 
-  // Budget vs Real NT
-  + 'function drawNTBudget(){'
-  + '  var cats=DATA.categorias.neurotea;var d=[["Categoria","Presupuesto","Real"]];'
-  + '  for(var i=0;i<cats.length;i++){var c=cats[i];if(c.presupuesto>0||c.real>0)d.push([c.nombre,c.presupuesto,c.real]);}'
-  + '  if(d.length===1){document.getElementById("chart_nt_budget").innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin datos</p>";return;}'
-  + '  var o=Object.assign({},BASE_OPT,{bars:"horizontal",colors:["#94a3b8","#3b82f6"],chartArea:{left:180,top:40,right:30,bottom:20,width:"55%",height:"80%"},bar:{groupWidth:"70%"}});'
-  + '  new google.visualization.BarChart(document.getElementById("chart_nt_budget")).draw(google.visualization.arrayToDataTable(d),o);'
-  + '}';
+  // 7. Presupuesto vs Ejecución NT
+  + 'function drawNTPresup(){'
+  + '  var ctx=document.getElementById("chart_nt_presup");if(!ctx)return;'
+  + '  var presup=DATA.tendencia.neurotea.presupEgresos;var real=DATA.tendencia.neurotea.egresos;'
+  + '  var realData=[];for(var i=0;i<12;i++){realData.push(real[i]||null);}'
+  + '  ntCharts.presup=new Chart(ctx,{'
+  + '    type:"line",'
+  + '    data:{labels:DATA.meses,datasets:['
+  + '      {label:"Presupuestado",data:presup,borderColor:C.primary,backgroundColor:"rgba(31,41,55,0.12)",fill:true,tension:0.1,borderWidth:2},'
+  + '      {label:"Ejecutado",data:realData,borderColor:C.sky,backgroundColor:"rgba(3,105,161,0.12)",fill:true,tension:0.4,borderWidth:3}'
+  + '    ]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,'
+  + '      plugins:{legend:{position:"top",labels:{usePointStyle:true,padding:14}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ctx.dataset.label+": Gs. "+fmtGs(ctx.raw);}}})},'
+  + '      scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return fmtM(v);}},grid:{color:"#f3f4f6"}}}}'
+  + '  });'
+  + '}'
 
-  // ═══ ASSEMBLE COMPLETE HTML ═══
+  // 8. Subcategorías Variables NT
+  + 'function drawNTSubcat(){'
+  + '  var ctx=document.getElementById("chart_nt_subcat");if(!ctx)return;'
+  + '  var subs=DATA.subcategoriasNT;'
+  + '  if(!subs||subs.length===0){ctx.parentElement.innerHTML="<p style=\\"text-align:center;padding:60px;color:#94a3b8\\">Sin gastos variables este mes</p>";return;}'
+  + '  var labels=[];var values=[];for(var i=0;i<subs.length;i++){labels.push(subs[i].nombre);values.push(subs[i].monto);}'
+  + '  ntCharts.subcat=new Chart(ctx,{'
+  + '    type:"doughnut",'
+  + '    data:{labels:labels,datasets:[{data:values,backgroundColor:DONUT2,borderWidth:3,borderColor:"#fff",hoverOffset:8}]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,cutout:"55%",'
+  + '      plugins:{legend:{position:"right",labels:{usePointStyle:true,padding:10,font:{size:10}}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ctx.label+": Gs. "+fmtGs(ctx.raw);}}})}}'
+  + '  });'
+  + '}'
+
+  // ═══ COMMON: Flujo Mensual Chart ═══
+  + 'function drawFlujoChart(canvasId){'
+  + '  var ctx=document.getElementById(canvasId);if(!ctx)return;'
+  + '  var obj=(canvasId.indexOf("fam")>=0)?famCharts:ntCharts;'
+  + '  obj.flujo=new Chart(ctx,{'
+  + '    type:"bar",'
+  + '    data:{labels:DATA.meses,datasets:['
+  + '      {label:"NT \\u2192 Familia",data:DATA.flujoMensual.ntToFam,backgroundColor:C.primary,borderRadius:4},'
+  + '      {label:"Familia \\u2192 NT",data:DATA.flujoMensual.famToNT,backgroundColor:C.teal,borderRadius:4}'
+  + '    ]},'
+  + '    options:{responsive:true,maintainAspectRatio:false,'
+  + '      plugins:{legend:{position:"top",labels:{usePointStyle:true,padding:14}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ctx.dataset.label+": Gs. "+fmtGs(ctx.raw);}}})},scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return fmtM(v);}},grid:{color:"#f3f4f6"}}}}'
+  + '  });'
+  + '}'
+
+  // --- Initialize ---
+  + 'drawFamiliaCharts();';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ASSEMBLE COMPLETE HTML
+  // ═══════════════════════════════════════════════════════════════════════════
+
   return '<!DOCTYPE html>'
   + '<html lang="es"><head>'
   + '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">'
-  + '<title>Control Financiero ' + AÑO + '</title>'
+  + '<title>Dashboard Financiero ' + AÑO + '</title>'
   + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">'
+  + '<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>'
   + '<style>' + css + '</style>'
   + '</head><body>'
-  + '<div class="header"><h1>Control Financiero ' + AÑO + '</h1>'
-  + '<div class="header-right"><span>Mes: <strong>' + datos.mes + '</strong></span><span>|</span><span>' + new Date().toLocaleDateString('es-PY') + '</span></div>'
+
+  // Header
+  + '<div class="header"><h1>\uD83D\uDCCA Dashboard Financiero ' + AÑO + '</h1>'
+  + '<div class="header-right"><span>Mes: <strong>' + datos.mes + '</strong></span><span>|</span><span>' + new Date().toLocaleDateString('es-PY') + '</span><span>|</span><span>v' + VERSION + '</span></div>'
   + '</div>'
+
+  // Tabs
   + '<div class="tabs">'
-  + '<button class="tab active" data-tab="familia" onclick="showTab(\'familia\')">FAMILIA</button>'
-  + '<button class="tab" data-tab="neurotea" onclick="showTab(\'neurotea\')">NEUROTEA</button>'
-  + '<button class="tab" data-tab="balance" onclick="showTab(\'balance\')">BALANCE CRUZADO</button>'
+  + '<button class="tab active" data-tab="familia" onclick="showTab(\'familia\')">\uD83C\uDFE0 FAMILIA</button>'
+  + '<button class="tab" data-tab="neurotea" onclick="showTab(\'neurotea\')">\uD83C\uDFE5 NEUROTEA</button>'
   + '</div>'
+
+  // Tab contents
   + '<div id="tab-familia" class="tab-content active">' + famTab + '</div>'
   + '<div id="tab-neurotea" class="tab-content">' + ntTab + '</div>'
-  + '<div id="tab-balance" class="tab-content">' + balTab + '</div>'
-  + '<div class="footer">Control Financiero ' + AÑO + ' - NeuroTEA & Familia | v' + VERSION + '</div>'
-  + '<script src="https://www.gstatic.com/charts/loader.js"><\/script>'
+
+  // Footer
+  + '<div class="footer">Dashboard Financiero ' + AÑO + ' - NeuroTEA & Familia | v' + VERSION + '</div>'
+
+  // Script
   + '<script>var DATA=' + dataJson + ';' + js + '<\/script>'
   + '</body></html>';
 }
