@@ -4,6 +4,24 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.31] - 2026-01-27
+
+### Fixed
+- **Auto-creación de préstamos/devoluciones no funcionaba (BUG CRÍTICO)**
+  - `encontrarPrimeraFilaVacia()` usaba `sheet.getLastRow()` que retornaba 500 debido al ARRAYFORMULA en columna J (VÁLIDO, v7.26)
+  - Las transacciones auto-creadas se escribían en fila 501, fuera del rango SUMPRODUCT (A4:A500)
+  - Fix: Ahora escanea columna A (FECHA) para encontrar la primera fila vacía
+- **`filtrarCargaPorMes()` operaba sobre 497 filas innecesariamente**
+  - Misma causa raíz: `getLastRow()` inflado por ARRAYFORMULA
+  - Fix: Busca última fila real en columna A
+
+### Added
+- Logging diagnóstico en `intentarAutoCreacionFamilia()` e `intentarAutoCreacionNT()`
+  - Muestra qué campos faltan cuando la auto-creación no se dispara
+  - Ver logs en: Extensiones → Apps Script → Ejecuciones
+
+---
+
 ## [7.30] - 2026-01-27
 
 ### Added

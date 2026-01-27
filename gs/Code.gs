@@ -439,10 +439,17 @@ function filtrarCargaPorMes(sheet, mesSeleccionado) {
   const ss = sheet.getParent();
   ss.toast('Aplicando filtro...', '📅 ' + (mesSeleccionado || 'TODOS'), 2);
 
-  const ultimaFila = sheet.getLastRow();
-  if (ultimaFila < 4) return; // No hay datos
+  // v7.31: Buscar última fila con datos en columna A (no getLastRow que incluye ARRAYFORMULA)
+  var fechasAll = sheet.getRange('A4:A500').getValues();
+  var ultimaFilaReal = 3; // si no hay datos
+  for (var idx = 0; idx < fechasAll.length; idx++) {
+    if (fechasAll[idx][0] && fechasAll[idx][0] !== '') {
+      ultimaFilaReal = idx + 4;
+    }
+  }
+  if (ultimaFilaReal < 4) return; // No hay datos
 
-  const numFilas = ultimaFila - 3; // filas 4 a ultimaFila
+  var numFilas = ultimaFilaReal - 3; // filas 4 a ultimaFilaReal
 
   // 1. Mostrar todas las filas de datos
   sheet.showRows(4, numFilas);
@@ -1266,11 +1273,18 @@ function actualizarMontoContraparte(linkId, hojaOrigen, nuevoMonto) {
 
 /**
  * Encuentra la primera fila vacía en una hoja (desde fila 4)
+ * v7.31: Escanea columna A (FECHA) en lugar de getLastRow()
+ * porque getLastRow() se confunde con ARRAYFORMULA en columna J (VÁLIDO)
+ * que extiende resultados hasta fila 500, retornando 500 en vez del último dato real.
  */
 function encontrarPrimeraFilaVacia(sheet) {
-  const ultimaFila = sheet.getLastRow();
-  if (ultimaFila < 4) return 4;
-  return ultimaFila + 1;
+  var fechas = sheet.getRange('A4:A500').getValues();
+  for (var i = 0; i < fechas.length; i++) {
+    if (!fechas[i][0] || fechas[i][0] === '') {
+      return i + 4;
+    }
+  }
+  return 504; // Si todas las 497 filas tienen datos
 }
 
 /**
@@ -1368,12 +1382,15 @@ function intentarAutoCreacionFamilia(sheet, row) {
   const linkId = String(datos[8] || '').trim();
 
   // Si ya tiene LINK_ID, no hacer nada (ya fue auto-creada)
-  if (linkId && linkId.length === 6) return;
+  if (linkId && linkId.length === 6) {
+    console.log('INTENTAR-FAM: Ya tiene LINK_ID=' + linkId + ', saliendo');
+    return;
+  }
 
   // Verificar que sea un préstamo/devolución
   const esPrestamoFamNT = subcategoria === 'Préstamo Familia → NT';
   const esDevolucionFamNT = subcategoria === 'Devolución Familia → NT';
-  if (!esPrestamoFamNT && !esDevolucionFamNT) return;
+  if (!esPrestamoFamNT && !esDevolucionFamNT) return; // Silencioso - no es préstamo/devolución
 
   // Verificar TODOS los campos requeridos
   const fechaValida = fecha && (fecha instanceof Date || (typeof fecha === 'string' && fecha.includes('/')));
@@ -1382,12 +1399,19 @@ function intentarAutoCreacionFamilia(sheet, row) {
   const montoValido = monto >= 10000;
   const cuentaValida = cuenta && cuenta !== '-' && cuenta !== '';
 
-  // Si falta algún campo, no hacer nada (esperar a que complete)
+  // v7.31: Log diagnóstico para detectar campos faltantes
   if (!fechaValida || !tipoValido || !categoriaValida || !montoValido || !cuentaValida) {
+    console.log('INTENTAR-FAM fila ' + row + ': Campos faltantes → fecha=' + fechaValida +
+      ' tipo=' + tipoValido + '(' + tipo + ')' +
+      ' cat=' + categoriaValida + '(' + categoria + ')' +
+      ' subcat=' + subcategoria +
+      ' monto=' + montoValido + '(' + monto + ')' +
+      ' cuenta=' + cuentaValida + '(' + cuenta + ')');
     return;
   }
 
   // ¡Todos los campos completos! Disparar auto-creación
+  console.log('INTENTAR-FAM fila ' + row + ': ¡TODOS los campos OK! Disparando auto-creación');
   autoCrearTransaccionCruzadaFamilia(sheet, row);
 }
 
@@ -1407,12 +1431,15 @@ function intentarAutoCreacionNT(sheet, row) {
   const linkId = String(datos[8] || '').trim();
 
   // Si ya tiene LINK_ID, no hacer nada (ya fue auto-creada)
-  if (linkId && linkId.length === 6) return;
+  if (linkId && linkId.length === 6) {
+    console.log('INTENTAR-NT: Ya tiene LINK_ID=' + linkId + ', saliendo');
+    return;
+  }
 
   // Verificar que sea un préstamo/devolución
   const esPrestamoNTFam = subcategoria === 'Préstamo NT → Familia';
   const esDevolucionNTFam = subcategoria === 'Devolución NT → Familia';
-  if (!esPrestamoNTFam && !esDevolucionNTFam) return;
+  if (!esPrestamoNTFam && !esDevolucionNTFam) return; // Silencioso - no es préstamo/devolución
 
   // Verificar TODOS los campos requeridos
   const fechaValida = fecha && (fecha instanceof Date || (typeof fecha === 'string' && fecha.includes('/')));
@@ -1421,12 +1448,19 @@ function intentarAutoCreacionNT(sheet, row) {
   const montoValido = monto >= 10000;
   const cuentaValida = cuenta && cuenta !== '-' && cuenta !== '';
 
-  // Si falta algún campo, no hacer nada (esperar a que complete)
+  // v7.31: Log diagnóstico para detectar campos faltantes
   if (!fechaValida || !tipoValido || !categoriaValida || !montoValido || !cuentaValida) {
+    console.log('INTENTAR-NT fila ' + row + ': Campos faltantes → fecha=' + fechaValida +
+      ' tipo=' + tipoValido + '(' + tipo + ')' +
+      ' cat=' + categoriaValida + '(' + categoria + ')' +
+      ' subcat=' + subcategoria +
+      ' monto=' + montoValido + '(' + monto + ')' +
+      ' cuenta=' + cuentaValida + '(' + cuenta + ')');
     return;
   }
 
   // ¡Todos los campos completos! Disparar auto-creación
+  console.log('INTENTAR-NT fila ' + row + ': ¡TODOS los campos OK! Disparando auto-creación');
   autoCrearTransaccionCruzadaNT(sheet, row);
 }
 

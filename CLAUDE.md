@@ -1458,6 +1458,21 @@ function estaEnModoAutoCreacion() {
 
 ---
 
+## Bug Fixes [2026-01-27] - v7.31 (CRÍTICO)
+
+### Auto-creación de préstamos/devoluciones no funcionaba
+- **Problema**: `encontrarPrimeraFilaVacia()` usaba `sheet.getLastRow()` que retornaba 500 (en vez del último dato real) porque el ARRAYFORMULA en columna J (VÁLIDO, v7.26) extiende resultados a J4:J500
+- **Impacto**: Las transacciones auto-creadas se escribían en fila 501, FUERA del rango SUMPRODUCT (A4:A500). La transacción existía pero NO se contaba en cálculos ni TABLERO
+- **Solución**: `encontrarPrimeraFilaVacia()` ahora escanea columna A (FECHA) para encontrar la primera fila vacía en lugar de usar `getLastRow()`
+- **También afectado**: `filtrarCargaPorMes()` usaba `getLastRow()` para determinar el rango de filas a filtrar/ordenar
+- **Archivos modificados**: Code.gs (encontrarPrimeraFilaVacia, filtrarCargaPorMes)
+
+### Logging diagnóstico agregado
+- `intentarAutoCreacionFamilia()` e `intentarAutoCreacionNT()` ahora logean qué campos faltan cuando la auto-creación no se dispara
+- Ver logs en: Extensiones → Apps Script → Ejecuciones
+
+---
+
 ## LECCIONES APRENDIDAS (NO IGNORAR)
 
 > Ver también: `.claude/rules/errores-historicos.md` para lista completa de bugs resueltos.
@@ -1488,6 +1503,18 @@ function estaEnModoAutoCreacion() {
 - **SIEMPRE** usar `IFERROR(MONTH(rango);0)` e `IFERROR(YEAR(rango);0)` DENTRO del SUMPRODUCT para proteger contra fechas texto
 - **NUNCA** calcular DISPONIBLE independientemente → referenciar TOTAL DISPONIBLE
 - Distribución ganancia NT: simple `=SI(H>0;H/3;0)` - no complicar
+
+### getLastRow() y ARRAYFORMULA (CRÍTICO v7.31)
+- **NUNCA** usar `sheet.getLastRow()` en hojas con ARRAYFORMULA → devuelve fila 500 (final del ARRAYFORMULA)
+- **SIEMPRE** escanear columna A (FECHA) para encontrar la última fila con datos reales
+- Afecta: `encontrarPrimeraFilaVacia()`, `filtrarCargaPorMes()`, cualquier función que busque filas vacías
+- Patrón correcto:
+  ```javascript
+  var fechas = sheet.getRange('A4:A500').getValues();
+  for (var i = 0; i < fechas.length; i++) {
+    if (!fechas[i][0] || fechas[i][0] === '') return i + 4;
+  }
+  ```
 
 ### Rangos en MOVIMIENTO
 - FAMILIA: filas **9-116** (NO 9-70)
@@ -1562,4 +1589,4 @@ function estaEnModoAutoCreacion() {
 ---
 
 *Última actualización: 2026-01-27*
-*Versión: 7.30 - Dashboard v3.0: Chart.js + dashboards separados FAMILIA/NEUROTEA*
+*Versión: 7.31 - Fix: encontrarPrimeraFilaVacia con ARRAYFORMULA + Dashboard v3.0*
