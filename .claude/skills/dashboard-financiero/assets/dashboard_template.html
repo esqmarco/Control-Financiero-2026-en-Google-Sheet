@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Financiero 2026</title>
+  <style>
+    :root {
+      --color-header: #1f2937;
+      --color-bg: #f9fafb;
+      --color-bg-alt: #ffffff;
+      --color-subtotal: #e5e7eb;
+      --color-border: #d1d5db;
+      --color-ok: #22c55e;
+      --color-alert: #dc2626;
+      --color-warn: #f59e0b;
+      --color-ingreso: #3b82f6;
+      --color-egreso: #ef4444;
+      --color-ganancia: #22c55e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-header);
+      padding: 20px;
+    }
+
+    .dashboard-header {
+      text-align: center;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .dashboard-header h1 {
+      font-size: 1.5rem;
+      color: var(--color-header);
+    }
+
+    .dashboard-header .mes-selector {
+      margin-top: 10px;
+      font-size: 1.1rem;
+      padding: 6px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    /* KPI Card */
+    .kpi-card {
+      background: var(--color-bg-alt);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .kpi-card .label {
+      font-size: 0.85rem;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .kpi-card .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .kpi-card .value.ingreso { color: var(--color-ingreso); }
+    .kpi-card .value.egreso { color: var(--color-egreso); }
+    .kpi-card .value.ok { color: var(--color-ok); }
+    .kpi-card .value.alert { color: var(--color-alert); }
+    .kpi-card .value.warn { color: var(--color-warn); }
+
+    /* Progress Bar */
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--color-subtotal);
+      border-radius: 4px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar .fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-bar .fill.ingreso { background: var(--color-ingreso); }
+    .progress-bar .fill.egreso { background: var(--color-egreso); }
+
+    /* Section */
+    .section {
+      background: var(--color-bg-alt);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section h2 {
+      font-size: 1rem;
+      color: var(--color-header);
+      border-bottom: 2px solid var(--color-subtotal);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .data-table th {
+      background: var(--color-header);
+      color: white;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .data-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .data-table tr:nth-child(even) {
+      background: var(--color-bg);
+    }
+
+    .data-table .monto {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Semaforo */
+    .semaforo {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .semaforo.verde { background: var(--color-ok); }
+    .semaforo.amarillo { background: var(--color-warn); }
+    .semaforo.rojo { background: var(--color-alert); }
+
+    /* Liquidez */
+    .liquidez-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--color-subtotal);
+    }
+
+    .liquidez-item:last-child { border-bottom: none; }
+
+    .liquidez-item .tag {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    .tag.atrasado { background: var(--color-alert); }
+    .tag.esta-semana { background: var(--color-warn); }
+    .tag.prox-semana { background: var(--color-ok); }
+    .tag.semana3 { background: var(--color-ingreso); }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6b7280;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      body { padding: 10px; }
+      .grid { grid-template-columns: 1fr; }
+      .kpi-card .value { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-header">
+    <h1>Control Financiero 2026</h1>
+    <select class="mes-selector" id="mesSel">
+      <option value="1">Enero</option>
+      <option value="2">Febrero</option>
+      <option value="3">Marzo</option>
+      <option value="4">Abril</option>
+      <option value="5">Mayo</option>
+      <option value="6">Junio</option>
+      <option value="7">Julio</option>
+      <option value="8">Agosto</option>
+      <option value="9">Septiembre</option>
+      <option value="10">Octubre</option>
+      <option value="11">Noviembre</option>
+      <option value="12">Diciembre</option>
+    </select>
+  </div>
+
+  <!-- FAMILIA -->
+  <h2 style="margin-bottom:12px;">FAMILIA</h2>
+  <div class="grid">
+    <div class="kpi-card">
+      <div class="label">Ingresos del Mes</div>
+      <div class="value ingreso" id="fam-ingresos">Gs. 0</div>
+      <div class="progress-bar"><div class="fill ingreso" id="fam-ing-bar" style="width:0%"></div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Egresos Pagados</div>
+      <div class="value egreso" id="fam-egresos">Gs. 0</div>
+      <div class="progress-bar"><div class="fill egreso" id="fam-egr-bar" style="width:0%"></div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Disponible</div>
+      <div class="value ok" id="fam-disponible">Gs. 0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Ahorro</div>
+      <div class="value ok" id="fam-ahorro">Gs. 0</div>
+    </div>
+  </div>
+
+  <!-- NEUROTEA -->
+  <h2 style="margin-bottom:12px;">NEUROTEA</h2>
+  <div class="grid">
+    <div class="kpi-card">
+      <div class="label">Ingresos del Mes</div>
+      <div class="value ingreso" id="nt-ingresos">Gs. 0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Egresos Pagados</div>
+      <div class="value egreso" id="nt-egresos">Gs. 0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Ganancia Real</div>
+      <div class="value" id="nt-ganancia">Gs. 0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">% Ganancia</div>
+      <div class="value" id="nt-pct-ganancia">0%</div>
+      <span class="semaforo" id="nt-semaforo"></span>
+    </div>
+  </div>
+
+  <!-- LIQUIDEZ -->
+  <div class="section">
+    <h2>Liquidez</h2>
+    <div class="liquidez-item">
+      <span class="tag atrasado">ATRASADOS</span>
+      <span id="liq-atrasados">Gs. 0</span>
+    </div>
+    <div class="liquidez-item">
+      <span class="tag esta-semana">ESTA SEMANA</span>
+      <span id="liq-esta-semana">Gs. 0</span>
+    </div>
+    <div class="liquidez-item">
+      <span class="tag prox-semana">PROX. SEMANA</span>
+      <span id="liq-prox-semana">Gs. 0</span>
+    </div>
+    <div class="liquidez-item">
+      <span class="tag semana3">SEMANA 3</span>
+      <span id="liq-semana3">Gs. 0</span>
+    </div>
+  </div>
+
+  <!-- CUENTAS FAMILIA -->
+  <div class="section">
+    <h2>Saldos por Cuenta - FAMILIA</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Cuenta</th>
+          <th class="monto">Esperado</th>
+          <th class="monto">Saldo Banco</th>
+          <th class="monto">Diferencia</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-cuentas-fam">
+        <tr><td colspan="4" class="loading">Cargando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CUENTAS NEUROTEA -->
+  <div class="section">
+    <h2>Saldos por Cuenta - NEUROTEA</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Cuenta</th>
+          <th class="monto">Esperado</th>
+          <th class="monto">Saldo Banco</th>
+          <th class="monto">Diferencia</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-cuentas-nt">
+        <tr><td colspan="4" class="loading">Cargando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BALANCE CRUZADO -->
+  <div class="section">
+    <h2>Balance Cruzado NT - FAMILIA</h2>
+    <div id="balance-cruzado" class="loading">Cargando...</div>
+  </div>
+
+  <script>
+    // Formato Guaranies paraguayos
+    function formatGs(num) {
+      if (typeof num !== 'number' || isNaN(num)) return 'Gs. 0';
+      var s = Math.round(Math.abs(num)).toString();
+      var result = '';
+      for (var i = s.length - 1, c = 0; i >= 0; i--, c++) {
+        if (c > 0 && c % 3 === 0) result = '.' + result;
+        result = s[i] + result;
+      }
+      return (num < 0 ? '-' : '') + 'Gs. ' + result;
+    }
+
+    // Placeholder: cargar datos via google.script.run
+    // google.script.run.withSuccessHandler(renderDashboard).getDashboardData(mesSeleccionado);
+  </script>
+</body>
+</html>
