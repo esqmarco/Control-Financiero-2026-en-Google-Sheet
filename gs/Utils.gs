@@ -700,3 +700,446 @@ function analizarFechaTexto(texto) {
 
   return { tipo: 'error', problema: 'Formato no reconocido' };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNCIÓN DE DATOS DE PRUEBA
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Carga datos de prueba realistas para verificar todo el sistema
+ * Genera datos para los 12 meses del año 2026
+ *
+ * DATOS GENERADOS:
+ * - CARGA_FAMILIA: Ingresos, egresos variables, ahorro
+ * - CARGA_NT: Ingresos y egresos variables
+ * - GASTOS_FIJOS: Gastos fijos mensuales de ambas entidades
+ * - CONFIG: Saldos iniciales por cuenta
+ */
+function cargarDatosPrueba() {
+  const ui = SpreadsheetApp.getUi();
+  const respuesta = ui.alert(
+    '⚠️ CARGAR DATOS DE PRUEBA',
+    '¿Desea cargar datos ficticios para probar el sistema?\n\n' +
+    'Esto agregará datos de prueba en:\n' +
+    '• CARGA_FAMILIA (ingresos, egresos, ahorro)\n' +
+    '• CARGA_NT (ingresos, egresos)\n' +
+    '• GASTOS_FIJOS (gastos mensuales)\n' +
+    '• CONFIG (saldos iniciales)\n\n' +
+    '⚠️ Se recomienda ejecutar sobre un sistema recién reinicializado.',
+    ui.ButtonSet.YES_NO
+  );
+
+  if (respuesta !== ui.Button.YES) {
+    ui.alert('Operación cancelada.');
+    return;
+  }
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
+  const cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
+  const gastosFijos = ss.getSheetByName(NOMBRES_HOJAS.GASTOS_FIJOS);
+  const config = ss.getSheetByName(NOMBRES_HOJAS.CONFIG);
+
+  if (!cargaFam || !cargaNT || !gastosFijos || !config) {
+    ui.alert('Error', 'Faltan hojas del sistema. Ejecute "Reinicializar Sistema" primero.', ui.ButtonSet.OK);
+    return;
+  }
+
+  SpreadsheetApp.getActiveSpreadsheet().toast('Cargando datos de prueba...', '⏳', 60);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 1. CARGAR DATOS EN CARGA_FAMILIA
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  var filaFam = 4; // Primera fila de datos
+  var datosFamilia = [];
+
+  // Para cada mes del año
+  for (var mes = 1; mes <= 12; mes++) {
+    var fechaBase = new Date(2026, mes - 1, 5); // Día 5 de cada mes
+
+    // --- INGRESOS ---
+    // Salario Marco (día 5)
+    datosFamilia.push([
+      new Date(2026, mes - 1, 5),
+      'Salario Marco',
+      '-',
+      '-',
+      'Salario mensual Itaipu',
+      15000000,
+      'ITAU Marco',
+      'Dato de prueba'
+    ]);
+
+    // Salario Marco NeuroTEA (día 10)
+    datosFamilia.push([
+      new Date(2026, mes - 1, 10),
+      'Salario Marco NeuroTEA',
+      '-',
+      '-',
+      'Honorarios clínica',
+      3000000,
+      'ITAU Marco',
+      'Dato de prueba'
+    ]);
+
+    // Tarjeta Gourmed (día 1)
+    datosFamilia.push([
+      new Date(2026, mes - 1, 1),
+      'Tarjeta Gourmed',
+      '-',
+      '-',
+      'Recarga mensual',
+      500000,
+      'Gourmed',
+      'Dato de prueba'
+    ]);
+
+    // --- EGRESOS VARIABLES ---
+    // Supermercado (varios días)
+    datosFamilia.push([
+      new Date(2026, mes - 1, 8),
+      'Egreso Familiar',
+      'VARIABLES',
+      'Supermercado',
+      'Compra semanal 1',
+      500000,
+      'Tarjeta ITAU Clara',
+      'Dato de prueba'
+    ]);
+    datosFamilia.push([
+      new Date(2026, mes - 1, 15),
+      'Egreso Familiar',
+      'VARIABLES',
+      'Supermercado',
+      'Compra semanal 2',
+      500000,
+      'Tarjeta ITAU Clara',
+      'Dato de prueba'
+    ]);
+    datosFamilia.push([
+      new Date(2026, mes - 1, 22),
+      'Egreso Familiar',
+      'VARIABLES',
+      'Supermercado',
+      'Compra semanal 3',
+      500000,
+      'Tarjeta ITAU Clara',
+      'Dato de prueba'
+    ]);
+    datosFamilia.push([
+      new Date(2026, mes - 1, 28),
+      'Egreso Familiar',
+      'VARIABLES',
+      'Supermercado',
+      'Compra semanal 4',
+      500000,
+      'Tarjeta ITAU Clara',
+      'Dato de prueba'
+    ]);
+
+    // Combustible (quincenal)
+    datosFamilia.push([
+      new Date(2026, mes - 1, 7),
+      'Egreso Familiar',
+      'VARIABLES',
+      'Combustible',
+      'Nafta camioneta',
+      400000,
+      'Tarjeta ITAU Marco',
+      'Dato de prueba'
+    ]);
+    datosFamilia.push([
+      new Date(2026, mes - 1, 21),
+      'Egreso Familiar',
+      'VARIABLES',
+      'Combustible',
+      'Nafta auto',
+      400000,
+      'Tarjeta ITAU Clara',
+      'Dato de prueba'
+    ]);
+
+    // Recreación (fines de semana)
+    datosFamilia.push([
+      new Date(2026, mes - 1, 12),
+      'Egreso Familiar',
+      'VARIABLES',
+      'Recreación (Pizza, hamburguesa, helados, etc)',
+      'Salida familiar',
+      250000,
+      'Efectivo',
+      'Dato de prueba'
+    ]);
+    datosFamilia.push([
+      new Date(2026, mes - 1, 26),
+      'Egreso Familiar',
+      'VARIABLES',
+      'Recreación (Pizza, hamburguesa, helados, etc)',
+      'Cine y helados',
+      250000,
+      'Tarjeta ITAU Clara',
+      'Dato de prueba'
+    ]);
+
+    // Salud (ocasional)
+    if (mes % 2 === 0) { // Meses pares
+      datosFamilia.push([
+        new Date(2026, mes - 1, 18),
+        'Egreso Familiar',
+        'VARIABLES',
+        'Salud y Medicamentos',
+        'Farmacia',
+        300000,
+        'Efectivo',
+        'Dato de prueba'
+      ]);
+    }
+
+    // --- AHORRO ---
+    // Ahorro Clara (día 6)
+    datosFamilia.push([
+      new Date(2026, mes - 1, 6),
+      'Ahorro',
+      'Ahorro Clara',
+      '-',
+      'Ahorro mensual',
+      1000000,
+      'UENO Clara',
+      'Dato de prueba'
+    ]);
+
+    // Ahorro Marco (día 6)
+    datosFamilia.push([
+      new Date(2026, mes - 1, 6),
+      'Ahorro',
+      'Ahorro Marco',
+      '-',
+      'Ahorro mensual',
+      1000000,
+      'Coop. Univ. Marco',
+      'Dato de prueba'
+    ]);
+
+    // Fondo Emergencia (cada 3 meses)
+    if (mes % 3 === 0) {
+      datosFamilia.push([
+        new Date(2026, mes - 1, 15),
+        'Ahorro',
+        'Fondo de Emergencia',
+        '-',
+        'Aporte trimestral',
+        500000,
+        'Coop. Univ. Marco',
+        'Dato de prueba'
+      ]);
+    }
+  }
+
+  // Escribir datos FAMILIA
+  if (datosFamilia.length > 0) {
+    cargaFam.getRange(filaFam, 1, datosFamilia.length, 8).setValues(datosFamilia);
+    // Aplicar formato fecha
+    cargaFam.getRange(filaFam, 1, datosFamilia.length, 1).setNumberFormat('dd/mm/yyyy');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 2. CARGAR DATOS EN CARGA_NT
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  var filaNT = 4;
+  var datosNT = [];
+
+  for (var mesNT = 1; mesNT <= 12; mesNT++) {
+    // --- INGRESOS NT ---
+    // Aporte Terapeutas (día 5)
+    datosNT.push([
+      new Date(2026, mesNT - 1, 5),
+      'Aporte NeuroTEA Terapeutas',
+      '-',
+      '-',
+      'Cobros del mes',
+      25000000,
+      'Atlas NeuroTEA',
+      'Dato de prueba'
+    ]);
+
+    // Cursos (día 15, no todos los meses)
+    if (mesNT <= 10) { // Cursos de enero a octubre
+      datosNT.push([
+        new Date(2026, mesNT - 1, 15),
+        'Cursos NeuroTEA',
+        '-',
+        '-',
+        'Curso mensual',
+        5000000,
+        'Atlas NeuroTEA',
+        'Dato de prueba'
+      ]);
+    }
+
+    // --- EGRESOS VARIABLES NT ---
+    // Insumos y Papelería
+    datosNT.push([
+      new Date(2026, mesNT - 1, 10),
+      'Egreso NT',
+      'VARIABLES',
+      'Insumos y Papelería',
+      'Material didáctico',
+      500000,
+      'Atlas NeuroTEA',
+      'Dato de prueba'
+    ]);
+
+    // Reparaciones (ocasional)
+    if (mesNT % 3 === 0) {
+      datosNT.push([
+        new Date(2026, mesNT - 1, 20),
+        'Egreso NT',
+        'VARIABLES',
+        'Reparaciones Clínica',
+        'Mantenimiento',
+        300000,
+        'Atlas NeuroTEA',
+        'Dato de prueba'
+      ]);
+    }
+
+    // Gastos Varios
+    datosNT.push([
+      new Date(2026, mesNT - 1, 25),
+      'Egreso NT',
+      'VARIABLES',
+      'Insumos y Papelería',
+      'Varios oficina',
+      200000,
+      'UENO Marco',
+      'Dato de prueba'
+    ]);
+  }
+
+  // Escribir datos NT
+  if (datosNT.length > 0) {
+    cargaNT.getRange(filaNT, 1, datosNT.length, 8).setValues(datosNT);
+    cargaNT.getRange(filaNT, 1, datosNT.length, 1).setNumberFormat('dd/mm/yyyy');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 3. CARGAR DATOS EN GASTOS_FIJOS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Estructura GASTOS_FIJOS: CONCEPTO, ENTIDAD, CATEGORÍA, FRECUENCIA, DÍA, CUENTA, ENE-DIC (G-R)
+  var filaGF = 4;
+  var datosGF = [];
+
+  // --- GASTOS FIJOS FAMILIA ---
+  // Alquiler Casa (Fijo/Mensual)
+  var alquilerCasa = ['Alquiler Casa', 'FAMILIA', 'GASTOS FIJOS', 'Fijo/Mensual', 1, 'ITAU Marco'];
+  for (var m = 0; m < 12; m++) alquilerCasa.push(3000000);
+  datosGF.push(alquilerCasa);
+
+  // ANDE Casa (Variable/Mensual)
+  var andeCasa = ['ANDE Casa', 'FAMILIA', 'GASTOS FIJOS', 'Variable/Mensual', 15, 'ITAU Clara'];
+  var montosAnde = [450000, 480000, 520000, 550000, 600000, 650000, 700000, 680000, 620000, 550000, 500000, 480000];
+  for (var m = 0; m < 12; m++) andeCasa.push(montosAnde[m]);
+  datosGF.push(andeCasa);
+
+  // ESSAP Casa
+  var essapCasa = ['ESSAP Casa', 'FAMILIA', 'GASTOS FIJOS', 'Variable/Mensual', 20, 'ITAU Clara'];
+  for (var m = 0; m < 12; m++) essapCasa.push(150000 + Math.floor(Math.random() * 50000));
+  datosGF.push(essapCasa);
+
+  // Internet Casa (Fijo/Mensual)
+  var internetCasa = ['Internet Casa', 'FAMILIA', 'SUSCRIPCIONES', 'Fijo/Mensual', 10, 'Tarjeta ITAU Clara'];
+  for (var m = 0; m < 12; m++) internetCasa.push(250000);
+  datosGF.push(internetCasa);
+
+  // Seguro Auto (Fijo/Mensual - cuota)
+  var seguroAuto = ['Seguro Auto', 'FAMILIA', 'CUOTAS Y PRÉSTAMOS', 'Fijo/Mensual', 5, 'ITAU Marco'];
+  for (var m = 0; m < 12; m++) seguroAuto.push(350000);
+  datosGF.push(seguroAuto);
+
+  // Colegio (Fijo/Mensual - 10 meses)
+  var colegio = ['Cuota Colegio', 'FAMILIA', 'CUOTAS Y PRÉSTAMOS', 'Fijo/Mensual', 5, 'ITAU Clara'];
+  for (var m = 0; m < 12; m++) colegio.push(m >= 2 && m <= 11 ? 1500000 : 0); // Mar-Dic
+  datosGF.push(colegio);
+
+  // --- GASTOS FIJOS NEUROTEA ---
+  // Alquiler NT (Fijo/Mensual)
+  var alquilerNT = ['Alquiler Clínica', 'NEUROTEA', 'CLÍNICA', 'Fijo/Mensual', 1, 'Atlas NeuroTEA'];
+  for (var m = 0; m < 12; m++) alquilerNT.push(4000000);
+  datosGF.push(alquilerNT);
+
+  // Sueldos Terapeutas (Fijo/Mensual)
+  var sueldosNT = ['Sueldos Terapeutas', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Mensual', 30, 'Atlas NeuroTEA'];
+  for (var m = 0; m < 12; m++) sueldosNT.push(8000000);
+  datosGF.push(sueldosNT);
+
+  // Internet Clínica (Fijo/Mensual)
+  var internetNT = ['Internet Clínica', 'NEUROTEA', 'TELEFONÍA E INTERNET', 'Fijo/Mensual', 10, 'Atlas NeuroTEA'];
+  for (var m = 0; m < 12; m++) internetNT.push(350000);
+  datosGF.push(internetNT);
+
+  // ANDE Clínica (Variable/Mensual)
+  var andeNT = ['ANDE Clínica', 'NEUROTEA', 'CLÍNICA', 'Variable/Mensual', 15, 'Atlas NeuroTEA'];
+  var montosAndeNT = [800000, 850000, 900000, 950000, 1000000, 1100000, 1200000, 1150000, 1000000, 900000, 850000, 800000];
+  for (var m = 0; m < 12; m++) andeNT.push(montosAndeNT[m]);
+  datosGF.push(andeNT);
+
+  // IPS (Fijo/Mensual)
+  var ipsNT = ['IPS', 'NEUROTEA', 'OBLIGACIONES LEGALES', 'Fijo/Mensual', 15, 'Atlas NeuroTEA'];
+  for (var m = 0; m < 12; m++) ipsNT.push(1200000);
+  datosGF.push(ipsNT);
+
+  // Escribir datos GASTOS_FIJOS
+  if (datosGF.length > 0) {
+    gastosFijos.getRange(filaGF, 1, datosGF.length, 18).setValues(datosGF);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 4. CONFIGURAR SALDOS INICIALES EN CONFIG
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Saldos iniciales FAMILIA (filas 68-77, columnas B-M = meses)
+  // Solo poner saldo inicial para Enero (columna B = 2)
+  config.getRange('B68').setValue(5000000);  // ITAU Marco - Enero
+  config.getRange('B69').setValue(2000000);  // Coop. Univ. Marco - Enero
+  config.getRange('B70').setValue(3000000);  // ITAU Clara - Enero
+  config.getRange('B71').setValue(1000000);  // UENO Clara - Enero
+  config.getRange('B77').setValue(500000);   // Efectivo - Enero
+
+  // Saldos iniciales NEUROTEA (filas 82-83, columnas B-M = meses)
+  config.getRange('B82').setValue(10000000); // Atlas NeuroTEA - Enero
+  config.getRange('B83').setValue(500000);   // UENO Marco - Enero
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 5. RESUMEN
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  SpreadsheetApp.getActiveSpreadsheet().toast('¡Datos de prueba cargados!', '✓', 5);
+
+  ui.alert(
+    '✓ DATOS DE PRUEBA CARGADOS',
+    'Se han cargado datos ficticios para los 12 meses de 2026:\n\n' +
+    '📊 CARGA_FAMILIA:\n' +
+    '  • ' + datosFamilia.length + ' transacciones\n' +
+    '  • Ingresos: ~18.5M/mes\n' +
+    '  • Egresos variables: ~4.3M/mes\n' +
+    '  • Ahorro: ~2M/mes\n\n' +
+    '📊 CARGA_NT:\n' +
+    '  • ' + datosNT.length + ' transacciones\n' +
+    '  • Ingresos: ~30M/mes\n' +
+    '  • Egresos variables: ~0.7M/mes\n\n' +
+    '📊 GASTOS_FIJOS:\n' +
+    '  • ' + datosGF.length + ' conceptos\n' +
+    '  • FAMILIA: ~5.7M/mes en fijos\n' +
+    '  • NEUROTEA: ~15.5M/mes en fijos\n\n' +
+    '📊 CONFIG:\n' +
+    '  • Saldos iniciales configurados para Enero\n\n' +
+    '💡 Ahora puede:\n' +
+    '  1. Ir a MOVIMIENTO y seleccionar un mes\n' +
+    '  2. Ver TABLERO para los KPIs\n' +
+    '  3. Abrir Dashboard Web para los gráficos',
+    ui.ButtonSet.OK
+  );
+}
