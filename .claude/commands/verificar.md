@@ -36,11 +36,11 @@ GASTOS FIJOS, CUOTAS Y PRÉSTAMOS, OBLIGACIONES LEGALES, SUSCRIPCIONES, VARIABLE
 ### Categorías Egreso NT (6) - para referencia
 CLÍNICA, SUELDOS Y HONORARIOS, TELEFONÍA E INTERNET, OBLIGACIONES LEGALES, EVENTOS, VARIABLES
 
-### Subcategorías Variables FAMILIA (16 items - v7.7)
-Incluye "Alimentación", "Gastos Varios", "Devolución Familia → NT", "Préstamo Familia → NT" y 3 reservas
+### Subcategorías Variables FAMILIA (19 items - v7.25)
+Incluye "Alimentación", "Gastos Varios", "Devolución Familia → NT", "Préstamo Familia → NT", "Gastos del Colegio" y 5 reservas
 
-### Subcategorías Variables NT (12 items - v7.7)
-Incluye "Horas Extras Aracely", "Horas Extras Fatima", "Préstamo NT → Familia", "Devolución NT → Familia" y 3 reservas
+### Subcategorías Variables NT (15 items - v7.25)
+Incluye "Horas Extras Aracely", "Horas Extras Fatima", "Préstamo NT → Familia", "Devolución NT → Familia", "Muebles y equipos" y 5 reservas
 
 ### Eventos NT (18 - v7.7)
 6 definidos + 12 reservas (van en GASTOS_FIJOS, NO en CARGA_NT)
@@ -77,7 +77,22 @@ Ahorro Clara, Ahorro Marco, Fondo de Emergencia
 | K | 🚦 |
 | L | CATEGORÍA (oculta) |
 | M | ENTIDAD (oculta) |
-| N | MES_NUM (oculta) |
+| N | CUENTA (oculta, v7.8) |
+| N3 | MES_NUM (celda especial) |
+
+### CARGA (10 columnas - v7.26)
+| Col | Contenido |
+|-----|-----------|
+| A | FECHA |
+| B | TIPO |
+| C | CATEGORÍA |
+| D | SUBCATEGORÍA |
+| E | DESCRIPCIÓN |
+| F | MONTO |
+| G | CUENTA |
+| H | NOTAS |
+| I | LINK_ID (v7.12) |
+| J | VÁLIDO (v7.26) |
 
 ## 4. Verificar Rangos de Filas en MOVIMIENTO
 
@@ -85,21 +100,34 @@ Ahorro Clara, Ahorro Marco, Fondo de Emergencia
 
 | Entidad | Rango Correcto | Verificar |
 |---------|----------------|-----------|
-| FAMILIA | 9-113 | Fórmulas para indicadores FAMILIA |
-| NEUROTEA | 119-200 | Fórmulas para indicadores NEUROTEA |
+| FAMILIA | 9-116 | Fórmulas para indicadores FAMILIA |
+| NEUROTEA | 122-206 | Fórmulas para indicadores NEUROTEA |
 
 ⚠️ **ERROR COMÚN**: Las fórmulas de NEUROTEA NO deben usar rango 73-150 (eso incluye FAMILIA)
 
-## 4b. Verificar Rangos de Saldos por Cuenta en CONFIG (v7.4)
+## 4b. Verificar Rangos de Saldos por Cuenta en CONFIG (v7.28)
 
 **CRÍTICO - Las fórmulas "Esperado" en Tablero.gs deben referenciar las filas correctas:**
 
 | Entidad | Filas Cuentas | Rango Datos |
 |---------|---------------|-------------|
-| FAMILIA | 65-74 (10 cuentas) | CONFIG!$B$65:$M$74 |
-| NEUROTEA | 79-80 (2 cuentas) | CONFIG!$B$79:$M$80 |
+| FAMILIA | 68-77 (10 cuentas) | CONFIG!$B$68:$M$77 |
+| NEUROTEA | 82-83 (2 cuentas) | CONFIG!$B$82:$M$83 |
 
 ⚠️ **ERROR COMÚN**: Usar filas incorrectas causa que el saldo inicial sea 0
+
+## 4c. Verificar Fórmulas SUMPRODUCT con TRIM (v7.35)
+
+**CRÍTICO - Todas las fórmulas que comparan strings de datos de usuario deben usar TRIM:**
+
+```
+CORRECTO:   (TRIM(CARGA!D4:D500)=TRIM(A102))
+INCORRECTO: (CARGA!D4:D500=A102)
+```
+
+Verificar en:
+- Sheets.gs: INGRESOS REAL, VARIABLES REAL, AHORRO REAL
+- Tablero.gs: Esperado FAM/NT, Ahorro, Fondo, Balance cruzado
 
 ## 5. Verificar Lógica de Negocio
 

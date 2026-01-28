@@ -4,6 +4,47 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.35] - 2026-01-28
+
+### Fixed
+- **BUG CRÍTICO: SUMPRODUCT no reconocía subcategorías con espacios invisibles**
+  - Las fórmulas hacían comparación EXACTA de strings sin tolerancia a espacios
+  - Si el usuario pegaba datos con espacios extra, la comparación fallaba silenciosamente
+  - MOVIMIENTO mostraba REAL=0 aunque VÁLIDO mostraba "✓"
+  - Fix: Agregar `TRIM()` a todas las comparaciones de strings en fórmulas SUMPRODUCT
+
+### Technical
+- Sheets.gs: 3 fórmulas SUMPRODUCT con TRIM (INGRESOS, VARIABLES, AHORRO)
+- Tablero.gs: Fórmulas Esperado FAM/NT, Ahorro, Fondo, Balance cruzado con TRIM
+- Patrón: `(TRIM(CARGA!D4:D500)=TRIM(A102))` en lugar de `(CARGA!D4:D500=A102)`
+
+---
+
+## [7.34] - 2026-01-28
+
+### Fixed
+- **VÁLIDO mostraba "⚠ Subcat" para subcategorías válidas**
+  - COUNTIF contra CONFIG fallaba con datos pegados (diferencias de encoding)
+  - Fix: Simplificado a verificar solo si vacío o "-": `(D4:D500="")+(D4:D500="-")`
+
+---
+
+## [7.33] - 2026-01-28
+
+### Fixed
+- **Reservas "Reserva Var." de NT usaban columna C en vez de G**
+  - `obtenerReferenciaReserva()` siempre buscaba primero en VARIABLES_FAMILIA
+  - MOVIMIENTO NT mostraba "Unidad" o vacío en las reservas
+  - Fix: Nuevo parámetro `entidad` para desambiguar la búsqueda
+- **Error "Cannot call SpreadsheetApp.getUi()" al ejecutar desde editor**
+  - Fix: try/catch para detectar contexto y ejecutar sin UI cuando es necesario
+
+### Changed
+- `obtenerReferenciaReserva(concepto, entidad)` - ahora requiere parámetro entidad
+- `reinicializarSistema()` funciona tanto desde menú como desde editor de Apps Script
+
+---
+
 ## [7.32] - 2026-01-28
 
 ### Fixed

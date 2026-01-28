@@ -1,7 +1,7 @@
 {
   "project": {
     "name": "Control Financiero 2026 - NeuroTEA & Familia",
-    "version": "6.5.0",
+    "version": "7.35",
     "description": "Sistema de control financiero para clínica NeuroTEA y finanzas familiares en Google Sheets"
   },
   "context": {
@@ -67,11 +67,24 @@
       "K": "🚦",
       "L": "CATEGORÍA (oculta)",
       "M": "ENTIDAD (oculta)",
-      "N": "MES_NUM (oculta)"
+      "N": "CUENTA (oculta, v7.8)",
+      "N3": "MES_NUM (celda especial)"
     },
     "rangosMovimiento": {
-      "FAMILIA": "9-113",
-      "NEUROTEA": "119-200"
+      "FAMILIA": "9-116",
+      "NEUROTEA": "122-206"
+    },
+    "cargaColumnas": {
+      "A": "FECHA",
+      "B": "TIPO",
+      "C": "CATEGORÍA",
+      "D": "SUBCATEGORÍA",
+      "E": "DESCRIPCIÓN",
+      "F": "MONTO",
+      "G": "CUENTA",
+      "H": "NOTAS",
+      "I": "LINK_ID",
+      "J": "VÁLIDO"
     }
   },
   "metasNT": {

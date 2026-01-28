@@ -862,18 +862,19 @@ function crearHojaTABLERO() {
   const filaSaldoInicialFam = rowFam;
   rowFam++;
 
-  // Total Ingresos FAMILIA (rango específico de FAMILIA: filas 9-116)
-  // ACTUALIZADO: E=PRESUP, F=REAL en MOVIMIENTO v5.1
-  // BUG FIX [2026-01-14]: Rango expandido a 9:116 para incluir todas las secciones FAMILIA
+  // Total Ingresos FAMILIA
+  // v7.36: Cambiado a INDEX/MATCH para leer del RESUMEN de MOVIMIENTO (rangos dinámicos)
   sheet.getRange(rowFam, 2).setValue('➕ Total Ingresos')
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B116;"Ingreso";MOVIMIENTO!E9:E116);0)')
+  // PRESUPUESTO: Lee del resumen de MOVIMIENTO (columna E)
+  sheet.getRange(rowFam, 3).setFormula('=IFERROR(INDEX(MOVIMIENTO!E:E;MATCH("📥 TOTAL INGRESOS FAMILIA";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B116;"Ingreso";MOVIMIENTO!F9:F116);0)')
+  // REAL: Lee del resumen de MOVIMIENTO (columna F)
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("📥 TOTAL INGRESOS FAMILIA";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
@@ -887,19 +888,19 @@ function crearHojaTABLERO() {
   const filaIngresosFam = rowFam;
   rowFam++;
 
-  // Egresos PAGADOS FAMILIA (filtrado por EST. PAGO = "Pagado")
-  // ACTUALIZADO: E=PRESUP, F=REAL, J=EST.PAGO en MOVIMIENTO v5.1
-  // BUG FIX [2026-01-14]: Rango expandido a 9:116 para incluir todas las secciones FAMILIA
+  // Egresos PAGADOS FAMILIA
+  // v7.36: Cambiado a INDEX/MATCH para leer del RESUMEN de MOVIMIENTO (rangos dinámicos)
   sheet.getRange(rowFam, 2).setValue('➖ Egresos Pagados')
     .setBackground(UI.ROJO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowFam, 3).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B116;"Egreso";MOVIMIENTO!E9:E116);0)')
+  // PRESUPUESTO: Lee del resumen de MOVIMIENTO (columna E)
+  sheet.getRange(rowFam, 3).setFormula('=IFERROR(INDEX(MOVIMIENTO!E:E;MATCH("📤 TOTAL EGRESOS PAGADOS FAMILIA";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  // REAL = Solo los que tienen EST. PAGO = "Pagado" (columna J)
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F116;MOVIMIENTO!B9:B116;"Egreso";MOVIMIENTO!J9:J116;"Pagado");0)')
+  // REAL: Lee del resumen de MOVIMIENTO (columna F) - ya tiene la fórmula SUMIFS correcta
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("📤 TOTAL EGRESOS PAGADOS FAMILIA";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
@@ -914,6 +915,7 @@ function crearHojaTABLERO() {
   rowFam++;
 
   // AHORRO + FONDO EMERGENCIA (v6.9 - se resta del disponible)
+  // v7.36: Cambiado a INDEX/MATCH para leer del RESUMEN de MOVIMIENTO (rangos dinámicos)
   sheet.getRange(rowFam, 2).setValue('➖ Ahorro + Fondo Emergencia')
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
@@ -921,8 +923,8 @@ function crearHojaTABLERO() {
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  // REAL = Suma de TIPO="Ahorro" en MOVIMIENTO
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B9:B116;"Ahorro";MOVIMIENTO!F9:F116);0)')
+  // REAL: Lee del resumen de MOVIMIENTO (columna F)
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("💰 TOTAL AHORRO FAMILIA";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setFontColor(UI.VERDE)
     .setBackground(UI.VERDE_FONDO)
@@ -968,9 +970,8 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowFam, 6);
   rowFam++;
 
-  // Egresos PENDIENTES FAMILIA (filtrado por EST. PAGO = "Pendiente")
-  // ACTUALIZADO: F=REAL, J=EST.PAGO en MOVIMIENTO v5.1
-  // BUG FIX [2026-01-14]: Rango expandido a 9:116 para incluir todas las secciones FAMILIA
+  // Egresos PENDIENTES FAMILIA
+  // v7.36: Cambiado a INDEX/MATCH para leer del RESUMEN de MOVIMIENTO (rangos dinámicos)
   sheet.getRange(rowFam, 2).setValue('⏳ Egresos Pendientes')
     .setBackground(UI.AMARILLO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
@@ -978,8 +979,8 @@ function crearHojaTABLERO() {
     .setBackground(UI.AMARILLO_FONDO)
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  // PENDIENTES = Solo los que tienen EST. PAGO = "Pendiente" (columna J)
-  sheet.getRange(rowFam, 4).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F9:F116;MOVIMIENTO!B9:B116;"Egreso";MOVIMIENTO!J9:J116;"Pendiente");0)')
+  // PENDIENTES: Lee del resumen de MOVIMIENTO (columna F) - ya tiene la fórmula SUMIFS correcta
+  sheet.getRange(rowFam, 4).setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("⏳ TOTAL EGRESOS PENDIENTES FAMILIA";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setFontColor(UI.AMARILLO)
     .setFontWeight('bold')
@@ -1075,17 +1076,19 @@ function crearHojaTABLERO() {
   const filaSaldoInicialNT = rowNT;
   rowNT++;
 
-  // Total Ingresos NT (rango específico de NT: filas 73-150)
-  // ACTUALIZADO: E=PRESUP, F=REAL en MOVIMIENTO v5.1
+  // Total Ingresos NT
+  // v7.36: Cambiado a INDEX/MATCH para leer del RESUMEN de MOVIMIENTO (rangos dinámicos)
   sheet.getRange(rowNT, 8).setValue('➕ Total Ingresos')
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B122:B206;"Ingreso";MOVIMIENTO!E122:E206);0)')
+  // PRESUPUESTO: Lee del resumen de MOVIMIENTO (columna E)
+  sheet.getRange(rowNT, 9).setFormula('=IFERROR(INDEX(MOVIMIENTO!E:E;MATCH("📥 TOTAL INGRESOS NT";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B122:B206;"Ingreso";MOVIMIENTO!F122:F206);0)')
+  // REAL: Lee del resumen de MOVIMIENTO (columna F)
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("📥 TOTAL INGRESOS NT";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.VERDE_FONDO)
     .setHorizontalAlignment('right')
@@ -1099,18 +1102,19 @@ function crearHojaTABLERO() {
   const filaIngresosNTFlujo = rowNT;
   rowNT++;
 
-  // Egresos PAGADOS NT (filtrado por EST. PAGO = "Pagado")
-  // ACTUALIZADO: E=PRESUP, F=REAL, J=EST.PAGO en MOVIMIENTO v5.1
+  // Egresos PAGADOS NT
+  // v7.36: Cambiado a INDEX/MATCH para leer del RESUMEN de MOVIMIENTO (rangos dinámicos)
   sheet.getRange(rowNT, 8).setValue('➖ Egresos Pagados')
     .setBackground(UI.ROJO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange(rowNT, 9).setFormula('=IFERROR(SUMIF(MOVIMIENTO!B122:B206;"Egreso";MOVIMIENTO!E122:E206);0)')
+  // PRESUPUESTO: Lee del resumen de MOVIMIENTO (columna E)
+  sheet.getRange(rowNT, 9).setFormula('=IFERROR(INDEX(MOVIMIENTO!E:E;MATCH("📤 TOTAL EGRESOS PAGADOS NT";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  // REAL = Solo los que tienen EST. PAGO = "Pagado" (columna J) - CORREGIDO: rango NT
-  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F122:F206;MOVIMIENTO!B122:B206;"Egreso";MOVIMIENTO!J122:J206;"Pagado");0)')
+  // REAL: Lee del resumen de MOVIMIENTO (columna F) - ya tiene la fórmula SUMIFS correcta
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("📤 TOTAL EGRESOS PAGADOS NT";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setBackground(UI.ROJO_FONDO)
     .setHorizontalAlignment('right')
@@ -1156,8 +1160,8 @@ function crearHojaTABLERO() {
   sheet.setRowHeight(rowNT, 6);
   rowNT++;
 
-  // Egresos PENDIENTES NT (filtrado por EST. PAGO = "Pendiente")
-  // ACTUALIZADO: F=REAL, J=EST.PAGO en MOVIMIENTO v5.1
+  // Egresos PENDIENTES NT
+  // v7.36: Cambiado a INDEX/MATCH para leer del RESUMEN de MOVIMIENTO (rangos dinámicos)
   sheet.getRange(rowNT, 8).setValue('⏳ Egresos Pendientes')
     .setBackground(UI.AMARILLO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
@@ -1165,8 +1169,8 @@ function crearHojaTABLERO() {
     .setBackground(UI.AMARILLO_FONDO)
     .setHorizontalAlignment('center')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
-  // PENDIENTES = Solo los que tienen EST. PAGO = "Pendiente" (columna J) - CORREGIDO: rango NT
-  sheet.getRange(rowNT, 10).setFormula('=IFERROR(SUMIFS(MOVIMIENTO!F122:F206;MOVIMIENTO!B122:B206;"Egreso";MOVIMIENTO!J122:J206;"Pendiente");0)')
+  // PENDIENTES: Lee del resumen de MOVIMIENTO (columna F) - ya tiene la fórmula SUMIFS correcta
+  sheet.getRange(rowNT, 10).setFormula('=IFERROR(INDEX(MOVIMIENTO!F:F;MATCH("⏳ TOTAL EGRESOS PENDIENTES NT";MOVIMIENTO!A:A;0));0)')
     .setNumberFormat('#,##0')
     .setFontColor(UI.AMARILLO)
     .setFontWeight('bold')

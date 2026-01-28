@@ -786,4 +786,90 @@ Corregido bug crítico donde las fórmulas "Esperado" por cuenta en TABLERO no r
 
 ---
 
-*Última actualización: 2026-01-20 - Agregada decisión v7.8 (FIX CRÍTICO: Esperado por cuenta)*
+### [2026-01-21] - Sistema LINK_ID para transacciones cruzadas (v7.12)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+Las transacciones cruzadas (préstamos/devoluciones NT↔FAM) ahora están vinculadas con un ID único.
+
+**Implementación**:
+1. **Nueva columna I (LINK_ID)** en CARGA_FAMILIA y CARGA_NT
+2. **Formato**: 6 caracteres alfanuméricos (ej: A7K2M1)
+3. **Ambas transacciones del par tienen el mismo LINK_ID**
+4. **Auto-borrado sincronizado**: Al borrar una transacción (vaciar MONTO), se borra la contraparte automáticamente
+5. **Actualización sincronizada**: Al editar MONTO, se actualiza en ambas hojas
+
+**Archivos afectados**: gs/Code.gs, gs/Sheets.gs, CLAUDE.md
+**Razón**: Antes no había vínculo explícito entre contrapartes, dificultando la sincronización y el borrado.
+
+---
+
+### [2026-01-24] - Trigger onChange para contrapartes huérfanas (v7.21)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+Si el usuario elimina una fila con clic derecho → "Eliminar fila", `onEdit` NO se dispara (limitación de Apps Script). Se implementó auto-limpieza via trigger `onChange`.
+
+**Implementación**:
+1. **`onChangeHandler(e)`**: trigger instalable que detecta `REMOVE_ROW`
+2. **`limpiarContrapartesHuerfanas()`**: escanea LINK_IDs sin par y elimina filas huérfanas
+3. **Menú**: Utilidades → "Instalar Auto-limpieza" (una sola vez)
+
+**Archivos afectados**: gs/Code.gs
+**Razón**: Contrapartes huérfanas corrompían los cálculos de balance cruzado.
+
+---
+
+### [2026-01-26] - Columna VÁLIDO para detectar errores silenciosos (v7.26)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+Las fórmulas SUMPRODUCT excluyen silenciosamente filas con datos inválidos. Nueva columna J (VÁLIDO) muestra qué filas serán contadas.
+
+**Indicadores**:
+- "✓" = Fila válida
+- "⚠ Fecha" = Fecha inválida (texto/malformada)
+- "⚠ Año" = Año diferente a 2026
+- "⚠ Monto" = Monto vacío o texto
+- "⚠ Tipo" = TIPO vacío
+- "⚠ Cat" = Egreso con CATEGORÍA="-"
+- "⚠ Subcat" = Egreso VARIABLES con SUBCATEGORÍA inválida
+
+**Archivos afectados**: gs/Sheets.gs, gs/Code.gs
+**Razón**: El usuario no podía saber cuáles filas NO estaban siendo contadas en TABLERO.
+
+---
+
+### [2026-01-27] - Dashboard v3.0 con Chart.js (v7.30)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+Reescritura completa del dashboard HTML con Chart.js en lugar de Google Charts.
+
+**Características**:
+1. **2 pestañas**: FAMILIA y NEUROTEA (antes 3)
+2. **18 gráficos Chart.js interactivos** con tooltips
+3. **Flujo entre entidades**: diagrama SVG + tabla + gráfico mensual
+4. **KPI cards mejorados**: grid responsive con indicadores de color
+5. **Guías de interpretación**: cada gráfico tiene descripción
+
+**Archivos afectados**: gs/WebApp.gs
+**Razón**: Google Charts era limitado y pesado. Chart.js es más flexible y ligero.
+
+---
+
+### [2026-01-28] - TRIM en todas las fórmulas SUMPRODUCT (v7.35)
+**Estado**: ✅ APROBADO - NO REVERTIR
+**Descripción**:
+Las fórmulas SUMPRODUCT hacían comparación EXACTA de strings. Si había espacios invisibles, la comparación fallaba silenciosamente.
+
+**Solución**:
+- Agregar `TRIM()` a todas las comparaciones de strings
+- Patrón: `(TRIM(CARGA!D4:D500)=TRIM(A102))` en lugar de `(CARGA!D4:D500=A102)`
+
+**Fórmulas corregidas**:
+- Sheets.gs: INGRESOS, VARIABLES, AHORRO
+- Tablero.gs: Esperado FAM/NT, Ahorro, Fondo, Balance cruzado
+
+**Archivos afectados**: gs/Sheets.gs, gs/Tablero.gs
+**Razón**: MOVIMIENTO mostraba REAL=0 aunque CARGA tenía datos válidos y VÁLIDO mostraba "✓". El problema era diferencia de espacios en strings.
+
+---
+
+*Última actualización: 2026-01-28 - Agregadas decisiones v7.12, v7.21, v7.26, v7.30, v7.35*
