@@ -1626,5 +1626,33 @@ function estaEnModoAutoCreacion() {
 
 ---
 
+## Bug Fixes [2026-01-28] - v7.33 (CRÍTICO)
+
+### Reservas "Reserva Var." de NT usaban columna C en vez de G (BUG CRÍTICO)
+- **Problema**: `obtenerReferenciaReserva()` siempre buscaba PRIMERO en VARIABLES_FAMILIA
+- **Impacto**: Las reservas "Reserva Var. 1-5" existen en AMBOS arrays (FAMILIA y NT), pero la función siempre retornaba referencia a columna C (FAMILIA)
+- **Resultado**: MOVIMIENTO NT mostraba valores incorrectos ("Unidad", vacío) porque `=CONFIG!$C$38` apuntaba a METAS en lugar de VARIABLES_NT
+- **Solución**: `obtenerReferenciaReserva(concepto, entidad)` ahora recibe parámetro `entidad` para desambiguar
+  - Si `entidad === 'NEUROTEA'`: busca primero en VARIABLES_NT (columna G)
+  - Si `entidad === 'FAMILIA'` (o sin especificar): busca en VARIABLES_FAMILIA (columna C)
+- **Archivos modificados**:
+  - Sheets.gs: `obtenerReferenciaReserva()` con nuevo parámetro `entidad`
+  - Sheets.gs: `escribirSeccionPresupuesto()` con nuevo parámetro `entidad`
+  - Sheets.gs: Todas las llamadas actualizadas para pasar entidad correcta
+
+### Fórmulas corregidas
+```javascript
+// ANTES (incorrecto):
+const refReserva = obtenerReferenciaReserva(item.concepto);
+// Siempre buscaba en FAMILIA primero → retornaba =CONFIG!$C$38 para NT
+
+// AHORA (correcto):
+const refReserva = obtenerReferenciaReserva(item.concepto, entidad);
+// Para NT → busca en VARIABLES_NT → retorna =CONFIG!$G$34
+// Para FAMILIA → busca en VARIABLES_FAMILIA → retorna =CONFIG!$C$38
+```
+
+---
+
 *Última actualización: 2026-01-28*
-*Versión: 7.32 - Fix: Dashboard v3.0 lectura de TABLERO con filas/columnas correctas*
+*Versión: 7.33 - Fix: Reservas usaban columna incorrecta (C en vez de G para NT)*
