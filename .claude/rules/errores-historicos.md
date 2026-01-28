@@ -13,8 +13,8 @@ paths:
 
 | Entidad | INCORRECTO | CORRECTO |
 |---------|------------|----------|
-| FAMILIA | 9-70 | **9-113** |
-| NEUROTEA | 73-150 | **119-200** |
+| FAMILIA | 9-70 | **9-116** |
+| NEUROTEA | 73-150 | **122-206** |
 
 **Impacto:** Egresos incompletos, NEUROTEA incluía SUSCRIPCIONES de FAMILIA.
 
@@ -218,3 +218,80 @@ CORRECTO: =IFERROR(SUMPRODUCT((B=tipo)*(IFERROR(MONTH(A);0)=mes)*(IFERROR(YEAR(A
 ```
 
 **Razón:** `requireValueInRange(CONFIG)` referencia un rango de celdas. Los valores pegados desde otro Google Sheet pueden no coincidir exactamente con los valores del rango (diferencias invisibles de encoding/whitespace). `requireValueInList` compara strings directos, más confiable para datos pegados.
+
+---
+
+## BUG 14: getLastRow() con ARRAYFORMULA (v7.31)
+
+```javascript
+// INCORRECTO - ARRAYFORMULA en columna J extiende a fila 500
+var ultimaFila = sheet.getLastRow(); // Retorna 500
+var filaVacia = ultimaFila + 1; // Fila 501, FUERA del rango SUMPRODUCT
+
+// CORRECTO - Escanear columna A (FECHA) para encontrar datos reales
+var fechas = sheet.getRange('A4:A500').getValues();
+for (var i = 0; i < fechas.length; i++) {
+  if (!fechas[i][0] || fechas[i][0] === '') return i + 4;
+}
+```
+
+**Razón:** `getLastRow()` incluye filas con ARRAYFORMULA aunque no tengan datos. Transacciones escritas fuera del rango SUMPRODUCT (A4:A500) se ignoran silenciosamente.
+
+---
+
+## BUG 15: obtenerReferenciaReserva sin entidad (v7.33)
+
+```javascript
+// INCORRECTO - Siempre busca en FAMILIA primero
+function obtenerReferenciaReserva(concepto) {
+  const idx = VARIABLES_FAMILIA.indexOf(concepto); // "Reserva Var. 4" existe aquí
+  if (idx >= 0) return '=CONFIG!$C${21+idx}'; // Siempre columna C
+}
+// Para NT, "Reserva Var. 4" retorna =CONFIG!$C$38 (que apunta a METAS, no a la reserva NT)
+
+// CORRECTO - Pasar entidad para desambiguar
+function obtenerReferenciaReserva(concepto, entidad) {
+  if (entidad === 'NEUROTEA') {
+    const idx = VARIABLES_NT.indexOf(concepto);
+    if (idx >= 0) return '=CONFIG!$G${21+idx}'; // Columna G para NT
+  } else {
+    const idx = VARIABLES_FAMILIA.indexOf(concepto);
+    if (idx >= 0) return '=CONFIG!$C${21+idx}'; // Columna C para FAMILIA
+  }
+}
+```
+
+**Razón:** "Reserva Var. 1-5" existen en AMBOS arrays. Sin el parámetro entidad, NT obtiene referencias a columna C (FAMILIA) que pueden apuntar a celdas METAS en lugar de VARIABLES_NT.
+
+---
+
+## BUG 16: getUi() desde editor de Apps Script (v7.33)
+
+```javascript
+// INCORRECTO - getUi() solo funciona desde menú del spreadsheet
+function reinicializarSistema() {
+  const ui = SpreadsheetApp.getUi();
+  ui.alert('Confirmación...'); // ERROR desde editor
+  crearTodasLasHojas();
+}
+
+// CORRECTO - Separar lógica sin UI
+function _crearTodasLasHojas() {
+  console.log('Creando hojas...');
+  // Toda la lógica aquí
+}
+
+function reinicializarSistema() {
+  const ui = SpreadsheetApp.getUi();
+  if (ui.alert('Confirmación...') === ui.Button.YES) {
+    _crearTodasLasHojas();
+  }
+}
+
+function reinicializarSistemaSinConfirm() {
+  // Para ejecutar desde editor
+  _crearTodasLasHojas();
+}
+```
+
+**Razón:** `SpreadsheetApp.getUi()` lanza error "Cannot call SpreadsheetApp.getUi() from this context" cuando se ejecuta desde el editor de Apps Script. Separar la lógica en función interna permite ejecutar desde ambos contextos.
