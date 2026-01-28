@@ -1540,6 +1540,13 @@ function estaEnModoAutoCreacion() {
   }
   ```
 
+### SpreadsheetApp.getUi() y contexto de ejecución (CRÍTICO v7.33)
+- **NUNCA** usar `getUi()` en funciones que pueden ejecutarse desde el editor de Apps Script
+- `getUi()` solo funciona cuando se ejecuta desde el menú del spreadsheet
+- **Patrón correcto**: Separar lógica en función interna sin UI (ej: `_crearTodasLasHojas()`)
+- Crear función wrapper sin confirmación para el editor (ej: `reinicializarSistemaSinConfirm()`)
+- Usar `console.log()` para progreso en lugar de `toast()` - funciona en ambos contextos
+
 ### Rangos en MOVIMIENTO
 - FAMILIA: filas **9-116** (NO 9-70)
 - NEUROTEA: filas **122-206** (NO 73-150)
@@ -1652,7 +1659,24 @@ const refReserva = obtenerReferenciaReserva(item.concepto, entidad);
 // Para FAMILIA → busca en VARIABLES_FAMILIA → retorna =CONFIG!$C$38
 ```
 
+### Error "Cannot call SpreadsheetApp.getUi()" al ejecutar desde editor
+- **Problema**: Al ejecutar `reinicializarSistema` desde el editor de Apps Script, daba error
+- **Causa**: `SpreadsheetApp.getUi()` solo funciona cuando se ejecuta desde el menú del spreadsheet
+- **Solución**:
+  - Nueva función `_crearTodasLasHojas()` que crea todas las hojas SIN dependencias de UI
+  - Nueva función `reinicializarSistemaSinConfirm()` para ejecutar desde el editor
+  - `inicializarSistemaCompleto()` ahora usa `_crearTodasLasHojas()` internamente
+- **Archivos modificados**: Code.gs
+
+### Cómo ejecutar desde el editor de Apps Script (v7.33)
+```
+1. Abrir Apps Script (Extensiones → Apps Script)
+2. En el dropdown de funciones, seleccionar: reinicializarSistemaSinConfirm
+3. Click en "Ejecutar"
+4. Ver progreso en el log (View → Logs)
+```
+
 ---
 
 *Última actualización: 2026-01-28*
-*Versión: 7.33 - Fix: Reservas usaban columna incorrecta (C en vez de G para NT)*
+*Versión: 7.33 - Fix: Reservas columna incorrecta + reinicializarSistemaSinConfirm()*
