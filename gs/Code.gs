@@ -69,6 +69,51 @@ function onOpen() {
 // INICIALIZACIÓN COMPLETA
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * v7.33: Función interna que crea todas las hojas SIN requerir UI
+ * Puede ejecutarse desde el editor de Apps Script sin errores
+ */
+function _crearTodasLasHojas() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Usar console.log para progreso (funciona en editor y en spreadsheet)
+  console.log('Creando CONFIG...');
+  crearHojaCONFIG();
+
+  console.log('Creando PRESUPUESTO...');
+  crearHojaPRESUPUESTO();
+
+  console.log('Creando GASTOS_FIJOS...');
+  crearHojaGASTOS_FIJOS();
+
+  console.log('Creando CARGA_FAMILIA...');
+  crearHojaCARGA_FAMILIA();
+
+  console.log('Creando CARGA_NT...');
+  crearHojaCARGA_NT();
+
+  console.log('Creando MOVIMIENTO...');
+  crearHojaMOVIMIENTO();
+
+  console.log('Creando TABLERO...');
+  crearHojaTABLERO();
+
+  console.log('Creando LIQUIDEZ_FAMILIA...');
+  crearHojaLIQUIDEZ_FAMILIA();
+
+  console.log('Creando LIQUIDEZ_NT...');
+  crearHojaLIQUIDEZ_NT();
+
+  // Ordenar hojas
+  ordenarHojas();
+
+  // Ir a TABLERO
+  const tablero = ss.getSheetByName(NOMBRES_HOJAS.TABLERO);
+  if (tablero) ss.setActiveSheet(tablero);
+
+  console.log('✅ Todas las hojas creadas exitosamente');
+}
+
 function inicializarSistemaCompleto() {
   const ui = SpreadsheetApp.getUi();
 
@@ -94,41 +139,8 @@ function inicializarSistemaCompleto() {
     return;
   }
 
-  // Mostrar progreso
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  ss.toast('Creando CONFIG...', '🚀 Inicializando', 3);
-  crearHojaCONFIG();
-
-  ss.toast('Creando PRESUPUESTO...', '🚀 Inicializando', 3);
-  crearHojaPRESUPUESTO();
-
-  ss.toast('Creando GASTOS_FIJOS...', '🚀 Inicializando', 3);
-  crearHojaGASTOS_FIJOS();
-
-  ss.toast('Creando CARGA_FAMILIA...', '🚀 Inicializando', 3);
-  crearHojaCARGA_FAMILIA();
-
-  ss.toast('Creando CARGA_NT...', '🚀 Inicializando', 3);
-  crearHojaCARGA_NT();
-
-  ss.toast('Creando MOVIMIENTO...', '🚀 Inicializando', 3);
-  crearHojaMOVIMIENTO();
-
-  ss.toast('Creando TABLERO...', '🚀 Inicializando', 3);
-  crearHojaTABLERO();
-
-  ss.toast('Creando LIQUIDEZ_FAMILIA...', '🚀 Inicializando', 3);
-  crearHojaLIQUIDEZ_FAMILIA();
-
-  ss.toast('Creando LIQUIDEZ_NT...', '🚀 Inicializando', 3);
-  crearHojaLIQUIDEZ_NT();
-
-  // Ordenar hojas
-  ordenarHojas();
-
-  // Ir a TABLERO
-  const tablero = ss.getSheetByName(NOMBRES_HOJAS.TABLERO);
-  if (tablero) ss.setActiveSheet(tablero);
+  // Crear todas las hojas
+  _crearTodasLasHojas();
 
   ui.alert(
     '✅ Sistema Creado Exitosamente',
@@ -167,6 +179,20 @@ function reinicializarSistema() {
   if (confirmacion !== ui.Button.YES) return;
 
   inicializarSistemaCompleto();
+}
+
+/**
+ * v7.33: Versión sin confirmación para ejecutar desde el editor de Apps Script
+ * ADVERTENCIA: Borra todos los datos sin preguntar
+ *
+ * Ejecutar desde el editor de Apps Script:
+ * 1. Seleccionar esta función en el dropdown
+ * 2. Click en "Ejecutar"
+ */
+function reinicializarSistemaSinConfirm() {
+  console.log('⚠️ Iniciando reinicialización sin confirmación...');
+  _crearTodasLasHojas();
+  console.log('✅ Reinicialización completada');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
