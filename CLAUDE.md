@@ -1525,8 +1525,16 @@ function estaEnModoAutoCreacion() {
 ### Fórmulas
 - **NUNCA** usar SUMIFS con MONTH()/YEAR() → usar SUMPRODUCT
 - **SIEMPRE** usar `IFERROR(MONTH(rango);0)` e `IFERROR(YEAR(rango);0)` DENTRO del SUMPRODUCT para proteger contra fechas texto
+- **SIEMPRE** usar `TRIM()` al comparar strings en SUMPRODUCT (v7.35): `(TRIM(rango)=TRIM(celda))`
 - **NUNCA** calcular DISPONIBLE independientemente → referenciar TOTAL DISPONIBLE
 - Distribución ganancia NT: simple `=SI(H>0;H/3;0)` - no complicar
+
+### Comparación de strings en fórmulas (CRÍTICO v7.35)
+- Las fórmulas SUMPRODUCT hacen comparación EXACTA de strings
+- Espacios invisibles (antes, después, o diferencias de encoding) causan mismatch silencioso
+- **SIEMPRE** usar `TRIM()` al comparar datos de usuario: `(TRIM(CARGA!D4:D500)=TRIM(A102))`
+- Esto aplica a: TIPO, CATEGORÍA, SUBCATEGORÍA, CUENTA en fórmulas que leen de CARGA
+- La función `repararDatosCarga()` aplica TRIM a los datos existentes, pero las fórmulas deben ser tolerantes
 
 ### getLastRow() y ARRAYFORMULA (CRÍTICO v7.31)
 - **NUNCA** usar `sheet.getLastRow()` en hojas con ARRAYFORMULA → devuelve fila 500 (final del ARRAYFORMULA)
@@ -1680,5 +1688,40 @@ const refReserva = obtenerReferenciaReserva(item.concepto, entidad);
 
 ---
 
+## Bug Fixes [2026-01-28] - v7.35 (CRÍTICO)
+
+### SUMPRODUCT no reconocía subcategorías con espacios invisibles (BUG CRÍTICO)
+- **Problema**: Las fórmulas SUMPRODUCT hacían comparación EXACTA de strings sin tolerancia a espacios
+- **Impacto**: Si el usuario pegaba datos desde otro spreadsheet o escribía con espacios extra, la comparación fallaba silenciosamente
+- **Síntoma**: MOVIMIENTO mostraba REAL=0 aunque CARGA tenía datos válidos y VÁLIDO mostraba "✓"
+- **Solución**: Agregar `TRIM()` a todas las comparaciones de strings en fórmulas SUMPRODUCT
+- **Archivos modificados**:
+  - Sheets.gs: 3 fórmulas SUMPRODUCT en MOVIMIENTO (ingresos, variables, ahorro)
+  - Tablero.gs: Fórmulas Esperado FAM/NT, Ahorro, Fondo, Balance cruzado
+- **Fórmulas corregidas**:
+  ```
+  ANTES: =SUMPRODUCT((CARGA!$D$4:$D$500=A102)*...)
+  AHORA: =SUMPRODUCT((TRIM(CARGA!$D$4:$D$500)=TRIM(A102))*...)
+  ```
+
+### Fórmulas actualizadas con TRIM
+| Archivo | Línea | Fórmula | Campos con TRIM |
+|---------|-------|---------|-----------------|
+| Sheets.gs | 1355 | INGRESOS REAL | TIPO (B) |
+| Sheets.gs | 1573 | VARIABLES REAL | SUBCATEGORÍA (D) |
+| Sheets.gs | 1647 | AHORRO REAL | TIPO (B), CATEGORÍA (C) |
+| Tablero.gs | 221 | Esperado FAM | CUENTA (G), TIPO (B), EST.PAGO (J) |
+| Tablero.gs | 479 | Esperado NT | CUENTA (G), TIPO (B), EST.PAGO (J) |
+| Tablero.gs | 370 | Ahorro | TIPO (B), CATEGORÍA (C) |
+| Tablero.gs | 384 | Fondo Emergencia | TIPO (B), CATEGORÍA (C) |
+| Tablero.gs | 1467+ | Balance cruzado | SUBCATEGORÍA (D) |
+
+### Resumen de cambios v7.35
+1. Todas las fórmulas SUMPRODUCT que comparan strings de datos de usuario ahora usan TRIM
+2. La función `repararDatosCarga()` (Utils.gs) ya aplicaba TRIM a los datos - esto sigue funcionando
+3. El fix garantiza que aunque el usuario no ejecute `repararDatosCarga()`, las fórmulas funcionan
+
+---
+
 *Última actualización: 2026-01-28*
-*Versión: 7.33 - Fix: Reservas columna incorrecta + reinicializarSistema con try/catch*
+*Versión: 7.35 - Fix: TRIM en todas las fórmulas SUMPRODUCT para evitar mismatch de strings*

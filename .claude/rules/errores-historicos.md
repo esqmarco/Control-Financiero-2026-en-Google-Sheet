@@ -296,3 +296,17 @@ function _crearTodasLasHojas() {
 ```
 
 **Razón:** `SpreadsheetApp.getUi()` lanza error "Cannot call SpreadsheetApp.getUi() from this context" cuando se ejecuta desde el editor de Apps Script. Usar try/catch permite detectar el contexto y ejecutar sin UI cuando es necesario.
+
+---
+
+## BUG 17: SUMPRODUCT sin TRIM() no matchea strings con espacios (v7.35)
+
+```
+INCORRECTO: =SUMPRODUCT((CARGA_FAMILIA!$D$4:$D$500=A102)*...)
+// Si el usuario pega datos con espacios extra, la comparación falla silenciosamente
+
+CORRECTO:   =SUMPRODUCT((TRIM(CARGA_FAMILIA!$D$4:$D$500)=TRIM(A102))*...)
+// TRIM elimina espacios al inicio/final, la comparación es tolerante
+```
+
+**Razón:** Las fórmulas SUMPRODUCT hacen comparación EXACTA de strings. Si hay diferencias invisibles (espacios al inicio/final, non-breaking spaces, etc.), la comparación retorna FALSE y el valor no se suma. El usuario ve REAL=0 aunque VÁLIDO muestre "✓".

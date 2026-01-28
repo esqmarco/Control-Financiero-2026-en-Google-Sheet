@@ -217,7 +217,8 @@ function crearHojaTABLERO() {
     // - Ahorro de esta cuenta desde CARGA (TIPO = "Ahorro")
     // - Gastos fijos PAGADOS de esta cuenta desde MOVIMIENTO (v7.8: usa columna N=CUENTA)
     // v7.23: Cada SUMPRODUCT con IFERROR individual para que un error en fechas no mate toda la fórmula
-    const formulaEsperado = `=${formulaSaldoInicialFam}+IFERROR(SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500<>"Egreso Familiar")*(CARGA_FAMILIA!B$4:B$500<>"Ahorro")*(IFERROR(MONTH(CARGA_FAMILIA!A$4:A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_FAMILIA!A$4:A$500);0)=${AÑO})*(CARGA_FAMILIA!F$4:F$500));0)-IFERROR(SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Egreso Familiar")*(IFERROR(MONTH(CARGA_FAMILIA!A$4:A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_FAMILIA!A$4:A$500);0)=${AÑO})*(CARGA_FAMILIA!F$4:F$500));0)-IFERROR(SUMPRODUCT((CARGA_FAMILIA!G$4:G$500="${cuenta}")*(CARGA_FAMILIA!B$4:B$500="Ahorro")*(IFERROR(MONTH(CARGA_FAMILIA!A$4:A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_FAMILIA!A$4:A$500);0)=${AÑO})*(CARGA_FAMILIA!F$4:F$500));0)-IFERROR(SUMPRODUCT((MOVIMIENTO!$N$9:$N$116="${cuenta}")*(MOVIMIENTO!$J$9:$J$116="Pagado")*(MOVIMIENTO!$F$9:$F$116));0)`;
+    // v7.35: TRIM en todas las comparaciones de strings para evitar mismatch
+    const formulaEsperado = `=${formulaSaldoInicialFam}+IFERROR(SUMPRODUCT((TRIM(CARGA_FAMILIA!G$4:G$500)="${cuenta}")*(TRIM(CARGA_FAMILIA!B$4:B$500)<>"Egreso Familiar")*(TRIM(CARGA_FAMILIA!B$4:B$500)<>"Ahorro")*(IFERROR(MONTH(CARGA_FAMILIA!A$4:A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_FAMILIA!A$4:A$500);0)=${AÑO})*(CARGA_FAMILIA!F$4:F$500));0)-IFERROR(SUMPRODUCT((TRIM(CARGA_FAMILIA!G$4:G$500)="${cuenta}")*(TRIM(CARGA_FAMILIA!B$4:B$500)="Egreso Familiar")*(IFERROR(MONTH(CARGA_FAMILIA!A$4:A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_FAMILIA!A$4:A$500);0)=${AÑO})*(CARGA_FAMILIA!F$4:F$500));0)-IFERROR(SUMPRODUCT((TRIM(CARGA_FAMILIA!G$4:G$500)="${cuenta}")*(TRIM(CARGA_FAMILIA!B$4:B$500)="Ahorro")*(IFERROR(MONTH(CARGA_FAMILIA!A$4:A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_FAMILIA!A$4:A$500);0)=${AÑO})*(CARGA_FAMILIA!F$4:F$500));0)-IFERROR(SUMPRODUCT((TRIM(MOVIMIENTO!$N$9:$N$116)="${cuenta}")*(TRIM(MOVIMIENTO!$J$9:$J$116)="Pagado")*(MOVIMIENTO!$F$9:$F$116));0)`;
     sheet.getRange(rowFam, 3).setFormula(formulaEsperado)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
@@ -364,8 +365,9 @@ function crearHojaTABLERO() {
   // ROW 4: Valores Ahorro y Fondo Emergencia (desde CARGA_FAMILIA)
   // v6.9: AHORRO es TIPO separado, CATEGORÍA = "Ahorro Clara" o "Ahorro Marco"
   // AHORRO = suma de CARGA_FAMILIA donde TIPO="Ahorro" y CATEGORÍA in ("Ahorro Clara", "Ahorro Marco")
+  // v7.35: TRIM en comparaciones de strings
   sheet.getRange(rowFam, 2, 1, 2).merge()
-    .setFormula('=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500="Ahorro")*((CARGA_FAMILIA!$C$4:$C$500="Ahorro Clara")+(CARGA_FAMILIA!$C$4:$C$500="Ahorro Marco"))*(IFERROR(MONTH(CARGA_FAMILIA!$A$4:$A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_FAMILIA!$A$4:$A$500);0)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
+    .setFormula('=IFERROR(SUMPRODUCT((TRIM(CARGA_FAMILIA!$B$4:$B$500)="Ahorro")*((TRIM(CARGA_FAMILIA!$C$4:$C$500)="Ahorro Clara")+(TRIM(CARGA_FAMILIA!$C$4:$C$500)="Ahorro Marco"))*(IFERROR(MONTH(CARGA_FAMILIA!$A$4:$A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_FAMILIA!$A$4:$A$500);0)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -377,8 +379,9 @@ function crearHojaTABLERO() {
   const filaValorAhorroFam = rowFam;
 
   // FONDO EMERGENCIA = suma de CARGA_FAMILIA donde TIPO="Ahorro" y CATEGORÍA="Fondo de Emergencia"
+  // v7.35: TRIM en comparaciones de strings
   sheet.getRange(rowFam, 4, 1, 2).merge()
-    .setFormula('=IFERROR(SUMPRODUCT((CARGA_FAMILIA!$B$4:$B$500="Ahorro")*(CARGA_FAMILIA!$C$4:$C$500="Fondo de Emergencia")*(IFERROR(MONTH(CARGA_FAMILIA!$A$4:$A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_FAMILIA!$A$4:$A$500);0)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
+    .setFormula('=IFERROR(SUMPRODUCT((TRIM(CARGA_FAMILIA!$B$4:$B$500)="Ahorro")*(TRIM(CARGA_FAMILIA!$C$4:$C$500)="Fondo de Emergencia")*(IFERROR(MONTH(CARGA_FAMILIA!$A$4:$A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_FAMILIA!$A$4:$A$500);0)=2026)*(CARGA_FAMILIA!$F$4:$F$500));0)')
     .setNumberFormat('#,##0')
     .setFontSize(16)
     .setFontWeight('bold')
@@ -474,7 +477,8 @@ function crearHojaTABLERO() {
     // - Egresos de esta cuenta desde CARGA (TIPO = "Egreso NT")
     // - Gastos fijos PAGADOS de esta cuenta desde MOVIMIENTO (v7.8: usa columna N=CUENTA)
     // v7.23: Cada SUMPRODUCT con IFERROR individual
-    const formulaEsperado = `=${formulaSaldoInicialNT}+IFERROR(SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500<>"Egreso NT")*(IFERROR(MONTH(CARGA_NT!A$4:A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_NT!A$4:A$500);0)=${AÑO})*(CARGA_NT!F$4:F$500));0)-IFERROR(SUMPRODUCT((CARGA_NT!G$4:G$500="${cuenta}")*(CARGA_NT!B$4:B$500="Egreso NT")*(IFERROR(MONTH(CARGA_NT!A$4:A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_NT!A$4:A$500);0)=${AÑO})*(CARGA_NT!F$4:F$500));0)-IFERROR(SUMPRODUCT((MOVIMIENTO!$N$122:$N$206="${cuenta}")*(MOVIMIENTO!$J$122:$J$206="Pagado")*(MOVIMIENTO!$F$122:$F$206));0)`;
+    // v7.35: TRIM en todas las comparaciones de strings para evitar mismatch
+    const formulaEsperado = `=${formulaSaldoInicialNT}+IFERROR(SUMPRODUCT((TRIM(CARGA_NT!G$4:G$500)="${cuenta}")*(TRIM(CARGA_NT!B$4:B$500)<>"Egreso NT")*(IFERROR(MONTH(CARGA_NT!A$4:A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_NT!A$4:A$500);0)=${AÑO})*(CARGA_NT!F$4:F$500));0)-IFERROR(SUMPRODUCT((TRIM(CARGA_NT!G$4:G$500)="${cuenta}")*(TRIM(CARGA_NT!B$4:B$500)="Egreso NT")*(IFERROR(MONTH(CARGA_NT!A$4:A$500);0)=MOVIMIENTO!$N$3)*(IFERROR(YEAR(CARGA_NT!A$4:A$500);0)=${AÑO})*(CARGA_NT!F$4:F$500));0)-IFERROR(SUMPRODUCT((TRIM(MOVIMIENTO!$N$122:$N$206)="${cuenta}")*(TRIM(MOVIMIENTO!$J$122:$J$206)="Pagado")*(MOVIMIENTO!$F$122:$F$206));0)`;
     sheet.getRange(rowNT, 9).setFormula(formulaEsperado)
       .setNumberFormat('#,##0')
       .setBackground(bgColor)
@@ -1462,8 +1466,9 @@ function crearHojaTABLERO() {
   sheet.getRange(rowBalance + 2, 2).setValue('↗️ Préstamo NT → Familia')
     .setBackground(UI.ROJO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  // v7.35: TRIM para evitar mismatch de strings
   sheet.getRange(rowBalance + 2, 3)
-    .setFormula(`=IFERROR(SUMPRODUCT((CARGA_NT!D4:D500="Préstamo NT → Familia")*(IFERROR(MONTH(CARGA_NT!A4:A500);0)=MOVIMIENTO!N3)*(IFERROR(YEAR(CARGA_NT!A4:A500);0)=${AÑO})*(CARGA_NT!F4:F500));0)`)
+    .setFormula(`=IFERROR(SUMPRODUCT((TRIM(CARGA_NT!D4:D500)="Préstamo NT → Familia")*(IFERROR(MONTH(CARGA_NT!A4:A500);0)=MOVIMIENTO!N3)*(IFERROR(YEAR(CARGA_NT!A4:A500);0)=${AÑO})*(CARGA_NT!F4:F500));0)`)
     .setNumberFormat('#,##0').setFontColor(UI.ROJO).setBackground(UI.ROJO_FONDO).setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 2, 4)
@@ -1476,8 +1481,9 @@ function crearHojaTABLERO() {
   sheet.getRange(rowBalance + 3, 2).setValue('↩️ Devolución Familia → NT')
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  // v7.35: TRIM para evitar mismatch de strings
   sheet.getRange(rowBalance + 3, 3)
-    .setFormula(`=IFERROR(SUMPRODUCT((CARGA_FAMILIA!D4:D500="Devolución Familia → NT")*(IFERROR(MONTH(CARGA_FAMILIA!A4:A500);0)=MOVIMIENTO!N3)*(IFERROR(YEAR(CARGA_FAMILIA!A4:A500);0)=${AÑO})*(CARGA_FAMILIA!F4:F500));0)`)
+    .setFormula(`=IFERROR(SUMPRODUCT((TRIM(CARGA_FAMILIA!D4:D500)="Devolución Familia → NT")*(IFERROR(MONTH(CARGA_FAMILIA!A4:A500);0)=MOVIMIENTO!N3)*(IFERROR(YEAR(CARGA_FAMILIA!A4:A500);0)=${AÑO})*(CARGA_FAMILIA!F4:F500));0)`)
     .setNumberFormat('#,##0').setFontColor(UI.VERDE).setBackground(UI.VERDE_FONDO).setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 3, 4)
@@ -1508,8 +1514,9 @@ function crearHojaTABLERO() {
   sheet.getRange(rowBalance + 5, 2).setValue('↗️ Préstamo Familia → NT')
     .setBackground(UI.AMARILLO_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  // v7.35: TRIM para evitar mismatch de strings
   sheet.getRange(rowBalance + 5, 3)
-    .setFormula(`=IFERROR(SUMPRODUCT((CARGA_FAMILIA!D4:D500="Préstamo Familia → NT")*(IFERROR(MONTH(CARGA_FAMILIA!A4:A500);0)=MOVIMIENTO!N3)*(IFERROR(YEAR(CARGA_FAMILIA!A4:A500);0)=${AÑO})*(CARGA_FAMILIA!F4:F500));0)`)
+    .setFormula(`=IFERROR(SUMPRODUCT((TRIM(CARGA_FAMILIA!D4:D500)="Préstamo Familia → NT")*(IFERROR(MONTH(CARGA_FAMILIA!A4:A500);0)=MOVIMIENTO!N3)*(IFERROR(YEAR(CARGA_FAMILIA!A4:A500);0)=${AÑO})*(CARGA_FAMILIA!F4:F500));0)`)
     .setNumberFormat('#,##0').setFontColor(UI.AMARILLO).setBackground(UI.AMARILLO_FONDO).setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 5, 4)
@@ -1522,8 +1529,9 @@ function crearHojaTABLERO() {
   sheet.getRange(rowBalance + 6, 2).setValue('↩️ Devolución NT → Familia')
     .setBackground(UI.VERDE_FONDO)
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
+  // v7.35: TRIM para evitar mismatch de strings
   sheet.getRange(rowBalance + 6, 3)
-    .setFormula(`=IFERROR(SUMPRODUCT((CARGA_NT!D4:D500="Devolución NT → Familia")*(IFERROR(MONTH(CARGA_NT!A4:A500);0)=MOVIMIENTO!N3)*(IFERROR(YEAR(CARGA_NT!A4:A500);0)=${AÑO})*(CARGA_NT!F4:F500));0)`)
+    .setFormula(`=IFERROR(SUMPRODUCT((TRIM(CARGA_NT!D4:D500)="Devolución NT → Familia")*(IFERROR(MONTH(CARGA_NT!A4:A500);0)=MOVIMIENTO!N3)*(IFERROR(YEAR(CARGA_NT!A4:A500);0)=${AÑO})*(CARGA_NT!F4:F500));0)`)
     .setNumberFormat('#,##0').setFontColor(UI.VERDE).setBackground(UI.VERDE_FONDO).setHorizontalAlignment('right')
     .setBorder(true, true, true, true, false, false, UI.GRIS_BORDE, SpreadsheetApp.BorderStyle.SOLID);
   sheet.getRange(rowBalance + 6, 4)
