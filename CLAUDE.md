@@ -1663,20 +1663,22 @@ const refReserva = obtenerReferenciaReserva(item.concepto, entidad);
 - **Problema**: Al ejecutar `reinicializarSistema` desde el editor de Apps Script, daba error
 - **Causa**: `SpreadsheetApp.getUi()` solo funciona cuando se ejecuta desde el menú del spreadsheet
 - **Solución**:
-  - Nueva función `_crearTodasLasHojas()` que crea todas las hojas SIN dependencias de UI
-  - Nueva función `reinicializarSistemaSinConfirm()` para ejecutar desde el editor
-  - `inicializarSistemaCompleto()` ahora usa `_crearTodasLasHojas()` internamente
+  - `reinicializarSistema()` ahora usa try/catch para detectar el contexto
+  - Desde menú: muestra confirmaciones UI normalmente
+  - Desde editor: detecta el error y ejecuta `_crearTodasLasHojas()` directamente
+  - Nueva función interna `_crearTodasLasHojas()` sin dependencias de UI
 - **Archivos modificados**: Code.gs
 
 ### Cómo ejecutar desde el editor de Apps Script (v7.33)
 ```
 1. Abrir Apps Script (Extensiones → Apps Script)
-2. En el dropdown de funciones, seleccionar: reinicializarSistemaSinConfirm
+2. En el dropdown de funciones, seleccionar: reinicializarSistema
 3. Click en "Ejecutar"
 4. Ver progreso en el log (View → Logs)
 ```
+> **NOTA**: Ya NO necesitas usar una función separada. `reinicializarSistema` funciona en ambos contextos.
 
 ---
 
 *Última actualización: 2026-01-28*
-*Versión: 7.33 - Fix: Reservas columna incorrecta + reinicializarSistemaSinConfirm()*
+*Versión: 7.33 - Fix: Reservas columna incorrecta + reinicializarSistema con try/catch*

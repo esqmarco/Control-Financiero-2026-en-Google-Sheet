@@ -275,23 +275,24 @@ function reinicializarSistema() {
   crearTodasLasHojas();
 }
 
-// CORRECTO - Separar lógica sin UI
-function _crearTodasLasHojas() {
-  console.log('Creando hojas...');
-  // Toda la lógica aquí
-}
-
+// CORRECTO - Usar try/catch para detectar contexto
 function reinicializarSistema() {
-  const ui = SpreadsheetApp.getUi();
-  if (ui.alert('Confirmación...') === ui.Button.YES) {
+  try {
+    const ui = SpreadsheetApp.getUi();
+    // Código con UI aquí (confirmaciones, etc.)
+    if (ui.alert('¿Confirmar?') === ui.Button.YES) {
+      _crearTodasLasHojas();
+    }
+  } catch (e) {
+    // Desde editor: ejecutar sin UI
+    console.log('Ejecutando desde editor...');
     _crearTodasLasHojas();
   }
 }
 
-function reinicializarSistemaSinConfirm() {
-  // Para ejecutar desde editor
-  _crearTodasLasHojas();
+function _crearTodasLasHojas() {
+  // Lógica sin UI
 }
 ```
 
-**Razón:** `SpreadsheetApp.getUi()` lanza error "Cannot call SpreadsheetApp.getUi() from this context" cuando se ejecuta desde el editor de Apps Script. Separar la lógica en función interna permite ejecutar desde ambos contextos.
+**Razón:** `SpreadsheetApp.getUi()` lanza error "Cannot call SpreadsheetApp.getUi() from this context" cuando se ejecuta desde el editor de Apps Script. Usar try/catch permite detectar el contexto y ejecutar sin UI cuando es necesario.
