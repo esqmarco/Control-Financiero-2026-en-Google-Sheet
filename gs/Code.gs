@@ -31,6 +31,7 @@ function onOpen() {
 
     // Dashboard
     .addItem('📊 Abrir Dashboard Web', 'abrirDashboard')
+    .addItem('🔍 Diagnosticar Dashboard', 'diagnosticarDashboard')
     .addItem('🌐 Instrucciones Web App', 'mostrarInstruccionesWebApp')
     .addSeparator()
 

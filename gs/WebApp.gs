@@ -16,6 +16,87 @@ function formatearGuaranies(num) {
   return new Intl.NumberFormat('es-PY').format(Math.round(num));
 }
 
+/**
+ * FUNCIÓN DE PRUEBA - Ejecutar para diagnosticar problemas del dashboard
+ * Muestra un popup con los valores que se leen de TABLERO
+ */
+function diagnosticarDashboard() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tablero = ss.getSheetByName(NOMBRES_HOJAS.TABLERO);
+  var movimiento = ss.getSheetByName(NOMBRES_HOJAS.MOVIMIENTO);
+
+  var resultado = '=== DIAGNÓSTICO DASHBOARD ===\n\n';
+
+  // Verificar hojas
+  resultado += '1. VERIFICACIÓN DE HOJAS:\n';
+  resultado += '   - TABLERO: ' + (tablero ? '✓ EXISTE' : '✗ NO EXISTE') + '\n';
+  resultado += '   - MOVIMIENTO: ' + (movimiento ? '✓ EXISTE' : '✗ NO EXISTE') + '\n\n';
+
+  if (!tablero) {
+    SpreadsheetApp.getUi().alert('ERROR', resultado + '\n\nLa hoja TABLERO no existe. Ejecute "Reinicializar Sistema".', SpreadsheetApp.getUi().ButtonSet.OK);
+    return;
+  }
+
+  // Posiciones calculadas
+  var FILA_VALORES_FAM = 8 + CUENTAS_FAMILIA.length + 4;  // 8 + 10 + 4 = 22
+  var FILA_AHORRO_FAM = FILA_VALORES_FAM + 3;  // 25
+  var FILA_VALORES_NT = 8 + CUENTAS_NT.length + 5;  // 8 + 2 + 5 = 15
+  var FILA_GANANCIA_NT = FILA_VALORES_NT + 6;  // 21
+
+  resultado += '2. POSICIONES CALCULADAS:\n';
+  resultado += '   FAMILIA - Ingresos/Egresos: Fila ' + FILA_VALORES_FAM + '\n';
+  resultado += '   FAMILIA - Ahorro/Fondo: Fila ' + FILA_AHORRO_FAM + '\n';
+  resultado += '   NEUROTEA - Ingresos/Egresos: Fila ' + FILA_VALORES_NT + '\n';
+  resultado += '   NEUROTEA - Ganancia/Meta: Fila ' + FILA_GANANCIA_NT + '\n\n';
+
+  resultado += '3. VALORES LEÍDOS DE TABLERO:\n\n';
+
+  // FAMILIA
+  resultado += '   === FAMILIA ===\n';
+  var ingFam = tablero.getRange(FILA_VALORES_FAM, 2).getValue();
+  var egrFam = tablero.getRange(FILA_VALORES_FAM, 4).getValue();
+  var ahoFam = tablero.getRange(FILA_AHORRO_FAM, 2).getValue();
+  var fonFam = tablero.getRange(FILA_AHORRO_FAM, 4).getValue();
+  resultado += '   B' + FILA_VALORES_FAM + ' (Ingresos): ' + ingFam + ' (tipo: ' + typeof ingFam + ')\n';
+  resultado += '   D' + FILA_VALORES_FAM + ' (Egresos): ' + egrFam + ' (tipo: ' + typeof egrFam + ')\n';
+  resultado += '   B' + FILA_AHORRO_FAM + ' (Ahorro): ' + ahoFam + ' (tipo: ' + typeof ahoFam + ')\n';
+  resultado += '   D' + FILA_AHORRO_FAM + ' (Fondo): ' + fonFam + ' (tipo: ' + typeof fonFam + ')\n\n';
+
+  // NEUROTEA
+  resultado += '   === NEUROTEA ===\n';
+  var ingNT = tablero.getRange(FILA_VALORES_NT, 8).getValue();
+  var egrNT = tablero.getRange(FILA_VALORES_NT, 10).getValue();
+  var ganNT = tablero.getRange(FILA_GANANCIA_NT, 8).getValue();
+  var metNT = tablero.getRange(FILA_GANANCIA_NT, 10).getValue();
+  resultado += '   H' + FILA_VALORES_NT + ' (Ingresos): ' + ingNT + ' (tipo: ' + typeof ingNT + ')\n';
+  resultado += '   J' + FILA_VALORES_NT + ' (Egresos): ' + egrNT + ' (tipo: ' + typeof egrNT + ')\n';
+  resultado += '   H' + FILA_GANANCIA_NT + ' (Ganancia): ' + ganNT + ' (tipo: ' + typeof ganNT + ')\n';
+  resultado += '   J' + FILA_GANANCIA_NT + ' (Meta): ' + metNT + ' (tipo: ' + typeof metNT + ')\n\n';
+
+  // Verificar contenido de celdas clave
+  resultado += '4. CONTENIDO DE CELDAS CLAVE:\n';
+  resultado += '   B22 (debe decir el número de ingresos):\n';
+  resultado += '   "' + tablero.getRange('B22').getValue() + '"\n';
+  resultado += '   H15 (debe decir el número de ingresos NT):\n';
+  resultado += '   "' + tablero.getRange('H15').getValue() + '"\n\n';
+
+  resultado += '5. CONCLUSIÓN:\n';
+  var valido = (typeof ingFam === 'number' && ingFam > 0);
+  if (valido) {
+    resultado += '   ✓ Los datos se leen correctamente.\n';
+    resultado += '   Si el dashboard web no muestra datos, el problema\n';
+    resultado += '   puede estar en la generación del HTML o Chart.js.';
+  } else {
+    resultado += '   ✗ Los datos NO se leen correctamente.\n';
+    resultado += '   Verifique que:\n';
+    resultado += '   1. Ha ejecutado "Reinicializar Sistema" recientemente\n';
+    resultado += '   2. Las fórmulas de TABLERO están calculando\n';
+    resultado += '   3. MOVIMIENTO tiene el mes seleccionado\n';
+  }
+
+  SpreadsheetApp.getUi().alert('Diagnóstico Dashboard', resultado, SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DATA COLLECTION - Comprehensive data for both dashboards
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -30,16 +111,30 @@ function obtenerDatosDashboard() {
   var gastosFijos = ss.getSheetByName(NOMBRES_HOJAS.GASTOS_FIJOS);
   var presupuesto = ss.getSheetByName(NOMBRES_HOJAS.PRESUPUESTO);
 
+  // DEBUG: Verificar que las hojas existen
+  console.log('=== DIAGNÓSTICO WebApp ===');
+  console.log('Hoja TABLERO existe:', !!tablero);
+  console.log('Hoja MOVIMIENTO existe:', !!movimiento);
+  console.log('Hoja CONFIG existe:', !!config);
+
   var mesSeleccionado = movimiento ? movimiento.getRange('B3').getValue() : 'Enero';
   var mesNum = MESES.indexOf(mesSeleccionado) + 1;
+  console.log('Mes seleccionado:', mesSeleccionado, '- Número:', mesNum);
 
-  function leerNumero(rango) {
+  function leerNumero(rango, debug) {
     try {
       var val = rango.getValue();
+      if (debug) {
+        var celda = rango.getA1Notation();
+        console.log('  RAW [' + celda + ']:', val, '(tipo:', typeof val + ')');
+      }
       if (val === '' || val === null || val === undefined) return 0;
       var num = Number(val);
       return isNaN(num) ? 0 : num;
-    } catch(e) { return 0; }
+    } catch(e) {
+      console.log('  ERROR leyendo celda:', e.message);
+      return 0;
+    }
   }
 
   // ═══ METAS FROM CONFIG (v7.28: rows B43-B47) ═══
@@ -101,28 +196,32 @@ function obtenerDatosDashboard() {
   var utilidadDueno = 0, fondoEmergenciaNT = 0, fondoInversionNT = 0;
   var egresosPendientesNT = 0;
   if (tablero) {
+    // DEBUG: Mostrar valores RAW NEUROTEA
+    console.log('--- NEUROTEA (fila valores', FILA_VALORES_NT, '/ fila ganancia', FILA_GANANCIA_NT, '/ fila dist', FILA_DISTRIBUCION_NT + 1, ') ---');
     // Fila 15: INGRESOS (H15:I15 merged) y EGRESOS (J15:K15 merged)
-    ingresosNT = leerNumero(tablero.getRange(FILA_VALORES_NT, 8));   // Columna H = INGRESOS
-    gastosNT = leerNumero(tablero.getRange(FILA_VALORES_NT, 10));    // Columna J = EGRESOS
+    ingresosNT = leerNumero(tablero.getRange(FILA_VALORES_NT, 8), true);   // Columna H = INGRESOS
+    gastosNT = leerNumero(tablero.getRange(FILA_VALORES_NT, 10), true);    // Columna J = EGRESOS
     // Fila 21: GANANCIA (H21:I21 merged) y META (J21:K21 merged)
-    gananciaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 8));  // Columna H = GANANCIA
-    metaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 10));     // Columna J = META
+    gananciaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 8), true);  // Columna H = GANANCIA
+    metaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 10), true);     // Columna J = META
     // Fila 28: Distribución valores (H=Utilidad, I=Emergencia, J:K=Inversión)
-    utilidadDueno = leerNumero(tablero.getRange(FILA_DISTRIBUCION_NT + 1, 8));
-    fondoEmergenciaNT = leerNumero(tablero.getRange(FILA_DISTRIBUCION_NT + 1, 9));
-    fondoInversionNT = leerNumero(tablero.getRange(FILA_DISTRIBUCION_NT + 1, 10));
+    utilidadDueno = leerNumero(tablero.getRange(FILA_DISTRIBUCION_NT + 1, 8), true);
+    fondoEmergenciaNT = leerNumero(tablero.getRange(FILA_DISTRIBUCION_NT + 1, 9), true);
+    fondoInversionNT = leerNumero(tablero.getRange(FILA_DISTRIBUCION_NT + 1, 10), true);
   }
 
   // ═══ FAMILIA RESUMEN (columnas B=2, C=3, D=4, E=5) ═══
   var ingresosFamReal = 0, egresosFamReal = 0, egresosPendientesFam = 0;
   var ahorroFam = 0, fondoEmergenciaFam = 0;
   if (tablero) {
+    // DEBUG: Mostrar valores RAW
+    console.log('--- FAMILIA (fila', FILA_VALORES_FAM, '/ fila ahorro', FILA_AHORRO_FAM, ') ---');
     // Fila 22: INGRESOS (B22:C22 merged) y EGRESOS (D22:E22 merged)
-    ingresosFamReal = leerNumero(tablero.getRange(FILA_VALORES_FAM, 2));   // Columna B = INGRESOS
-    egresosFamReal = leerNumero(tablero.getRange(FILA_VALORES_FAM, 4));    // Columna D = EGRESOS
+    ingresosFamReal = leerNumero(tablero.getRange(FILA_VALORES_FAM, 2), true);   // Columna B = INGRESOS
+    egresosFamReal = leerNumero(tablero.getRange(FILA_VALORES_FAM, 4), true);    // Columna D = EGRESOS
     // Fila 25: AHORRO (B25:C25 merged) y FONDO (D25:E25 merged)
-    ahorroFam = leerNumero(tablero.getRange(FILA_AHORRO_FAM, 2));          // Columna B = AHORRO
-    fondoEmergenciaFam = leerNumero(tablero.getRange(FILA_AHORRO_FAM, 4)); // Columna D = FONDO
+    ahorroFam = leerNumero(tablero.getRange(FILA_AHORRO_FAM, 2), true);          // Columna B = AHORRO
+    fondoEmergenciaFam = leerNumero(tablero.getRange(FILA_AHORRO_FAM, 4), true); // Columna D = FONDO
   }
 
   // Read MOVIMIENTO for FAMILIA/NEUROTEA pendientes (ahorro/fondo ya leídos de TABLERO)
