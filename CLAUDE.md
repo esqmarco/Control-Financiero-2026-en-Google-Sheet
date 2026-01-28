@@ -1473,6 +1473,30 @@ function estaEnModoAutoCreacion() {
 
 ---
 
+## Bug Fixes [2026-01-28] - v7.32 (CRÍTICO)
+
+### Dashboard v3.0 mostraba todos los KPIs en cero
+- **Problema**: `obtenerDatosDashboard()` en WebApp.gs usaba cálculos de filas incorrectos para leer de TABLERO
+- **Causa raíz FAMILIA**: El código esperaba que INGRESOS y EGRESOS estuvieran en filas separadas, pero ambos están en la misma fila (22), solo en columnas diferentes (B y D)
+- **Causa raíz NEUROTEA**: El código leía cuentas de fila 24 (debía ser 8) e indicadores de fila 9 (debía ser 15)
+- **Impacto**: Todas las tarjetas KPI mostraban "Gs. 0", gráficos mostraban "Sin datos"
+- **Solución**: Recalculados los offsets de filas:
+  - `FILA_INICIO_CUENTAS_NT = 8` (no 24)
+  - `FILA_VALORES_FAM = 22` (INGRESOS en col B, EGRESOS en col D)
+  - `FILA_VALORES_NT = 15` (INGRESOS en col H, EGRESOS en col J)
+  - `FILA_GANANCIA_NT = 21` (GANANCIA en col H, META en col J)
+- **Archivos modificados**: WebApp.gs (`obtenerDatosDashboard()`)
+
+### Ahorro y Fondo se leían duplicados
+- **Problema**: Se leían de TABLERO y luego se sumaban OTRA VEZ desde MOVIMIENTO
+- **Solución**: Eliminada lectura redundante de MOVIMIENTO
+
+### Variables no definidas causaban errores silenciosos
+- **Problema**: `FILA_CAJA_DISP`, `FILA_SEMANA_1`, `FILA_BALANCE_CRUZADO` nunca fueron definidas tras refactor
+- **Solución**: Simplificada lectura - liquidez calculada desde disponible/pendientes, balance cruzado desde flujoMensual
+
+---
+
 ## LECCIONES APRENDIDAS (NO IGNORAR)
 
 > Ver también: `.claude/rules/errores-historicos.md` para lista completa de bugs resueltos.
@@ -1519,6 +1543,20 @@ function estaEnModoAutoCreacion() {
 ### Rangos en MOVIMIENTO
 - FAMILIA: filas **9-116** (NO 9-70)
 - NEUROTEA: filas **122-206** (NO 73-150)
+
+### Posiciones en TABLERO (v7.32)
+- **FAMILIA** (columnas B-E, cols 2-5):
+  - Cuentas: filas 8-17 (10 cuentas)
+  - Total: fila 18
+  - Indicadores (INGRESOS/EGRESOS): fila 22 (B=INGRESOS, D=EGRESOS)
+  - Ahorro/Fondo: fila 25 (B=AHORRO, D=FONDO)
+- **NEUROTEA** (columnas H-K, cols 8-11):
+  - Cuentas: filas 8-9 (2 cuentas) - **MISMAS FILAS que FAMILIA**
+  - Total: fila 10
+  - Indicadores (INGRESOS/EGRESOS): fila 15 (H=INGRESOS, J=EGRESOS)
+  - Ganancia/Meta: fila 21 (H=GANANCIA, J=META)
+  - Distribución: fila 28 (H=Utilidad, I=Emergencia, J=Inversión)
+- **IMPORTANTE**: INGRESOS y EGRESOS están en la **MISMA FILA**, diferentes columnas
 
 ### Workflow Anti-Errores
 1. Después de cambios en gs/ → ejecutar `/verificar`
@@ -1588,5 +1626,5 @@ function estaEnModoAutoCreacion() {
 
 ---
 
-*Última actualización: 2026-01-27*
-*Versión: 7.31 - Fix: encontrarPrimeraFilaVacia con ARRAYFORMULA + Dashboard v3.0*
+*Última actualización: 2026-01-28*
+*Versión: 7.32 - Fix: Dashboard v3.0 lectura de TABLERO con filas/columnas correctas*

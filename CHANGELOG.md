@@ -4,6 +4,30 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [7.32] - 2026-01-28
+
+### Fixed
+- **Dashboard v3.0 mostraba todos los KPIs en cero (BUG CRÍTICO)**
+  - `obtenerDatosDashboard()` en WebApp.gs usaba cálculos de filas incorrectos para leer de TABLERO
+  - FAMILIA: Esperaba valores en filas separadas, pero INGRESOS y EGRESOS están en la misma fila (22), columnas B y D
+  - NEUROTEA: Cuentas se leían de fila 24 cuando realmente están en fila 8; indicadores de fila 9 cuando están en fila 15
+  - Fix: Recalculados `FILA_INICIO_CUENTAS_NT=8`, `FILA_VALORES_FAM=22`, `FILA_VALORES_NT=15`, `FILA_GANANCIA_NT=21`
+- **Ahorro y Fondo Emergencia se leían duplicados**
+  - Se leían de TABLERO y también se sumaban desde MOVIMIENTO
+  - Fix: Eliminada lectura redundante de MOVIMIENTO; ahora solo se leen de TABLERO (filas 22 y 25)
+- **Liquidez y Balance Cruzado usaban variables no definidas**
+  - Variables `FILA_CAJA_DISP`, `FILA_SEMANA_1`, `FILA_BALANCE_CRUZADO` nunca fueron definidas tras refactor
+  - Fix: Simplificada lectura de liquidez (calculada desde disponible/pendientes) y balance cruzado (calculado desde flujoMensual)
+
+### Technical
+- Mapa de filas TABLERO documentado:
+  - FAMILIA: Cuentas 8-17, Total 18, Indicadores 22/25
+  - NEUROTEA: Cuentas 8-9, Total 10, Indicadores 15, Ganancia 21, Distribución 28
+- Columnas FAMILIA: B=2, C=3, D=4, E=5
+- Columnas NEUROTEA: H=8, I=9, J=10, K=11
+
+---
+
 ## [7.31] - 2026-01-27
 
 ### Fixed
