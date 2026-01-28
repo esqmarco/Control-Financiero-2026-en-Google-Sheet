@@ -1154,23 +1154,28 @@ function crearHojaMOVIMIENTO() {
   row++;
 
   // v7.14: Textos únicos para que TABLERO use INDEX/MATCH
+  // v7.36: Agregadas fórmulas columna E (PRESUPUESTO) para consistencia con TABLERO
   // TOTAL INGRESOS FAMILIA
   sheet.getRange(row, 1).setValue('📥 TOTAL INGRESOS FAMILIA');
-  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIF(B${filaInicioFam}:B${filaFinFam};"Ingreso";F${filaInicioFam}:F${filaFinFam});0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(SUMIF(B${filaInicioFam}:B${filaFinFam};"Ingreso";E${filaInicioFam}:E${filaFinFam});0)`); // PRESUP
+  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIF(B${filaInicioFam}:B${filaFinFam};"Ingreso";F${filaInicioFam}:F${filaFinFam});0)`); // REAL
   sheet.getRange(row, 1, 1, 11).setBackground(C.VERDE_FONDO);
   const filaTotalIngresosFam = row;
   row++;
 
   // TOTAL EGRESOS PAGADOS FAMILIA (solo gastos reales, sin AHORRO)
+  // Presupuesto = TODOS los egresos, porque presupuesto no tiene estado de pago
   sheet.getRange(row, 1).setValue('📤 TOTAL EGRESOS PAGADOS FAMILIA');
-  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioFam}:F${filaFinFam};B${filaInicioFam}:B${filaFinFam};"Egreso";J${filaInicioFam}:J${filaFinFam};"Pagado");0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(SUMIF(B${filaInicioFam}:B${filaFinFam};"Egreso";E${filaInicioFam}:E${filaFinFam});0)`); // PRESUP (todos)
+  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioFam}:F${filaFinFam};B${filaInicioFam}:B${filaFinFam};"Egreso";J${filaInicioFam}:J${filaFinFam};"Pagado");0)`); // REAL (pagados)
   sheet.getRange(row, 1, 1, 11).setBackground(C.ROJO_FONDO);
   const filaTotalEgresosPagadosFam = row;
   row++;
 
   // TOTAL AHORRO FAMILIA (suma de TIPO="Ahorro" con EST.PAGO="Ahorrado")
   sheet.getRange(row, 1).setValue('💰 TOTAL AHORRO FAMILIA');
-  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIF(B${filaInicioFam}:B${filaFinFam};"Ahorro";F${filaInicioFam}:F${filaFinFam});0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(SUMIF(B${filaInicioFam}:B${filaFinFam};"Ahorro";E${filaInicioFam}:E${filaFinFam});0)`); // PRESUP
+  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIF(B${filaInicioFam}:B${filaFinFam};"Ahorro";F${filaInicioFam}:F${filaFinFam});0)`); // REAL
   sheet.getRange(row, 1, 1, 11).setBackground(C.VERDE_FONDO);
   const filaTotalAhorroFam = row;
   row++;
@@ -1237,16 +1242,19 @@ function crearHojaMOVIMIENTO() {
   row++;
 
   // v7.14: Textos únicos para que TABLERO use INDEX/MATCH
+  // v7.36: Agregadas fórmulas columna E (PRESUPUESTO) para consistencia con TABLERO
   // TOTAL INGRESOS NT
   sheet.getRange(row, 1).setValue('📥 TOTAL INGRESOS NT');
-  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIF(B${filaInicioNT}:B${filaFinNT};"Ingreso";F${filaInicioNT}:F${filaFinNT});0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(SUMIF(B${filaInicioNT}:B${filaFinNT};"Ingreso";E${filaInicioNT}:E${filaFinNT});0)`); // PRESUP
+  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIF(B${filaInicioNT}:B${filaFinNT};"Ingreso";F${filaInicioNT}:F${filaFinNT});0)`); // REAL
   sheet.getRange(row, 1, 1, 11).setBackground(C.VERDE_FONDO);
   const filaTotalIngresosNT = row;
   row++;
 
-  // TOTAL EGRESOS PAGADOS NT
+  // TOTAL EGRESOS PAGADOS NT (Presupuesto = TODOS los egresos, porque presupuesto no tiene estado de pago)
   sheet.getRange(row, 1).setValue('📤 TOTAL EGRESOS PAGADOS NT');
-  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioNT}:F${filaFinNT};B${filaInicioNT}:B${filaFinNT};"Egreso";J${filaInicioNT}:J${filaFinNT};"Pagado");0)`);
+  sheet.getRange(row, 5).setFormula(`=IFERROR(SUMIF(B${filaInicioNT}:B${filaFinNT};"Egreso";E${filaInicioNT}:E${filaFinNT});0)`); // PRESUP (todos)
+  sheet.getRange(row, 6).setFormula(`=IFERROR(SUMIFS(F${filaInicioNT}:F${filaFinNT};B${filaInicioNT}:B${filaFinNT};"Egreso";J${filaInicioNT}:J${filaFinNT};"Pagado");0)`); // REAL (pagados)
   sheet.getRange(row, 1, 1, 11).setBackground(C.ROJO_FONDO);
   const filaTotalEgresosPagadosNT = row;
   row++;
