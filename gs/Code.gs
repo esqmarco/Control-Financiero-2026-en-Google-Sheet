@@ -157,42 +157,51 @@ function inicializarSistemaCompleto() {
   );
 }
 
-function reinicializarSistema() {
-  const ui = SpreadsheetApp.getUi();
-
-  const resultado = ui.alert(
-    '⚠️ Reinicializar Sistema',
-    '¿Estás seguro de querer BORRAR y RECREAR todas las hojas?\n\n' +
-    '🔴 ADVERTENCIA: Se perderán TODOS los datos actuales.\n\n' +
-    'Esta acción no se puede deshacer.',
-    ui.ButtonSet.YES_NO
-  );
-
-  if (resultado !== ui.Button.YES) return;
-
-  const confirmacion = ui.alert(
-    '⚠️ Confirmación Final',
-    '¿Confirmas que deseas BORRAR todos los datos y recrear el sistema?',
-    ui.ButtonSet.YES_NO
-  );
-
-  if (confirmacion !== ui.Button.YES) return;
-
-  inicializarSistemaCompleto();
-}
-
 /**
- * v7.33: Versión sin confirmación para ejecutar desde el editor de Apps Script
- * ADVERTENCIA: Borra todos los datos sin preguntar
- *
- * Ejecutar desde el editor de Apps Script:
- * 1. Seleccionar esta función en el dropdown
- * 2. Click en "Ejecutar"
+ * v7.33: Funciona tanto desde el menú del spreadsheet como desde el editor de Apps Script
+ * - Desde menú: Muestra confirmaciones UI y luego crea hojas
+ * - Desde editor: Detecta el error de getUi() y crea hojas directamente
  */
-function reinicializarSistemaSinConfirm() {
-  console.log('⚠️ Iniciando reinicialización sin confirmación...');
-  _crearTodasLasHojas();
-  console.log('✅ Reinicialización completada');
+function reinicializarSistema() {
+  try {
+    // Intentar usar UI (solo funciona desde menú del spreadsheet)
+    const ui = SpreadsheetApp.getUi();
+
+    const resultado = ui.alert(
+      '⚠️ Reinicializar Sistema',
+      '¿Estás seguro de querer BORRAR y RECREAR todas las hojas?\n\n' +
+      '🔴 ADVERTENCIA: Se perderán TODOS los datos actuales.\n\n' +
+      'Esta acción no se puede deshacer.',
+      ui.ButtonSet.YES_NO
+    );
+
+    if (resultado !== ui.Button.YES) return;
+
+    const confirmacion = ui.alert(
+      '⚠️ Confirmación Final',
+      '¿Confirmas que deseas BORRAR todos los datos y recrear el sistema?',
+      ui.ButtonSet.YES_NO
+    );
+
+    if (confirmacion !== ui.Button.YES) return;
+
+    // Ejecutar con UI disponible
+    _crearTodasLasHojas();
+
+    ui.alert(
+      '✅ Sistema Reinicializado',
+      'Todas las hojas han sido recreadas exitosamente.',
+      ui.ButtonSet.OK
+    );
+
+  } catch (e) {
+    // Si getUi() falla, estamos en el editor de Apps Script
+    // Ejecutar directamente sin confirmación
+    console.log('⚠️ Ejecutando desde editor de Apps Script (sin UI)...');
+    console.log('Creando todas las hojas...');
+    _crearTodasLasHojas();
+    console.log('✅ Reinicialización completada exitosamente');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
