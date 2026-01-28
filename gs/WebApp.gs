@@ -160,7 +160,7 @@ function obtenerDatosDashboard() {
     saldoFinal: ingresosFamReal - egresosFamReal - egresosPendientesFam
   };
 
-  // ═══ BALANCE CRUZADO - Calculado desde CARGA ═══
+  // ═══ BALANCE CRUZADO - Se calcula después de leer CARGA ═══
   var balanceCruzado = {
     prestamoNTMes: 0, prestamoNTAcum: 0, devFamMes: 0, devFamAcum: 0,
     deudaFamMes: 0, deudaFamAcum: 0,
@@ -168,7 +168,11 @@ function obtenerDatosDashboard() {
     deudaNTMes: 0, deudaNTAcum: 0,
     balanceNetoMes: 0, balanceNeto: 0
   };
-  // Balance cruzado se calculará desde flujoMensual más adelante
+  // Variables para acumular préstamos y devoluciones separados
+  var prestamosNT = new Array(12).fill(0);  // NT presta a FAM
+  var devolucionesFam = new Array(12).fill(0);  // FAM devuelve a NT
+  var prestamosFam = new Array(12).fill(0);  // FAM presta a NT
+  var devolucionesNT = new Array(12).fill(0);  // NT devuelve a FAM
 
   // ═══ CATEGORY BREAKDOWN FROM MOVIMIENTO ═══
   var categoriasFamilia = [];
@@ -243,12 +247,22 @@ function obtenerDatosDashboard() {
       }
 
       // Flujo cruzado NT→FAM (ingresos en FAM provenientes de NT)
-      if (tipoC === 'Préstamo NeuroTEA' || tipoC === 'Devolución NeuroTEA') {
+      if (tipoC === 'Préstamo NeuroTEA') {
         flujoMensual.ntToFam[mesC] += montoC;
+        prestamosNT[mesC] += montoC;  // NT presta a FAM
+      }
+      if (tipoC === 'Devolución NeuroTEA') {
+        flujoMensual.ntToFam[mesC] += montoC;
+        devolucionesNT[mesC] += montoC;  // NT devuelve a FAM
       }
       // Flujo cruzado FAM→NT (egresos de FAM hacia NT)
-      if (subcatC === 'Préstamo Familia → NT' || subcatC === 'Devolución Familia → NT') {
+      if (subcatC === 'Préstamo Familia → NT') {
         flujoMensual.famToNT[mesC] += montoC;
+        prestamosFam[mesC] += montoC;  // FAM presta a NT
+      }
+      if (subcatC === 'Devolución Familia → NT') {
+        flujoMensual.famToNT[mesC] += montoC;
+        devolucionesFam[mesC] += montoC;  // FAM devuelve a NT
       }
     }
   }
@@ -277,12 +291,22 @@ function obtenerDatosDashboard() {
       }
 
       // Flujo cruzado FAM→NT (ingresos en NT provenientes de FAM)
-      if (tipoN === 'Préstamo Familia' || tipoN === 'Devolución Familia → NT') {
+      if (tipoN === 'Préstamo Familia') {
         flujoMensual.famToNT[mesN] += montoN;
+        prestamosFam[mesN] += montoN;  // FAM presta a NT
+      }
+      if (tipoN === 'Devolución Familia → NT') {
+        flujoMensual.famToNT[mesN] += montoN;
+        devolucionesFam[mesN] += montoN;  // FAM devuelve a NT
       }
       // Flujo cruzado NT→FAM (egresos de NT hacia FAM)
-      if (subcatN === 'Préstamo NT → Familia' || subcatN === 'Devolución NT → Familia') {
+      if (subcatN === 'Préstamo NT → Familia') {
         flujoMensual.ntToFam[mesN] += montoN;
+        prestamosNT[mesN] += montoN;  // NT presta a FAM
+      }
+      if (subcatN === 'Devolución NT → Familia') {
+        flujoMensual.ntToFam[mesN] += montoN;
+        devolucionesNT[mesN] += montoN;  // NT devuelve a FAM
       }
     }
   }
@@ -331,6 +355,29 @@ function obtenerDatosDashboard() {
       }
     }
   }
+
+  // ═══ CALCULAR BALANCE CRUZADO ═══
+  var mesIdx = mesNum - 1;  // 0-indexed
+  // Del mes actual
+  balanceCruzado.prestamoNTMes = prestamosNT[mesIdx];
+  balanceCruzado.devFamMes = devolucionesFam[mesIdx];
+  balanceCruzado.prestamoFamMes = prestamosFam[mesIdx];
+  balanceCruzado.devNTMes = devolucionesNT[mesIdx];
+  // Acumulados (suma de todos los meses hasta el actual)
+  for (var bc = 0; bc <= mesIdx; bc++) {
+    balanceCruzado.prestamoNTAcum += prestamosNT[bc];
+    balanceCruzado.devFamAcum += devolucionesFam[bc];
+    balanceCruzado.prestamoFamAcum += prestamosFam[bc];
+    balanceCruzado.devNTAcum += devolucionesNT[bc];
+  }
+  // Deudas = Préstamos - Devoluciones
+  balanceCruzado.deudaFamMes = balanceCruzado.prestamoNTMes - balanceCruzado.devFamMes;
+  balanceCruzado.deudaFamAcum = balanceCruzado.prestamoNTAcum - balanceCruzado.devFamAcum;
+  balanceCruzado.deudaNTMes = balanceCruzado.prestamoFamMes - balanceCruzado.devNTMes;
+  balanceCruzado.deudaNTAcum = balanceCruzado.prestamoFamAcum - balanceCruzado.devNTAcum;
+  // Balance Neto = Deuda FAM a NT - Deuda NT a FAM (positivo = FAM debe a NT)
+  balanceCruzado.balanceNetoMes = balanceCruzado.deudaFamMes - balanceCruzado.deudaNTMes;
+  balanceCruzado.balanceNeto = balanceCruzado.deudaFamAcum - balanceCruzado.deudaNTAcum;
 
   // ═══ RETURN COMPLETE DATA ═══
   var disponibleFam = ingresosFamReal - egresosFamReal - ahorroFam - fondoEmergenciaFam;
