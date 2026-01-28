@@ -99,8 +99,16 @@ Este skill permite generar y mantener el Dashboard Financiero del Sistema de Con
 5. **Graficos**: Ver `references/charts.md` para tipos de visualizacion
 6. **DISPONIBLE = SUM(Esperado)**: Nunca calcular independientemente de las cuentas
 7. **IFERROR proteccion**: Todas las formulas SUMPRODUCT deben usar `IFERROR(MONTH();0)` internamente
-8. **IDs unicos**: SVG markers usan IDs con chartId suffix para evitar colisiones entre tabs
-9. **Destroy/Recreate**: Charts se destruyen al cambiar tab para evitar "Canvas already in use"
+8. **TRIM proteccion (v7.35)**: Comparaciones de strings deben usar `TRIM()`: `(TRIM(rango)=TRIM(celda))`
+9. **IDs unicos**: SVG markers usan IDs con chartId suffix para evitar colisiones entre tabs
+10. **Destroy/Recreate**: Charts se destruyen al cambiar tab para evitar "Canvas already in use"
+
+## Rangos Criticos (v7.35)
+
+| Entidad | MOVIMIENTO | CONFIG Saldos |
+|---------|------------|---------------|
+| FAMILIA | 9-116 | 68-77 |
+| NEUROTEA | 122-206 | 82-83 |
 
 ## Referencias
 
