@@ -322,7 +322,7 @@ function crearHojaPRESUPUESTO() {
   row += 2;
 
   // ─── INGRESOS FAMILIA ───
-  result = escribirSeccionPresupuesto(sheet, row, '▶ INGRESOS FAMILIA', INGRESOS_FAMILIA, 'Ingreso', C.FAM_FONDO, C.FAM_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ INGRESOS FAMILIA', INGRESOS_FAMILIA, 'Ingreso', C.FAM_FONDO, C.FAM_SUBTOTAL, 'FAMILIA');
   row = result.row;
   const filaSubtotalIngresosFam = result.filaSubtotal;
 
@@ -339,22 +339,22 @@ function crearHojaPRESUPUESTO() {
   // ─── EGRESOS FAMILIA ───
   const filasSubtotalesEgresosFam = [];
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ GASTOS FIJOS', GASTOS_FIJOS_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ GASTOS FIJOS', GASTOS_FIJOS_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL, 'FAMILIA');
   row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ CUOTAS Y PRÉSTAMOS', CUOTAS_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ CUOTAS Y PRÉSTAMOS', CUOTAS_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL, 'FAMILIA');
   row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL, 'FAMILIA');
   row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ SUSCRIPCIONES', SUSCRIPCIONES_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ SUSCRIPCIONES', SUSCRIPCIONES_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL, 'FAMILIA');
   row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL, 'FAMILIA');
   row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ AHORRO', AHORRO_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ AHORRO', AHORRO_FAM, 'Egreso', C.FAM_FONDO_ALT, C.FAM_SUBTOTAL, 'FAMILIA');
   row = result.row; filasSubtotalesEgresosFam.push(result.filaSubtotal);
 
   // TOTAL EGRESOS FAMILIA
@@ -389,7 +389,7 @@ function crearHojaPRESUPUESTO() {
   row += 2;
 
   // ─── INGRESOS NT ───
-  result = escribirSeccionPresupuesto(sheet, row, '▶ INGRESOS NEUROTEA', INGRESOS_NT, 'Ingreso', C.NT_FONDO, C.NT_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ INGRESOS NEUROTEA', INGRESOS_NT, 'Ingreso', C.NT_FONDO, C.NT_SUBTOTAL, 'NEUROTEA');
   row = result.row;
   const filaSubtotalIngresosNT = result.filaSubtotal;
 
@@ -406,23 +406,23 @@ function crearHojaPRESUPUESTO() {
   // ─── EGRESOS NT ───
   const filasSubtotalesEgresosNT = [];
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ CLÍNICA', CLINICA_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ CLÍNICA', CLINICA_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL, 'NEUROTEA');
   row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ SUELDOS Y HONORARIOS', SUELDOS_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ SUELDOS Y HONORARIOS', SUELDOS_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL, 'NEUROTEA');
   row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ TELEFONÍA E INTERNET', TELEFONIA_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ TELEFONÍA E INTERNET', TELEFONIA_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL, 'NEUROTEA');
   row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ OBLIGACIONES LEGALES', OBLIGACIONES_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL, 'NEUROTEA');
   row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
 
   // EVENTOS NT (especial)
   result = escribirSeccionEventos(sheet, row, C.NT_FONDO_ALT, C.NT_SUBTOTAL);
   row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
 
-  result = escribirSeccionPresupuesto(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL);
+  result = escribirSeccionPresupuesto(sheet, row, '▶ VARIABLES', VARIABLES_PRESUP_NT, 'Egreso', C.NT_FONDO_ALT, C.NT_SUBTOTAL, 'NEUROTEA');
   row = result.row; filasSubtotalesEgresosNT.push(result.filaSubtotal);
 
   // TOTAL EGRESOS NT (sin ganancia)
@@ -544,7 +544,8 @@ function crearHojaPRESUPUESTO() {
   return sheet;
 }
 
-function escribirSeccionPresupuesto(sheet, row, titulo, items, tipo, colorFondo, colorSubtotal) {
+function escribirSeccionPresupuesto(sheet, row, titulo, items, tipo, colorFondo, colorSubtotal, entidad) {
+  // v7.33: entidad agregada para pasar a obtenerReferenciaReserva
   // Título de sección
   sheet.getRange(row, 1, 1, 16).merge()
     .setValue(titulo)
@@ -556,8 +557,8 @@ function escribirSeccionPresupuesto(sheet, row, titulo, items, tipo, colorFondo,
 
   // Items
   items.forEach(item => {
-    // v7.20: Reservas usan fórmula referenciando fuente de verdad
-    const refReserva = obtenerReferenciaReserva(item.concepto);
+    // v7.33: Reservas usan fórmula referenciando fuente de verdad, pasando entidad para desambiguar
+    const refReserva = obtenerReferenciaReserva(item.concepto, entidad);
     if (refReserva) {
       sheet.getRange(row, 1).setFormula(refReserva);
     } else {
@@ -611,8 +612,8 @@ function escribirSeccionEventos(sheet, row, colorFondo, colorSubtotal) {
   const filaInicio = row;
 
   EVENTOS_NT.forEach(evento => {
-    // v7.20: Reservas de eventos referencian CONFIG dinámicamente
-    const refReserva = obtenerReferenciaReserva(evento.nombre);
+    // v7.33: Reservas de eventos referencian CONFIG dinámicamente (siempre NEUROTEA)
+    const refReserva = obtenerReferenciaReserva(evento.nombre, 'NEUROTEA');
     if (refReserva) {
       sheet.getRange(row, 1).setFormula(refReserva);
     } else {
@@ -1390,47 +1391,60 @@ function escribirSeccionMovimientoIngresos(sheet, row, titulo, items, entidad, c
   return row;
 }
 
-// ─── HELPER: Referencia dinámica para reservas (v7.20) ───
+// ─── HELPER: Referencia dinámica para reservas (v7.33) ───
 // Permite renombrar reservas en CONFIG o GASTOS_FIJOS y que MOVIMIENTO/PRESUPUESTO se actualicen
+// BUG FIX v7.33: Ahora recibe entidad para evitar confusión entre FAMILIA y NT
+// (Las reservas "Reserva Var. 1-5" existen en AMBOS arrays, hay que buscar en el correcto)
 
 /**
  * Obtiene la fórmula de referencia para el nombre de una reserva.
  *
  * Fuentes de verdad:
- *   - VARIABLES FAM/NT → CONFIG (cols C/G, filas 21+)
- *   - EVENTOS NT → CONFIG (col I, filas 21+)
- *   - Otros GASTOS_FIJOS → GASTOS_FIJOS!A (usuario renombra ahí)
+ *   - VARIABLES FAM → CONFIG col C, filas 21+
+ *   - VARIABLES NT → CONFIG col G, filas 21+
+ *   - EVENTOS NT → CONFIG col I, filas 21+
+ *   - GASTOS_FIJOS → GASTOS_FIJOS!A
  *
  * @param {string} concepto - Nombre original del concepto
+ * @param {string} entidad - 'FAMILIA' o 'NEUROTEA' para desambiguar reservas
  * @returns {string|null} Fórmula (ej: "=CONFIG!$G$30") o null si no es reserva
  */
-function obtenerReferenciaReserva(concepto) {
+function obtenerReferenciaReserva(concepto, entidad) {
   if (!concepto.includes('Reserva')) return null;
 
-  // ─── VARIABLES FAMILIA (CONFIG col C, items rows 21+) ───
-  const idxVarFam = VARIABLES_FAMILIA.indexOf(concepto);
-  if (idxVarFam >= 0) return `=CONFIG!$C$${21 + idxVarFam}`;
-
-  // ─── VARIABLES NT (CONFIG col G, items rows 21+) ───
-  const idxVarNT = VARIABLES_NT.indexOf(concepto);
-  if (idxVarNT >= 0) return `=CONFIG!$G$${21 + idxVarNT}`;
+  // ─── VARIABLES: Buscar según entidad para evitar confusión ───
+  // Las reservas "Reserva Var. 1-5" existen en AMBOS arrays
+  if (entidad === 'NEUROTEA') {
+    // Para NT, buscar primero en VARIABLES_NT (col G)
+    const idxVarNT = VARIABLES_NT.indexOf(concepto);
+    if (idxVarNT >= 0) return `=CONFIG!$G$${21 + idxVarNT}`;
+  } else {
+    // Para FAMILIA (o sin especificar), buscar en VARIABLES_FAMILIA (col C)
+    const idxVarFam = VARIABLES_FAMILIA.indexOf(concepto);
+    if (idxVarFam >= 0) return `=CONFIG!$C$${21 + idxVarFam}`;
+  }
 
   // ─── EVENTOS NT (CONFIG col I, items rows 21+) ───
+  // Solo aplica a NEUROTEA, pero verificamos de todas formas
   const eventosNombres = EVENTOS_NT.map(e => e.nombre);
   const idxEvt = eventosNombres.indexOf(concepto);
   if (idxEvt >= 0) return `=CONFIG!$I$${21 + idxEvt}`;
 
-  // ─── GASTOS_FIJOS FAMILIA (GASTOS_FIJOS!A, items rows 8+) ───
+  // ─── GASTOS_FIJOS: Buscar según entidad ───
   const FILA_INICIO_GF_FAM = 8;
   const gastosFam = [...GASTOS_FIJOS_FAM, ...CUOTAS_FAM, ...OBLIGACIONES_FAM, ...SUSCRIPCIONES_FAM];
-  const idxGFFam = gastosFam.findIndex(g => g.concepto === concepto);
-  if (idxGFFam >= 0) return `=GASTOS_FIJOS!$A$${FILA_INICIO_GF_FAM + idxGFFam}`;
 
-  // ─── GASTOS_FIJOS NEUROTEA (GASTOS_FIJOS!A, after FAMILIA + 4 rows gap) ───
-  const FILA_INICIO_GF_NT = FILA_INICIO_GF_FAM + gastosFam.length + 4;
-  const gastosNT = [...CLINICA_NT, ...SUELDOS_NT, ...TELEFONIA_NT, ...OBLIGACIONES_NT, ...EVENTOS_GASTOS_NT];
-  const idxGFNT = gastosNT.findIndex(g => g.concepto === concepto);
-  if (idxGFNT >= 0) return `=GASTOS_FIJOS!$A$${FILA_INICIO_GF_NT + idxGFNT}`;
+  if (entidad === 'NEUROTEA') {
+    // Para NT, buscar en sección NEUROTEA de GASTOS_FIJOS
+    const FILA_INICIO_GF_NT = FILA_INICIO_GF_FAM + gastosFam.length + 4;
+    const gastosNT = [...CLINICA_NT, ...SUELDOS_NT, ...TELEFONIA_NT, ...OBLIGACIONES_NT, ...EVENTOS_GASTOS_NT];
+    const idxGFNT = gastosNT.findIndex(g => g.concepto === concepto);
+    if (idxGFNT >= 0) return `=GASTOS_FIJOS!$A$${FILA_INICIO_GF_NT + idxGFNT}`;
+  } else {
+    // Para FAMILIA, buscar en sección FAMILIA de GASTOS_FIJOS
+    const idxGFFam = gastosFam.findIndex(g => g.concepto === concepto);
+    if (idxGFFam >= 0) return `=GASTOS_FIJOS!$A$${FILA_INICIO_GF_FAM + idxGFFam}`;
+  }
 
   return null; // No es reserva conocida
 }
@@ -1451,8 +1465,8 @@ function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, co
   const filaInicio = row;
 
   items.forEach(item => {
-    // v7.20: Reservas usan fórmula referenciando fuente de verdad (CONFIG o GASTOS_FIJOS)
-    const refReserva = obtenerReferenciaReserva(item.concepto);
+    // v7.33: Reservas usan fórmula referenciando fuente de verdad, con entidad para desambiguar
+    const refReserva = obtenerReferenciaReserva(item.concepto, entidad);
     if (refReserva) {
       sheet.getRange(row, 1).setFormula(refReserva);
     } else {
@@ -1534,8 +1548,8 @@ function escribirSeccionMovimientoVariables(sheet, row, titulo, items, entidad, 
   const hojaCarga = entidad === 'FAMILIA' ? 'CARGA_FAMILIA' : 'CARGA_NT';
 
   items.forEach(item => {
-    // v7.20: Reservas usan fórmula referenciando CONFIG (fuente de verdad para VARIABLES)
-    const refReserva = obtenerReferenciaReserva(item.concepto);
+    // v7.33: Reservas usan fórmula referenciando CONFIG, con entidad para desambiguar
+    const refReserva = obtenerReferenciaReserva(item.concepto, entidad);
     if (refReserva) {
       sheet.getRange(row, 1).setFormula(refReserva);
     } else {
@@ -1683,8 +1697,8 @@ function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal)
 
   // v7.7: Incluimos TODOS los eventos (incluyendo reservas)
   EVENTOS_NT.forEach(evento => {
-    // v7.20: Reservas de eventos referencian CONFIG dinámicamente
-    const refReserva = obtenerReferenciaReserva(evento.nombre);
+    // v7.33: Reservas de eventos referencian CONFIG dinámicamente (siempre NEUROTEA)
+    const refReserva = obtenerReferenciaReserva(evento.nombre, 'NEUROTEA');
     if (refReserva) {
       sheet.getRange(row, 1).setFormula(refReserva);
     } else {
