@@ -53,23 +53,20 @@ function obtenerDatosDashboard() {
   }
 
   // ═══ TABLERO - Dynamic row positions ═══
-  var FILA_INICIO_CUENTAS_FAM = 8;
-  var FILA_TOTAL_CUENTAS_FAM = FILA_INICIO_CUENTAS_FAM + CUENTAS_FAMILIA.length;
-  var FILA_TITULO_RESUMEN = FILA_TOTAL_CUENTAS_FAM + 3;
-  var FILA_INGRESOS_FAM = FILA_TITULO_RESUMEN + 2;
-  var FILA_EGRESOS_FAM = FILA_INGRESOS_FAM + 1;
-  var FILA_BALANCE_FAM = FILA_EGRESOS_FAM + 1;
-  var FILA_TITULO_LIQUIDEZ = FILA_BALANCE_FAM + 2;
-  var FILA_CAJA_DISP = FILA_TITULO_LIQUIDEZ + 2;
-  var FILA_SEMANA_1 = FILA_CAJA_DISP + 1;
-  var FILA_SALDO_FINAL_FAM = FILA_SEMANA_1 + 3;
+  // FAMILIA (columnas B-E)
+  var FILA_INICIO_CUENTAS_FAM = 8;  // Cuentas FAM empiezan en fila 8
+  var FILA_TOTAL_CUENTAS_FAM = FILA_INICIO_CUENTAS_FAM + CUENTAS_FAMILIA.length;  // 8 + 10 = 18
+  // Fila 18: Total, +2 espacio = 20, +1 titulo = 21 labels, +1 = 22 valores
+  var FILA_VALORES_FAM = FILA_TOTAL_CUENTAS_FAM + 4;  // 18 + 4 = 22 (INGRESOS col B, EGRESOS col D)
+  var FILA_AHORRO_FAM = FILA_VALORES_FAM + 3;  // 22 + 3 = 25 (AHORRO col B, FONDO col D)
 
-  var FILA_INGRESOS_NT = 9;
-  var FILA_GANANCIA_NT = 13;
-  var FILA_DISTRIBUCION = 20;
-  var FILA_INICIO_CUENTAS_NT = 24;
-  var FILA_TOTAL_CUENTAS_NT = FILA_INICIO_CUENTAS_NT + CUENTAS_NT.length;
-  var FILA_BALANCE_CRUZADO = Math.max(FILA_SALDO_FINAL_FAM, FILA_TOTAL_CUENTAS_NT + 2) + 3;
+  // NEUROTEA (columnas H-K) - También empieza en fila 8
+  var FILA_INICIO_CUENTAS_NT = 8;  // Cuentas NT empiezan en fila 8 (columnas H-K)
+  var FILA_TOTAL_CUENTAS_NT = FILA_INICIO_CUENTAS_NT + CUENTAS_NT.length;  // 8 + 2 = 10
+  // Fila 10: Total, +2 espacio = 12, +1 titulo = 13, +1 spacer = 14 labels, +1 = 15 valores
+  var FILA_VALORES_NT = FILA_TOTAL_CUENTAS_NT + 5;  // 10 + 5 = 15 (INGRESOS col H, EGRESOS col J)
+  var FILA_GANANCIA_NT = FILA_VALORES_NT + 6;  // 15 + 6 = 21 (GANANCIA col H, META col J)
+  var FILA_DISTRIBUCION_NT = FILA_GANANCIA_NT + 6;  // 21 + 6 = 27 (labels), +1 = 28 (valores)
 
   // ═══ ACCOUNTS - FAMILIA ═══
   var cuentasFamilia = [];
@@ -85,54 +82,57 @@ function obtenerDatosDashboard() {
     }
   }
 
-  // ═══ ACCOUNTS - NEUROTEA ═══
+  // ═══ ACCOUNTS - NEUROTEA (columnas H=8, I=9, J=10, K=11) ═══
   var cuentasNT = [];
   if (tablero) {
     for (var j = 0; j < CUENTAS_NT.length; j++) {
-      var filaNT = FILA_INICIO_CUENTAS_NT + j;
+      var filaNT = FILA_INICIO_CUENTAS_NT + j;  // Filas 8, 9 para 2 cuentas
       cuentasNT.push({
         nombre: CUENTAS_NT[j],
-        saldo: leerNumero(tablero.getRange(filaNT, 9)),
-        acumulado: leerNumero(tablero.getRange(filaNT, 10))
+        saldo: leerNumero(tablero.getRange(filaNT, 9)),      // Columna I = Esperado
+        acumulado: leerNumero(tablero.getRange(filaNT, 10))  // Columna J = Saldo Banco
       });
     }
   }
-  var totalCuentasNT = tablero ? leerNumero(tablero.getRange(FILA_TOTAL_CUENTAS_NT, 9)) : 0;
+  var totalCuentasNT = tablero ? leerNumero(tablero.getRange(FILA_TOTAL_CUENTAS_NT, 9)) : 0;  // Fila 10, col I
 
-  // ═══ NEUROTEA INDICATORS ═══
+  // ═══ NEUROTEA INDICATORS (columnas H=8, I=9, J=10, K=11) ═══
   var ingresosNT = 0, gastosNT = 0, gananciaNT = 0, metaNT = 0;
   var utilidadDueno = 0, fondoEmergenciaNT = 0, fondoInversionNT = 0;
   var egresosPendientesNT = 0;
   if (tablero) {
-    ingresosNT = leerNumero(tablero.getRange(FILA_INGRESOS_NT, 8));
-    gastosNT = leerNumero(tablero.getRange(FILA_INGRESOS_NT, 10));
-    gananciaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 8));
-    metaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 10));
-    utilidadDueno = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 9));
-    fondoEmergenciaNT = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 10));
-    fondoInversionNT = leerNumero(tablero.getRange(FILA_DISTRIBUCION, 11));
+    // Fila 15: INGRESOS (H15:I15 merged) y EGRESOS (J15:K15 merged)
+    ingresosNT = leerNumero(tablero.getRange(FILA_VALORES_NT, 8));   // Columna H = INGRESOS
+    gastosNT = leerNumero(tablero.getRange(FILA_VALORES_NT, 10));    // Columna J = EGRESOS
+    // Fila 21: GANANCIA (H21:I21 merged) y META (J21:K21 merged)
+    gananciaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 8));  // Columna H = GANANCIA
+    metaNT = leerNumero(tablero.getRange(FILA_GANANCIA_NT, 10));     // Columna J = META
+    // Fila 28: Distribución valores (H=Utilidad, I=Emergencia, J:K=Inversión)
+    utilidadDueno = leerNumero(tablero.getRange(FILA_DISTRIBUCION_NT + 1, 8));
+    fondoEmergenciaNT = leerNumero(tablero.getRange(FILA_DISTRIBUCION_NT + 1, 9));
+    fondoInversionNT = leerNumero(tablero.getRange(FILA_DISTRIBUCION_NT + 1, 10));
   }
 
-  // ═══ FAMILIA RESUMEN ═══
+  // ═══ FAMILIA RESUMEN (columnas B=2, C=3, D=4, E=5) ═══
   var ingresosFamReal = 0, egresosFamReal = 0, egresosPendientesFam = 0;
   var ahorroFam = 0, fondoEmergenciaFam = 0;
   if (tablero) {
-    ingresosFamReal = leerNumero(tablero.getRange(FILA_INGRESOS_FAM, 4));
-    egresosFamReal = leerNumero(tablero.getRange(FILA_EGRESOS_FAM, 4));
+    // Fila 22: INGRESOS (B22:C22 merged) y EGRESOS (D22:E22 merged)
+    ingresosFamReal = leerNumero(tablero.getRange(FILA_VALORES_FAM, 2));   // Columna B = INGRESOS
+    egresosFamReal = leerNumero(tablero.getRange(FILA_VALORES_FAM, 4));    // Columna D = EGRESOS
+    // Fila 25: AHORRO (B25:C25 merged) y FONDO (D25:E25 merged)
+    ahorroFam = leerNumero(tablero.getRange(FILA_AHORRO_FAM, 2));          // Columna B = AHORRO
+    fondoEmergenciaFam = leerNumero(tablero.getRange(FILA_AHORRO_FAM, 4)); // Columna D = FONDO
   }
 
-  // Read MOVIMIENTO for FAMILIA ahorro, fondo, pendientes
+  // Read MOVIMIENTO for FAMILIA/NEUROTEA pendientes (ahorro/fondo ya leídos de TABLERO)
   if (movimiento) {
     var datosFamMov = movimiento.getRange('A9:J116').getValues();
     for (var idx = 0; idx < datosFamMov.length; idx++) {
       var filaM = datosFamMov[idx];
-      var concepto = filaM[0] ? filaM[0].toString() : '';
       var tipo = filaM[1] ? filaM[1].toString() : '';
       var real = Number(filaM[5]) || 0;
       var estPago = filaM[9] ? filaM[9].toString() : '';
-
-      if (concepto.indexOf('Ahorro') >= 0 || concepto.indexOf('AHORRO') >= 0) ahorroFam += real;
-      if (concepto.indexOf('Fondo') >= 0 && concepto.indexOf('Emergencia') >= 0) fondoEmergenciaFam += real;
       if (tipo === 'Egreso' && estPago === 'Pendiente') egresosPendientesFam += real;
     }
   }
@@ -149,23 +149,18 @@ function obtenerDatosDashboard() {
     }
   }
 
-  // ═══ LIQUIDEZ FAMILIA ═══
-  var liquidez = { cajaDisponible: 0, semanas: [], saldoFinal: 0 };
-  if (tablero) {
-    liquidez.cajaDisponible = leerNumero(tablero.getRange(FILA_CAJA_DISP, 4));
-    var nombresS = ['Esta semana', 'Prox. semana', '3ra semana'];
-    for (var k = 0; k < 3; k++) {
-      var filaS = FILA_SEMANA_1 + k;
-      liquidez.semanas.push({
-        nombre: nombresS[k],
-        gastos: leerNumero(tablero.getRange(filaS, 3)),
-        saldo: leerNumero(tablero.getRange(filaS, 4))
-      });
-    }
-    liquidez.saldoFinal = leerNumero(tablero.getRange(FILA_SALDO_FINAL_FAM, 4));
-  }
+  // ═══ LIQUIDEZ - Calculada desde disponible y pendientes ═══
+  var liquidez = {
+    cajaDisponible: ingresosFamReal - egresosFamReal,
+    semanas: [
+      { nombre: 'Esta semana', gastos: 0, saldo: 0 },
+      { nombre: 'Prox. semana', gastos: 0, saldo: 0 },
+      { nombre: '3ra semana', gastos: 0, saldo: 0 }
+    ],
+    saldoFinal: ingresosFamReal - egresosFamReal - egresosPendientesFam
+  };
 
-  // ═══ BALANCE CRUZADO ═══
+  // ═══ BALANCE CRUZADO - Calculado desde CARGA ═══
   var balanceCruzado = {
     prestamoNTMes: 0, prestamoNTAcum: 0, devFamMes: 0, devFamAcum: 0,
     deudaFamMes: 0, deudaFamAcum: 0,
@@ -173,23 +168,7 @@ function obtenerDatosDashboard() {
     deudaNTMes: 0, deudaNTAcum: 0,
     balanceNetoMes: 0, balanceNeto: 0
   };
-  if (tablero) {
-    var fBC = FILA_BALANCE_CRUZADO + 2;
-    balanceCruzado.prestamoNTMes = leerNumero(tablero.getRange(fBC, 3));
-    balanceCruzado.prestamoNTAcum = leerNumero(tablero.getRange(fBC, 4));
-    balanceCruzado.devFamMes = leerNumero(tablero.getRange(fBC+1, 3));
-    balanceCruzado.devFamAcum = leerNumero(tablero.getRange(fBC+1, 4));
-    balanceCruzado.deudaFamMes = leerNumero(tablero.getRange(fBC+2, 3));
-    balanceCruzado.deudaFamAcum = leerNumero(tablero.getRange(fBC+2, 4));
-    balanceCruzado.prestamoFamMes = leerNumero(tablero.getRange(fBC+3, 3));
-    balanceCruzado.prestamoFamAcum = leerNumero(tablero.getRange(fBC+3, 4));
-    balanceCruzado.devNTMes = leerNumero(tablero.getRange(fBC+4, 3));
-    balanceCruzado.devNTAcum = leerNumero(tablero.getRange(fBC+4, 4));
-    balanceCruzado.deudaNTMes = leerNumero(tablero.getRange(fBC+5, 3));
-    balanceCruzado.deudaNTAcum = leerNumero(tablero.getRange(fBC+5, 4));
-    balanceCruzado.balanceNetoMes = leerNumero(tablero.getRange(fBC+6, 3));
-    balanceCruzado.balanceNeto = leerNumero(tablero.getRange(fBC+6, 4));
-  }
+  // Balance cruzado se calculará desde flujoMensual más adelante
 
   // ═══ CATEGORY BREAKDOWN FROM MOVIMIENTO ═══
   var categoriasFamilia = [];
