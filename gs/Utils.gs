@@ -1045,24 +1045,27 @@ function cargarDatosPrueba() {
   datosGF.push(crearFilaGF('Scribd', 'FAMILIA', 'SUSCRIPCIONES', 'Fijo/Mensual', 15, 'Tarjeta ITAU Marco', 85000));
   datosGF.push(crearFilaGF('iLovePDF', 'FAMILIA', 'SUSCRIPCIONES', 'Fijo/Mensual', 15, 'Tarjeta ITAU Marco', 55000));
 
-  // GASTOS FIJOS NEUROTEA
-  datosGF.push(crearFilaGF('Alquiler Clínica', 'NEUROTEA', 'CLÍNICA', 'Fijo/Mensual', 1, 'Atlas NeuroTEA', 4500000));
-  datosGF.push(crearFilaGF('ANDE Clínica', 'NEUROTEA', 'CLÍNICA', 'Variable/Mensual', 15, 'Atlas NeuroTEA', [750000,800000,850000,900000,980000,1100000,1250000,1180000,1000000,880000,800000,750000]));
-  datosGF.push(crearFilaGF('ESSAP Clínica', 'NEUROTEA', 'CLÍNICA', 'Variable/Mensual', 20, 'Atlas NeuroTEA', [120000,125000,130000,135000,140000,145000,150000,145000,140000,135000,130000,125000]));
-  datosGF.push(crearFilaGF('Seguro Clínica', 'NEUROTEA', 'CLÍNICA', 'Fijo/Mensual', 5, 'Atlas NeuroTEA', 350000));
-  datosGF.push(crearFilaGF('Limpieza Clínica', 'NEUROTEA', 'CLÍNICA', 'Fijo/Mensual', 30, 'Atlas NeuroTEA', 1200000));
+  // GASTOS FIJOS NEUROTEA (nombres exactos de Config.gs)
+  datosGF.push(crearFilaGF('Alquiler 1 (Principal)', 'NEUROTEA', 'CLÍNICA', 'Fijo/Mensual', 5, 'Atlas NeuroTEA', 4500000));
+  datosGF.push(crearFilaGF('Alquiler 2 (Secundario)', 'NEUROTEA', 'CLÍNICA', 'Fijo/Mensual', 5, 'Atlas NeuroTEA', 1500000));
+  datosGF.push(crearFilaGF('ANDE clínica', 'NEUROTEA', 'CLÍNICA', 'Variable/Mensual', 15, 'Atlas NeuroTEA', [750000,800000,850000,900000,980000,1100000,1250000,1180000,1000000,880000,800000,750000]));
 
-  datosGF.push(crearFilaGF('Salario Aracely', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Mensual', 30, 'Atlas NeuroTEA', 3500000));
-  datosGF.push(crearFilaGF('Salario Fatima', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Mensual', 30, 'Atlas NeuroTEA', 3200000));
-  datosGF.push(crearFilaGF('Honorarios Terapeutas', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Mensual', 5, 'Atlas NeuroTEA', 8500000));
-  datosGF.push(crearFilaGF('Aguinaldo Personal', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Anual', 20, 'Atlas NeuroTEA', [0,0,0,0,0,0,0,0,0,0,0,6700000]));
+  datosGF.push(crearFilaGF('Sueldo Aracely', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Mensual', 30, 'Atlas NeuroTEA', 3500000));
+  datosGF.push(crearFilaGF('Sueldo Fátima', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Mensual', 30, 'Atlas NeuroTEA', 3200000));
+  datosGF.push(crearFilaGF('Limpieza NeuroTEA', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Variable/Mensual', 30, 'Atlas NeuroTEA', 1200000));
+  datosGF.push(crearFilaGF('Honorario Contador', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Mensual', 10, 'Atlas NeuroTEA', 600000));
+  datosGF.push(crearFilaGF('Salario Administrador (Marco)', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Mensual', 30, 'Atlas NeuroTEA', 3000000));
+  datosGF.push(crearFilaGF('Honorario Mant. Sistema', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Mensual', 15, 'Atlas NeuroTEA', 500000));
+  datosGF.push(crearFilaGF('Community Manager', 'NEUROTEA', 'SUELDOS Y HONORARIOS', 'Fijo/Mensual', 30, 'Atlas NeuroTEA', 800000));
 
-  datosGF.push(crearFilaGF('Internet Clínica', 'NEUROTEA', 'TELEFONÍA E INTERNET', 'Fijo/Mensual', 10, 'Atlas NeuroTEA', 380000));
-  datosGF.push(crearFilaGF('Teléfono Clínica', 'NEUROTEA', 'TELEFONÍA E INTERNET', 'Fijo/Mensual', 10, 'Atlas NeuroTEA', 180000));
+  datosGF.push(crearFilaGF('Celular Tigo NeuroTEA', 'NEUROTEA', 'TELEFONÍA E INTERNET', 'Fijo/Mensual', 28, 'Atlas NeuroTEA', 150000));
+  datosGF.push(crearFilaGF('Celular Tigo Sistema', 'NEUROTEA', 'TELEFONÍA E INTERNET', 'Fijo/Mensual', 28, 'Atlas NeuroTEA', 120000));
+  datosGF.push(crearFilaGF('WhatsFlow', 'NEUROTEA', 'TELEFONÍA E INTERNET', 'Fijo/Mensual', 15, 'Atlas NeuroTEA', 180000));
+  datosGF.push(crearFilaGF('Internet NeuroTEA', 'NEUROTEA', 'TELEFONÍA E INTERNET', 'Fijo/Mensual', 15, 'Atlas NeuroTEA', 380000));
 
-  datosGF.push(crearFilaGF('IPS NeuroTEA', 'NEUROTEA', 'OBLIGACIONES LEGALES', 'Fijo/Mensual', 15, 'Atlas NeuroTEA', 1350000));
-  datosGF.push(crearFilaGF('Patente Comercial', 'NEUROTEA', 'OBLIGACIONES LEGALES', 'Fijo/Anual', 31, 'Atlas NeuroTEA', [0,0,450000,0,0,0,0,0,0,0,0,0]));
-  datosGF.push(crearFilaGF('Contadora NT', 'NEUROTEA', 'OBLIGACIONES LEGALES', 'Fijo/Mensual', 15, 'Atlas NeuroTEA', 600000));
+  datosGF.push(crearFilaGF('IVA', 'NEUROTEA', 'OBLIGACIONES LEGALES', 'Variable/Mensual', 20, 'Atlas NeuroTEA', [850000,900000,950000,1000000,1050000,1100000,1150000,1100000,1050000,1000000,950000,900000]));
+  datosGF.push(crearFilaGF('IPS', 'NEUROTEA', 'OBLIGACIONES LEGALES', 'Fijo/Mensual', 15, 'Atlas NeuroTEA', 1350000));
+  datosGF.push(crearFilaGF('Ministerio de Salud', 'NEUROTEA', 'OBLIGACIONES LEGALES', 'Variable/Anual', 31, 'Atlas NeuroTEA', [0,0,450000,0,0,0,0,0,0,0,0,0]));
 
   // EVENTOS NT
   datosGF.push(crearFilaGF('Día del Autismo', 'NEUROTEA', 'EVENTOS', 'Variable/Anual', 2, 'Atlas NeuroTEA', [0,0,0,1500000,0,0,0,0,0,0,0,0]));
@@ -1212,27 +1215,30 @@ function cargarDatosPrueba() {
     llenarPresupuesto('Aporte NeuroTEA Terapeutas', 25000000);
     llenarPresupuesto('Cursos NeuroTEA', [0,4500000,4500000,4500000,4500000,4500000,4500000,4500000,4500000,4500000,4500000,0]);
 
-    // ── EGRESOS NEUROTEA - CLÍNICA ──
-    llenarPresupuesto('Alquiler Clínica', 4500000);
-    llenarPresupuesto('ANDE Clínica', 900000);
-    llenarPresupuesto('ESSAP Clínica', 135000);
-    llenarPresupuesto('Seguro Clínica', 350000);
-    llenarPresupuesto('Limpieza Clínica', 1200000);
+    // ── EGRESOS NEUROTEA - CLÍNICA (nombres de Config.gs) ──
+    llenarPresupuesto('Alquiler 1 (Principal)', 4500000);
+    llenarPresupuesto('Alquiler 2 (Secundario)', 1500000);
+    llenarPresupuesto('ANDE clínica', 900000);
 
-    // ── EGRESOS NEUROTEA - SUELDOS Y HONORARIOS ──
-    llenarPresupuesto('Salario Aracely', 3500000);
-    llenarPresupuesto('Salario Fatima', 3200000);
-    llenarPresupuesto('Honorarios Terapeutas', 8500000);
-    llenarPresupuesto('Aguinaldo Personal', [0,0,0,0,0,0,0,0,0,0,0,6700000]);
+    // ── EGRESOS NEUROTEA - SUELDOS Y HONORARIOS (nombres de Config.gs) ──
+    llenarPresupuesto('Sueldo Aracely', 3500000);
+    llenarPresupuesto('Sueldo Fátima', 3200000);
+    llenarPresupuesto('Limpieza NeuroTEA', 1200000);
+    llenarPresupuesto('Honorario Contador', 600000);
+    llenarPresupuesto('Salario Administrador (Marco)', 3000000);
+    llenarPresupuesto('Honorario Mant. Sistema', 500000);
+    llenarPresupuesto('Community Manager', 800000);
 
-    // ── EGRESOS NEUROTEA - TELEFONÍA ──
-    llenarPresupuesto('Internet Clínica', 380000);
-    llenarPresupuesto('Teléfono Clínica', 180000);
+    // ── EGRESOS NEUROTEA - TELEFONÍA (nombres de Config.gs) ──
+    llenarPresupuesto('Celular Tigo NeuroTEA', 150000);
+    llenarPresupuesto('Celular Tigo Sistema', 120000);
+    llenarPresupuesto('WhatsFlow', 180000);
+    llenarPresupuesto('Internet NeuroTEA', 380000);
 
-    // ── EGRESOS NEUROTEA - OBLIGACIONES ──
-    llenarPresupuesto('IPS NeuroTEA', 1350000);
-    llenarPresupuesto('Patente Comercial', [0,0,450000,0,0,0,0,0,0,0,0,0]);
-    llenarPresupuesto('Contadora NT', 600000);
+    // ── EGRESOS NEUROTEA - OBLIGACIONES (nombres de Config.gs) ──
+    llenarPresupuesto('IVA', 1000000);
+    llenarPresupuesto('IPS', 1350000);
+    llenarPresupuesto('Ministerio de Salud', [0,0,450000,0,0,0,0,0,0,0,0,0]);
 
     // ── EGRESOS NEUROTEA - EVENTOS ──
     llenarPresupuesto('Día del Autismo', [0,0,0,1500000,0,0,0,0,0,0,0,0]);
