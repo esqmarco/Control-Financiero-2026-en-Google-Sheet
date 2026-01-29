@@ -176,38 +176,23 @@ function reinicializarSistema() {
     // Intentar usar UI (solo funciona desde menú del spreadsheet)
     const ui = SpreadsheetApp.getUi();
 
+    // v8.2: Un solo diálogo de confirmación para minimizar tiempo perdido
     const resultado = ui.alert(
-      '⚠️ Reinicializar Sistema',
-      '¿Estás seguro de querer BORRAR y RECREAR todas las hojas?\n\n' +
-      '🔴 ADVERTENCIA: Se perderán TODOS los datos actuales.\n\n' +
-      'Esta acción no se puede deshacer.',
+      '⚠️ REINICIALIZAR SISTEMA',
+      '¿BORRAR y RECREAR todas las hojas?\n\n' +
+      '🔴 Se perderán TODOS los datos actuales.\n' +
+      '⏳ El proceso toma ~3 minutos. NO cierres la pestaña.',
       ui.ButtonSet.YES_NO
     );
 
     if (resultado !== ui.Button.YES) return;
 
-    const confirmacion = ui.alert(
-      '⚠️ Confirmación Final',
-      '¿Confirmas que deseas BORRAR todos los datos y recrear el sistema?',
-      ui.ButtonSet.YES_NO
-    );
+    // v8.2: Ejecutar directamente (sin trigger diferido que fallaba)
+    SpreadsheetApp.getActiveSpreadsheet().toast('Iniciando reinicialización... NO cierres la pestaña', '⏳', 300);
 
-    if (confirmacion !== ui.Button.YES) return;
+    _crearTodasLasHojas();
 
-    // v8.1: Mostrar aviso y usar trigger para evitar timeout
-    ui.alert(
-      '⏳ Creando hojas...',
-      'El sistema se creará en segundo plano.\n\n' +
-      'Espera aproximadamente 3 minutos y luego REFRESCA la página (F5).\n\n' +
-      '📋 Se crearán 10 hojas: CONFIG, CALCULOS, PRESUPUESTO, etc.',
-      ui.ButtonSet.OK
-    );
-
-    // Crear trigger que se ejecuta inmediatamente (nuevo contexto = nuevo límite de 6 min)
-    ScriptApp.newTrigger('_crearTodasLasHojasConNotificacion')
-      .timeBased()
-      .after(1000)  // 1 segundo después
-      .create();
+    ui.alert('✅ Sistema Reinicializado', 'Todas las hojas han sido recreadas exitosamente.', ui.ButtonSet.OK);
 
   } catch (e) {
     // Si getUi() falla, estamos en el editor de Apps Script
