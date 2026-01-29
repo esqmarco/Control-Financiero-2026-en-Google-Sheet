@@ -878,13 +878,22 @@ function cargarDatosPrueba() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════
-  // PRÉSTAMOS Y DEVOLUCIONES NT↔FAM
+  // PRÉSTAMOS Y DEVOLUCIONES NT↔FAM (distribuidos en varios meses)
   // ═══════════════════════════════════════════════════════════════════════
 
-  // Febrero: FAMILIA presta a NT
+  // ENERO: NT presta a FAMILIA (para visualización inmediata)
+  datosFamilia.push([new Date(2026, 0, 15), 'Préstamo NeuroTEA', '-', '-', 'Préstamo de NT a FAM', 4000000, 'ITAU Marco', 'Prueba']);
+
+  // ENERO: FAMILIA devuelve a NT (parcial)
+  datosFamilia.push([new Date(2026, 0, 25), 'Egreso Familiar', 'VARIABLES', 'Devolución Familia → NT', 'Devolución parcial', 1500000, 'ITAU Marco', 'Prueba']);
+
+  // FEBRERO: FAMILIA presta a NT
   datosFamilia.push([new Date(2026, 1, 10), 'Egreso Familiar', 'VARIABLES', 'Préstamo Familia → NT', 'Préstamo a NT', 5000000, 'ITAU Marco', 'Prueba']);
 
-  // Octubre: FAMILIA devuelve a NT
+  // MAYO: NT devuelve a FAMILIA
+  datosFamilia.push([new Date(2026, 4, 20), 'Devolución NeuroTEA', '-', '-', 'NT devuelve préstamo', 2000000, 'ITAU Marco', 'Prueba']);
+
+  // OCTUBRE: FAMILIA devuelve a NT
   datosFamilia.push([new Date(2026, 9, 15), 'Egreso Familiar', 'VARIABLES', 'Devolución Familia → NT', 'Devolución a NT', 3000000, 'ITAU Marco', 'Prueba']);
 
   // Escribir datos FAMILIA
@@ -944,9 +953,22 @@ function cargarDatosPrueba() {
     }
   }
 
-  // PRÉSTAMOS Y DEVOLUCIONES NT↔FAM
+  // PRÉSTAMOS Y DEVOLUCIONES NT↔FAM (distribuidos en varios meses)
+
+  // ENERO: NT presta a FAMILIA (egreso en NT)
+  datosNT.push([new Date(2026, 0, 15), 'Egreso NT', 'VARIABLES', 'Préstamo NT → Familia', 'Préstamo a FAM', 4000000, 'Atlas NeuroTEA', 'Prueba']);
+
+  // ENERO: FAMILIA presta a NT (ingreso en NT)
+  datosNT.push([new Date(2026, 0, 25), 'Préstamo Familia', '-', '-', 'FAM presta a NT', 1500000, 'Atlas NeuroTEA', 'Prueba']);
+
+  // FEBRERO: FAMILIA presta a NT (ingreso en NT)
+  datosNT.push([new Date(2026, 1, 10), 'Préstamo Familia', '-', '-', 'FAM presta a NT', 5000000, 'Atlas NeuroTEA', 'Prueba']);
+
+  // ABRIL: NT devuelve a FAMILIA
   datosNT.push([new Date(2026, 3, 20), 'Egreso NT', 'VARIABLES', 'Devolución NT → Familia', 'Devolución parcial', 2500000, 'Atlas NeuroTEA', 'Prueba']);
-  datosNT.push([new Date(2026, 6, 15), 'Egreso NT', 'VARIABLES', 'Préstamo NT → Familia', 'Préstamo a FAM', 3000000, 'Atlas NeuroTEA', 'Prueba']);
+
+  // JULIO: NT presta a FAMILIA
+  datosNT.push([new Date(2026, 6, 15), 'Egreso NT', 'VARIABLES', 'Préstamo NT → Familia', 'Préstamo adicional', 3000000, 'Atlas NeuroTEA', 'Prueba']);
 
   if (datosNT.length > 0) {
     cargaNT.getRange(filaNT, 1, datosNT.length, 8).setValues(datosNT);
@@ -1074,35 +1096,175 @@ function cargarDatosPrueba() {
   config.getRange('B82').setValue(12000000);  // Atlas NeuroTEA
   config.getRange('B83').setValue(800000);    // UENO Marco
 
+  SpreadsheetApp.getActiveSpreadsheet().toast('CONFIG completado. Cargando PRESUPUESTO...', '⏳', 30);
+
   // ═══════════════════════════════════════════════════════════════════════════
-  // 5. RESUMEN
+  // 5. CARGAR VALORES EN PRESUPUESTO
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  var presupuesto = ss.getSheetByName(NOMBRES_HOJAS.PRESUPUESTO);
+  if (presupuesto) {
+    var datosPresup = presupuesto.getDataRange().getValues();
+
+    // Función auxiliar para buscar fila por concepto
+    function buscarFilaConcepto(concepto) {
+      for (var r = 0; r < datosPresup.length; r++) {
+        if (datosPresup[r][0] && datosPresup[r][0].toString().trim() === concepto) {
+          return r + 1; // Devolver número de fila (1-indexed)
+        }
+      }
+      return null;
+    }
+
+    // Función para llenar valores mensuales (columnas D-O = 4-15)
+    function llenarPresupuesto(concepto, valoresMensuales) {
+      var fila = buscarFilaConcepto(concepto);
+      if (fila) {
+        for (var m = 0; m < 12; m++) {
+          var valor = Array.isArray(valoresMensuales) ? valoresMensuales[m] : valoresMensuales;
+          if (valor > 0) {
+            presupuesto.getRange(fila, 4 + m).setValue(valor);
+          }
+        }
+      }
+    }
+
+    // ── INGRESOS FAMILIA ──
+    llenarPresupuesto('Salario Marco', 15000000);
+    llenarPresupuesto('Salario Marco NeuroTEA', 3000000);
+    llenarPresupuesto('Vacaciones Marco', [8000000,0,0,0,0,0,8000000,0,0,0,0,0]);
+    llenarPresupuesto('Adelanto de Aguinaldo Marco', [0,0,0,0,0,0,0,0,0,0,7500000,0]);
+    llenarPresupuesto('Saldo Aguinaldo Marco', [0,0,0,0,0,0,0,0,0,0,0,7500000]);
+    llenarPresupuesto('Viático Marco', [1500000,0,1500000,0,1500000,0,1500000,0,1500000,0,1500000,0]);
+    llenarPresupuesto('Animador Bíblico Marco', 200000);
+    llenarPresupuesto('Tarjeta Gourmed', 500000);
+    llenarPresupuesto('Contrato Colectivo Marco', [0,0,0,0,0,5000000,0,0,0,0,0,5000000]);
+    llenarPresupuesto('PL Itaipu Marco', [0,0,0,12000000,0,0,0,0,0,0,0,0]);
+    llenarPresupuesto('Honorarios Clara NeuroTEA', 2500000);
+
+    // ── EGRESOS FAMILIA - GASTOS FIJOS ──
+    llenarPresupuesto('Salario Lili Doméstico', 2200000);
+    llenarPresupuesto('Salario Laura Doméstico', 1800000);
+    llenarPresupuesto('Escuela Fabián y Brenda', [0,0,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,0]);
+    llenarPresupuesto('Robótica Niños', [0,0,350000,350000,350000,350000,350000,350000,350000,350000,350000,0]);
+    llenarPresupuesto('ANDE Casa', [450000,480000,520000,580000,650000,720000,680000,600000,520000,460000,430000,420000]);
+    llenarPresupuesto('Expensa Casa', 850000);
+
+    // ── EGRESOS FAMILIA - CUOTAS Y PRÉSTAMOS ──
+    llenarPresupuesto('Préstamo Lizzi', 1200000);
+    llenarPresupuesto('Cajubi Marco', 450000);
+    llenarPresupuesto('Mutual Marco', 380000);
+    llenarPresupuesto('Seguro Auto Laura ITAU', 420000);
+    llenarPresupuesto('Cuota ITAU', 870000);
+    llenarPresupuesto('Auto Laura Cuota', 1800000);
+    llenarPresupuesto('Coop. Universitaria Clara', 650000);
+    llenarPresupuesto('Coomecipar Clara', 550000);
+    llenarPresupuesto('Solar Préstamo 1', 480000);
+    llenarPresupuesto('Solar Préstamo 2', 320000);
+
+    // ── EGRESOS FAMILIA - OBLIGACIONES LEGALES ──
+    llenarPresupuesto('Aporte IPS', 520000);
+    llenarPresupuesto('Aporte Cajubi', 180000);
+    llenarPresupuesto('Aporte STEIBI', 150000);
+    llenarPresupuesto('Aporte SICHAP', 120000);
+    llenarPresupuesto('Impuesto Renta personal', [0,0,2500000,0,0,0,0,0,0,0,0,0]);
+    llenarPresupuesto('Impuesto terreno casa', [0,0,850000,0,0,0,0,0,0,0,0,0]);
+
+    // ── EGRESOS FAMILIA - SUSCRIPCIONES ──
+    llenarPresupuesto('Giganet', 280000);
+    llenarPresupuesto('Tigo Clara', 150000);
+    llenarPresupuesto('Tigo Familiar', 250000);
+    llenarPresupuesto('Google One', 35000);
+    llenarPresupuesto('ChatGPT', 150000);
+    llenarPresupuesto('Claude Marco', 150000);
+    llenarPresupuesto('Claude Clara', 150000);
+
+    // ── EGRESOS FAMILIA - VARIABLES ──
+    llenarPresupuesto('Supermercado', 2000000);
+    llenarPresupuesto('Combustible', 750000);
+    llenarPresupuesto('Alimentación', 250000);
+    llenarPresupuesto('Gastos Varios', 300000);
+    llenarPresupuesto('Recreación (Pizza, hamburguesa, helados, etc)', 400000);
+    llenarPresupuesto('Salud y Medicamentos', 300000);
+
+    // ── EGRESOS FAMILIA - AHORRO ──
+    llenarPresupuesto('Ahorro Clara', 1000000);
+    llenarPresupuesto('Ahorro Marco', 1200000);
+    llenarPresupuesto('Fondo de Emergencia', [0,0,500000,0,0,500000,0,0,500000,0,0,500000]);
+
+    // ── INGRESOS NEUROTEA ──
+    llenarPresupuesto('Aporte NeuroTEA Terapeutas', 25000000);
+    llenarPresupuesto('Cursos NeuroTEA', [0,4500000,4500000,4500000,4500000,4500000,4500000,4500000,4500000,4500000,4500000,0]);
+
+    // ── EGRESOS NEUROTEA - CLÍNICA ──
+    llenarPresupuesto('Alquiler Clínica', 4500000);
+    llenarPresupuesto('ANDE Clínica', 900000);
+    llenarPresupuesto('ESSAP Clínica', 135000);
+    llenarPresupuesto('Seguro Clínica', 350000);
+    llenarPresupuesto('Limpieza Clínica', 1200000);
+
+    // ── EGRESOS NEUROTEA - SUELDOS Y HONORARIOS ──
+    llenarPresupuesto('Salario Aracely', 3500000);
+    llenarPresupuesto('Salario Fatima', 3200000);
+    llenarPresupuesto('Honorarios Terapeutas', 8500000);
+    llenarPresupuesto('Aguinaldo Personal', [0,0,0,0,0,0,0,0,0,0,0,6700000]);
+
+    // ── EGRESOS NEUROTEA - TELEFONÍA ──
+    llenarPresupuesto('Internet Clínica', 380000);
+    llenarPresupuesto('Teléfono Clínica', 180000);
+
+    // ── EGRESOS NEUROTEA - OBLIGACIONES ──
+    llenarPresupuesto('IPS NeuroTEA', 1350000);
+    llenarPresupuesto('Patente Comercial', [0,0,450000,0,0,0,0,0,0,0,0,0]);
+    llenarPresupuesto('Contadora NT', 600000);
+
+    // ── EGRESOS NEUROTEA - EVENTOS ──
+    llenarPresupuesto('Día del Autismo', [0,0,0,1500000,0,0,0,0,0,0,0,0]);
+    llenarPresupuesto('San Juan', [0,0,0,0,0,1200000,0,0,0,0,0,0]);
+    llenarPresupuesto('Día del Niño', [0,0,0,0,0,0,0,1800000,0,0,0,0]);
+    llenarPresupuesto('Clausura Padres', [0,0,0,0,0,0,0,0,0,0,2500000,0]);
+    llenarPresupuesto('Navidad Papá Noel', [0,0,0,0,0,0,0,0,0,0,0,2000000]);
+    llenarPresupuesto('Cena Fin de Año', [0,0,0,0,0,0,0,0,0,0,0,1500000]);
+
+    // ── EGRESOS NEUROTEA - VARIABLES ──
+    llenarPresupuesto('Insumos y Papelería', 600000);
+    llenarPresupuesto('Reparaciones Clínica', [200000,0,200000,0,200000,0,200000,0,200000,0,200000,0]);
+    llenarPresupuesto('Mantenimiento Aire', [0,0,350000,0,0,0,350000,0,0,0,350000,0]);
+    llenarPresupuesto('Horas Extras Aracely', 400000);
+    llenarPresupuesto('Horas Extras Fatima', 350000);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 6. RESUMEN
   // ═══════════════════════════════════════════════════════════════════════════
 
   SpreadsheetApp.getActiveSpreadsheet().toast('¡Datos integrales cargados!', '✓', 5);
 
   ui.alert(
-    '✓ DATOS DE PRUEBA INTEGRALES CARGADOS',
+    '✓ DATOS DE PRUEBA INTEGRALES CARGADOS v7.40',
     'Datos COMPLETOS para 12 meses de 2026:\n\n' +
     '═══════════════════════════════════\n' +
     '📊 CARGA_FAMILIA: ' + datosFamilia.length + ' transacciones\n' +
     '  • 12+ tipos de ingresos\n' +
     '  • 14+ subcategorías variables\n' +
     '  • 3 tipos de ahorro\n' +
-    '  • Préstamos/devoluciones NT↔FAM\n\n' +
+    '  • Préstamos/devoluciones NT↔FAM (ENERO)\n\n' +
     '📊 CARGA_NT: ' + datosNT.length + ' transacciones\n' +
     '  • 4 tipos de ingresos\n' +
     '  • 8+ subcategorías variables\n' +
-    '  • Préstamos/devoluciones\n\n' +
+    '  • Préstamos/devoluciones (ENERO)\n\n' +
     '📊 GASTOS_FIJOS: ' + datosGF.length + ' conceptos\n' +
     '  • FAMILIA: gastos, cuotas, oblig, suscr\n' +
     '  • NEUROTEA: clínica, sueldos, eventos\n\n' +
+    '📊 PRESUPUESTO: 70+ conceptos con valores\n' +
+    '  • Ingresos y egresos presupuestados\n' +
+    '  • Gráfico Presup vs Ejecución funciona\n\n' +
     '📊 CONFIG: 12 cuentas con saldos\n\n' +
     '═══════════════════════════════════\n' +
     '💡 SIGUIENTE:\n' +
-    '  1. MOVIMIENTO → seleccionar mes\n' +
-    '  2. TABLERO → ver KPIs\n' +
-    '  3. Dashboard Web → gráficos\n' +
-    '  4. GASTOS_FIJOS → marcar "Pagado"',
+    '  1. MOVIMIENTO → verificar mes Enero\n' +
+    '  2. Dashboard Web → ver gráficos\n' +
+    '  3. GASTOS_FIJOS → marcar "Pagado"',
     ui.ButtonSet.OK
   );
 }
