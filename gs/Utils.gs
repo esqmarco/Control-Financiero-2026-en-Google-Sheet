@@ -1073,7 +1073,23 @@ function cargarDatosPrueba() {
   datosGF.push(crearFilaGF('Cena Fin de Año', 'NEUROTEA', 'EVENTOS', 'Variable/Anual', 28, 'Atlas NeuroTEA', [0,0,0,0,0,0,0,0,0,0,0,1500000]));
 
   if (datosGF.length > 0) {
+    // v8.1: Limpiar validaciones de CUENTA (col F) antes de escribir
+    // para evitar conflicto entre validaciones FAMILIA vs NEUROTEA
+    gastosFijos.getRange(filaGF, 6, datosGF.length, 1).clearDataValidations();
+
     gastosFijos.getRange(filaGF, 1, datosGF.length, 18).setValues(datosGF);
+
+    // Aplicar validaciones correctas según ENTIDAD (columna B)
+    for (var gfIdx = 0; gfIdx < datosGF.length; gfIdx++) {
+      var entidadGF = datosGF[gfIdx][1]; // Columna B = ENTIDAD
+      var cuentasValidas = (entidadGF === 'NEUROTEA') ? CUENTAS_NT : CUENTAS_FAMILIA;
+      gastosFijos.getRange(filaGF + gfIdx, 6).setDataValidation(
+        SpreadsheetApp.newDataValidation()
+          .requireValueInList(cuentasValidas, true)
+          .setAllowInvalid(false)
+          .build()
+      );
+    }
   }
 
   SpreadsheetApp.getActiveSpreadsheet().toast('GASTOS_FIJOS completado. Configurando saldos...', '⏳', 30);
