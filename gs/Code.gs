@@ -468,6 +468,20 @@ function onEdit(e) {
     }
   }
 
+  // ═══ v8.0: Sincronización EST.PAGO con CALCULOS ═══
+  if (nombreHoja === NOMBRES_HOJAS.MOVIMIENTO) {
+    // Cambio de MES (celda B3) → cargar estados desde CALCULOS
+    if (row === 3 && col === 2) {
+      cargarEstadosDesdeCálculos(sheet, e.value);
+      return;
+    }
+    // Cambio de EST.PAGO (columna J) → guardar en CALCULOS
+    if (col === 10 && row >= 9) {
+      guardarEstadoEnCálculos(sheet, row, e.value);
+      return;
+    }
+  }
+
   if (row < 4) return;
 
   if (nombreHoja === NOMBRES_HOJAS.CARGA_FAMILIA) {
@@ -475,6 +489,132 @@ function onEdit(e) {
   } else if (nombreHoja === NOMBRES_HOJAS.CARGA_NT) {
     procesarEdicionCargaNT(sheet, row, col, e.value, e.oldValue);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SINCRONIZACIÓN EST.PAGO CON CALCULOS (v8.0)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Carga los estados de pago desde CALCULOS sección 7 cuando cambia el mes.
+ * @param {Sheet} movimiento - Hoja MOVIMIENTO
+ * @param {string} mesNuevo - Nombre del mes seleccionado (Enero, Febrero, etc.)
+ */
+function cargarEstadosDesdeCálculos(movimiento, mesNuevo) {
+  const ss = movimiento.getParent();
+  const calculos = ss.getSheetByName(NOMBRES_HOJAS.CALCULOS);
+
+  if (!calculos) {
+    console.log('Hoja CALCULOS no existe');
+    return;
+  }
+
+  // Obtener número de mes (1-12)
+  const mesNum = MESES.indexOf(mesNuevo) + 1;
+  if (mesNum < 1 || mesNum > 12) {
+    console.log('Mes no válido:', mesNuevo);
+    return;
+  }
+
+  ss.toast('Cargando estados de ' + mesNuevo + '...', '📅', 2);
+
+  // Columna del mes en CALCULOS sección 7 (B=1=Enero, C=2=Febrero, etc.)
+  const colMes = mesNum + 1; // B=2, C=3, ..., M=13
+
+  // Leer todos los conceptos y estados de CALCULOS sección 7 (fila 167+)
+  const datosCalc = calculos.getRange(167, 1, 100, 13).getValues(); // A167:M266
+
+  // Crear mapa concepto → estado
+  const estadosPorConcepto = {};
+  for (let i = 0; i < datosCalc.length; i++) {
+    const concepto = (datosCalc[i][0] || '').toString().trim();
+    const estado = (datosCalc[i][mesNum] || 'Pendiente').toString().trim();
+    if (concepto && concepto !== '── FAMILIA ──' && concepto !== '── NEUROTEA ──') {
+      estadosPorConcepto[concepto] = estado;
+    }
+  }
+
+  // Leer conceptos de MOVIMIENTO (columna A) y actualizar EST.PAGO (columna J)
+  // FAMILIA: filas 9-116, NEUROTEA: filas 122-206
+  const rangos = [
+    { inicio: 9, fin: 116 },    // FAMILIA
+    { inicio: 122, fin: 206 }   // NEUROTEA
+  ];
+
+  for (const rango of rangos) {
+    const conceptosMov = movimiento.getRange(rango.inicio, 1, rango.fin - rango.inicio + 1, 1).getValues();
+
+    for (let i = 0; i < conceptosMov.length; i++) {
+      const concepto = (conceptosMov[i][0] || '').toString().trim();
+
+      // Solo actualizar filas de gastos fijos (no headers, subtotales, variables, ahorro)
+      if (concepto && !concepto.startsWith('▶') && !concepto.startsWith('📥') &&
+          !concepto.startsWith('📤') && concepto !== 'Subtotal' &&
+          estadosPorConcepto[concepto]) {
+        const filaMovimiento = rango.inicio + i;
+        const estadoActual = movimiento.getRange(filaMovimiento, 10).getValue();
+        const estadoNuevo = estadosPorConcepto[concepto];
+
+        // Solo actualizar si es diferente (optimización)
+        if (estadoActual !== estadoNuevo) {
+          movimiento.getRange(filaMovimiento, 10).setValue(estadoNuevo);
+        }
+      }
+    }
+  }
+
+  ss.toast('Estados de ' + mesNuevo + ' cargados', '✓', 2);
+}
+
+/**
+ * Guarda el estado de pago en CALCULOS sección 7 cuando se edita en MOVIMIENTO.
+ * @param {Sheet} movimiento - Hoja MOVIMIENTO
+ * @param {number} filaMovimiento - Fila editada en MOVIMIENTO
+ * @param {string} nuevoEstado - Nuevo valor (Pendiente/Pagado/Cancelado)
+ */
+function guardarEstadoEnCálculos(movimiento, filaMovimiento, nuevoEstado) {
+  const ss = movimiento.getParent();
+  const calculos = ss.getSheetByName(NOMBRES_HOJAS.CALCULOS);
+
+  if (!calculos) {
+    console.log('Hoja CALCULOS no existe');
+    return;
+  }
+
+  // Obtener el concepto de la fila editada
+  const concepto = movimiento.getRange(filaMovimiento, 1).getValue().toString().trim();
+
+  if (!concepto || concepto.startsWith('▶') || concepto.startsWith('📥') ||
+      concepto.startsWith('📤') || concepto === 'Subtotal') {
+    return; // No guardar headers ni subtotales
+  }
+
+  // Obtener mes actual (de celda B3)
+  const mesActual = movimiento.getRange(3, 2).getValue().toString();
+  const mesNum = MESES.indexOf(mesActual) + 1;
+
+  if (mesNum < 1 || mesNum > 12) {
+    console.log('Mes no válido:', mesActual);
+    return;
+  }
+
+  // Columna del mes en CALCULOS (B=Enero=2, C=Febrero=3, etc.)
+  const colMes = mesNum + 1;
+
+  // Buscar el concepto en CALCULOS sección 7 (fila 167+)
+  const conceptosCalc = calculos.getRange(167, 1, 100, 1).getValues();
+
+  for (let i = 0; i < conceptosCalc.length; i++) {
+    const conceptoCalc = (conceptosCalc[i][0] || '').toString().trim();
+    if (conceptoCalc === concepto) {
+      const filaCalc = 167 + i;
+      calculos.getRange(filaCalc, colMes).setValue(nuevoEstado);
+      console.log('Estado guardado:', concepto, '→', nuevoEstado, 'en', mesActual);
+      return;
+    }
+  }
+
+  console.log('Concepto no encontrado en CALCULOS:', concepto);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
