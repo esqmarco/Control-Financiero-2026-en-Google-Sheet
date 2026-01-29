@@ -10,7 +10,7 @@
 // CONSTANTES GLOBALES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const VERSION = '7.40';
+const VERSION = '8.0';
 const AÑO = 2026;
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -507,12 +507,13 @@ const METAS_NT = {
 
 const NOMBRES_HOJAS = {
   CONFIG: 'CONFIG',
+  CALCULOS: 'CALCULOS',               // v8.0: Hoja intermedia de cálculos
   PRESUPUESTO: 'PRESUPUESTO',
   GASTOS_FIJOS: 'GASTOS_FIJOS',
   CARGA_FAMILIA: 'CARGA_FAMILIA',
   CARGA_NT: 'CARGA_NT',
   MOVIMIENTO: 'MOVIMIENTO',
   TABLERO: 'TABLERO',
-  LIQUIDEZ_FAM: 'LIQUIDEZ_FAMILIA',   // Nueva v6.0
-  LIQUIDEZ_NT: 'LIQUIDEZ_NT'          // Nueva v6.0
+  LIQUIDEZ_FAM: 'LIQUIDEZ_FAMILIA',
+  LIQUIDEZ_NT: 'LIQUIDEZ_NT'
 };

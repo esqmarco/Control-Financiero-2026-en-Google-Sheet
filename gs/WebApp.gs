@@ -106,16 +106,18 @@ function obtenerDatosDashboard() {
   var tablero = ss.getSheetByName(NOMBRES_HOJAS.TABLERO);
   var movimiento = ss.getSheetByName(NOMBRES_HOJAS.MOVIMIENTO);
   var config = ss.getSheetByName(NOMBRES_HOJAS.CONFIG);
+  var calculos = ss.getSheetByName(NOMBRES_HOJAS.CALCULOS);  // v8.0: Hoja centralizada
   var cargaFam = ss.getSheetByName(NOMBRES_HOJAS.CARGA_FAMILIA);
   var cargaNT = ss.getSheetByName(NOMBRES_HOJAS.CARGA_NT);
   var gastosFijos = ss.getSheetByName(NOMBRES_HOJAS.GASTOS_FIJOS);
   var presupuesto = ss.getSheetByName(NOMBRES_HOJAS.PRESUPUESTO);
 
   // DEBUG: Verificar que las hojas existen
-  console.log('=== DIAGNÓSTICO WebApp ===');
+  console.log('=== DIAGNÓSTICO WebApp v8.0 ===');
   console.log('Hoja TABLERO existe:', !!tablero);
   console.log('Hoja MOVIMIENTO existe:', !!movimiento);
   console.log('Hoja CONFIG existe:', !!config);
+  console.log('Hoja CALCULOS existe:', !!calculos);
 
   var mesSeleccionado = movimiento ? movimiento.getRange('B3').getValue() : 'Enero';
   var mesNum = MESES.indexOf(mesSeleccionado) + 1;
@@ -248,7 +250,7 @@ function obtenerDatosDashboard() {
     }
   }
 
-  // ═══ LIQUIDEZ - Calculada desde disponible y pendientes ═══
+  // ═══ LIQUIDEZ - Desde CALCULOS sección 6 (v8.0) ═══
   var liquidez = {
     cajaDisponible: ingresosFamReal - egresosFamReal,
     semanas: [
@@ -258,6 +260,28 @@ function obtenerDatosDashboard() {
     ],
     saldoFinal: ingresosFamReal - egresosFamReal - egresosPendientesFam
   };
+
+  // Leer liquidez detallada desde CALCULOS sección 6 (filas 147-150)
+  if (calculos) {
+    console.log('--- Leyendo liquidez desde CALCULOS sección 6 ---');
+    var dataLiq = calculos.getRange(147, 1, 4, 3).getValues();
+    // Fila 0: Atrasados, Fila 1: Esta semana, Fila 2: Próxima semana, Fila 3: Semana 3
+    var liqAtrasados = Number(dataLiq[0][1]) || 0;
+    var liqSem1 = Number(dataLiq[1][1]) || 0;
+    var liqSem2 = Number(dataLiq[2][1]) || 0;
+    var liqSem3 = Number(dataLiq[3][1]) || 0;
+    console.log('  Atrasados:', liqAtrasados, '- Esta sem:', liqSem1, '- Prox:', liqSem2, '- Sem3:', liqSem3);
+
+    // Actualizar semanas con valores reales
+    liquidez.semanas[0] = { nombre: 'Esta semana', gastos: liqSem1, saldo: liquidez.cajaDisponible - liqSem1 };
+    liquidez.semanas[1] = { nombre: 'Prox. semana', gastos: liqSem2, saldo: liquidez.cajaDisponible - liqSem1 - liqSem2 };
+    liquidez.semanas[2] = { nombre: '3ra semana', gastos: liqSem3, saldo: liquidez.cajaDisponible - liqSem1 - liqSem2 - liqSem3 };
+
+    // Si hay atrasados, agregar como primera semana
+    if (liqAtrasados > 0) {
+      liquidez.semanas.unshift({ nombre: 'Atrasados', gastos: liqAtrasados, saldo: liquidez.cajaDisponible - liqAtrasados });
+    }
+  }
 
   // ═══ BALANCE CRUZADO - Se calcula después de leer CARGA ═══
   var balanceCruzado = {
@@ -273,32 +297,47 @@ function obtenerDatosDashboard() {
   var prestamosFam = new Array(12).fill(0);  // FAM presta a NT
   var devolucionesNT = new Array(12).fill(0);  // NT devuelve a FAM
 
-  // ═══ CATEGORY BREAKDOWN FROM MOVIMIENTO ═══
+  // ═══ CATEGORY BREAKDOWN FROM CALCULOS (v8.0) ═══
+  // Sección 3 de CALCULOS: filas 58-62 FAMILIA, filas 66-71 NEUROTEA
+  // Columna A = nombre categoría, columna mesNum+1 = valor del mes
   var categoriasFamilia = [];
   var categoriasNT = [];
-  if (movimiento) {
-    var dataFMov = movimiento.getRange('A9:F116').getValues();
-    for (var m = 0; m < dataFMov.length; m++) {
-      var c = (dataFMov[m][0] || '').toString();
-      if (c.indexOf('\u25B6') >= 0) {
+
+  if (calculos) {
+    console.log('--- Leyendo categorías desde CALCULOS sección 3 ---');
+
+    // FAMILIA: filas 58-62 (5 categorías)
+    var dataCategFam = calculos.getRange(58, 1, 5, 14).getValues();
+    for (var catF = 0; catF < dataCategFam.length; catF++) {
+      var nombreCatF = (dataCategFam[catF][0] || '').toString().trim();
+      if (nombreCatF && nombreCatF !== '── FAMILIA ──') {
+        var valorMes = Number(dataCategFam[catF][mesNum]) || 0;
+        var valorTotal = Number(dataCategFam[catF][13]) || 0;
+        console.log('  FAM categoría:', nombreCatF, '- Mes', mesNum, ':', valorMes);
         categoriasFamilia.push({
-          nombre: c.replace('\u25B6', '').trim(),
-          presupuesto: Number(dataFMov[m][4]) || 0,
-          real: Number(dataFMov[m][5]) || 0
+          nombre: nombreCatF,
+          presupuesto: 0,  // TODO: leer de PRESUPUESTO si es necesario
+          real: valorMes
         });
       }
     }
-    var dataNMov = movimiento.getRange('A122:F206').getValues();
-    for (var n = 0; n < dataNMov.length; n++) {
-      var cn = (dataNMov[n][0] || '').toString();
-      if (cn.indexOf('\u25B6') >= 0) {
+
+    // NEUROTEA: filas 66-71 (6 categorías)
+    var dataCategNT = calculos.getRange(66, 1, 6, 14).getValues();
+    for (var catN = 0; catN < dataCategNT.length; catN++) {
+      var nombreCatN = (dataCategNT[catN][0] || '').toString().trim();
+      if (nombreCatN && nombreCatN !== '── NEUROTEA ──') {
+        var valorMesNT = Number(dataCategNT[catN][mesNum]) || 0;
+        console.log('  NT categoría:', nombreCatN, '- Mes', mesNum, ':', valorMesNT);
         categoriasNT.push({
-          nombre: cn.replace('\u25B6', '').trim(),
-          presupuesto: Number(dataNMov[n][4]) || 0,
-          real: Number(dataNMov[n][5]) || 0
+          nombre: nombreCatN,
+          presupuesto: 0,
+          real: valorMesNT
         });
       }
     }
+  } else {
+    console.log('⚠️ Hoja CALCULOS no existe - categorías vacías');
   }
 
   // ═══ 12-MONTH TREND DATA + SUBCATEGORÍAS + FLUJO CRUZADO ═══

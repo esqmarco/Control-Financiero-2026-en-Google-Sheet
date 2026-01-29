@@ -1235,13 +1235,96 @@ function cargarDatosPrueba() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 6. RESUMEN
+  // 6. CARGAR ESTADOS DE PAGO EN CALCULOS SECCIÓN 7 (v8.0)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  var calculos = ss.getSheetByName(NOMBRES_HOJAS.CALCULOS);
+  if (calculos) {
+    console.log('Cargando estados de pago en CALCULOS sección 7...');
+
+    // Leer conceptos de la sección 7 (empieza en fila 167)
+    var filaInicioEstados = 167;
+    var datosEstados = calculos.getRange(filaInicioEstados, 1, 100, 1).getValues();
+
+    // Encontrar la última fila con datos en sección 7
+    var ultimaFilaEstados = filaInicioEstados;
+    for (var e = 0; e < datosEstados.length; e++) {
+      if (datosEstados[e][0] && datosEstados[e][0].toString().trim() !== '') {
+        ultimaFilaEstados = filaInicioEstados + e;
+      }
+    }
+
+    // Llenar estados de prueba para ENERO (mes 1 = columna B = col 2)
+    // Algunos Pagado, algunos Pendiente para demostrar independencia por mes
+    var estadosEnero = {
+      // FAMILIA - marcar algunos como Pagado
+      'Salario Lili Doméstico': 'Pagado',
+      'Salario Laura Doméstico': 'Pagado',
+      'ANDE Casa': 'Pendiente',
+      'Expensa Casa': 'Pagado',
+      'Préstamo Lizzi': 'Pagado',
+      'Cajubi Marco': 'Pagado',
+      'Mutual Marco': 'Pagado',
+      'Giganet': 'Pagado',
+      'Tigo Familiar': 'Pagado',
+      // NEUROTEA
+      'Alquiler Clínica': 'Pagado',
+      'ANDE Clínica': 'Pendiente',
+      'Salario Aracely': 'Pagado',
+      'Salario Fatima': 'Pagado'
+    };
+
+    // Llenar estados para FEBRERO (mes 2 = columna C = col 3)
+    // Diferente de enero para demostrar independencia
+    var estadosFebrero = {
+      'Salario Lili Doméstico': 'Pagado',
+      'Salario Laura Doméstico': 'Pendiente',
+      'ANDE Casa': 'Pagado',
+      'Expensa Casa': 'Pagado',
+      'Préstamo Lizzi': 'Pendiente',
+      'Cajubi Marco': 'Pagado',
+      'Mutual Marco': 'Pendiente',
+      'Giganet': 'Pagado',
+      'Tigo Familiar': 'Pendiente',
+      'Alquiler Clínica': 'Pagado',
+      'ANDE Clínica': 'Pagado',
+      'Salario Aracely': 'Pagado',
+      'Salario Fatima': 'Pendiente'
+    };
+
+    // Aplicar estados a las filas correspondientes
+    for (var f = filaInicioEstados; f <= ultimaFilaEstados; f++) {
+      var concepto = calculos.getRange(f, 1).getValue().toString().trim();
+      if (concepto && concepto !== '── FAMILIA ──' && concepto !== '── NEUROTEA ──') {
+        // Enero (columna B = 2)
+        if (estadosEnero[concepto]) {
+          calculos.getRange(f, 2).setValue(estadosEnero[concepto]);
+        } else {
+          calculos.getRange(f, 2).setValue('Pendiente');
+        }
+        // Febrero (columna C = 3)
+        if (estadosFebrero[concepto]) {
+          calculos.getRange(f, 3).setValue(estadosFebrero[concepto]);
+        } else {
+          calculos.getRange(f, 3).setValue('Pendiente');
+        }
+        // Marzo a Diciembre: Pendiente por defecto
+        for (var m = 4; m <= 13; m++) {
+          calculos.getRange(f, m).setValue('Pendiente');
+        }
+      }
+    }
+    console.log('Estados de pago cargados: ' + (ultimaFilaEstados - filaInicioEstados + 1) + ' conceptos');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 7. RESUMEN
   // ═══════════════════════════════════════════════════════════════════════════
 
   SpreadsheetApp.getActiveSpreadsheet().toast('¡Datos integrales cargados!', '✓', 5);
 
   ui.alert(
-    '✓ DATOS DE PRUEBA INTEGRALES CARGADOS v7.40',
+    '✓ DATOS DE PRUEBA INTEGRALES CARGADOS v8.0',
     'Datos COMPLETOS para 12 meses de 2026:\n\n' +
     '═══════════════════════════════════\n' +
     '📊 CARGA_FAMILIA: ' + datosFamilia.length + ' transacciones\n' +
@@ -1256,15 +1339,17 @@ function cargarDatosPrueba() {
     '📊 GASTOS_FIJOS: ' + datosGF.length + ' conceptos\n' +
     '  • FAMILIA: gastos, cuotas, oblig, suscr\n' +
     '  • NEUROTEA: clínica, sueldos, eventos\n\n' +
-    '📊 PRESUPUESTO: 70+ conceptos con valores\n' +
-    '  • Ingresos y egresos presupuestados\n' +
-    '  • Gráfico Presup vs Ejecución funciona\n\n' +
+    '📊 PRESUPUESTO: 70+ conceptos con valores\n\n' +
     '📊 CONFIG: 12 cuentas con saldos\n\n' +
+    '🧮 CALCULOS: Estados de pago por mes\n' +
+    '  • ENERO: algunos Pagado, algunos Pendiente\n' +
+    '  • FEBRERO: estados diferentes a Enero\n' +
+    '  • MARZO-DIC: Pendiente (default)\n\n' +
     '═══════════════════════════════════\n' +
-    '💡 SIGUIENTE:\n' +
-    '  1. MOVIMIENTO → verificar mes Enero\n' +
-    '  2. Dashboard Web → ver gráficos\n' +
-    '  3. GASTOS_FIJOS → marcar "Pagado"',
+    '💡 PRUEBA DE MESES INDEPENDIENTES:\n' +
+    '  1. MOVIMIENTO → seleccionar Enero\n' +
+    '  2. Ver EST.PAGO de gastos fijos\n' +
+    '  3. Cambiar a Febrero → ¡estados diferentes!',
     ui.ButtonSet.OK
   );
 }

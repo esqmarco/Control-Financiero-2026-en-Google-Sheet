@@ -1510,12 +1510,10 @@ function escribirSeccionMovimientoEgresos(sheet, row, titulo, items, entidad, co
     // ESTADO (col I) - Egreso: gastar menos es bueno
     sheet.getRange(row, 9).setFormula(`=IF(F${row}<=E${row};"✓";"⚠")`);
 
-    // ESTADO PAGO (col J) - dropdown, por defecto "Pendiente"
-    sheet.getRange(row, 10).setValue('Pendiente').setDataValidation(
-      SpreadsheetApp.newDataValidation()
-        .requireValueInList(ESTADOS, true)
-        .build()
-    );
+    // ESTADO PAGO (col J) - v8.0: Lee de CALCULOS sección 7 (estados por mes)
+    // El usuario edita el estado en CALCULOS, MOVIMIENTO solo LEE
+    const formulaEstPago = `=IFERROR(INDEX(CALCULOS!$B:$M;MATCH(A${row};CALCULOS!$A:$A;0);$N$3);"Pendiente")`;
+    sheet.getRange(row, 10).setFormula(formulaEstPago);
 
     // CATEGORÍA (col L) - para cálculos de % GASTOS POR CATEGORÍA
     sheet.getRange(row, 12).setValue(categoria);
@@ -1743,14 +1741,9 @@ function escribirSeccionMovimientoEventos(sheet, row, colorFondo, colorSubtotal)
     // ESTADO (col I)
     sheet.getRange(row, 9).setFormula(`=IF(F${row}<=E${row};"✓";"⚠")`);
 
-    // EST. PAGO (col J): Dropdown como otros gastos fijos (v7.7)
-    sheet.getRange(row, 10).setValue('Pendiente')
-      .setDataValidation(
-        SpreadsheetApp.newDataValidation()
-          .requireValueInList(ESTADOS, true)
-          .setAllowInvalid(false)
-          .build()
-      );
+    // EST. PAGO (col J) - v8.0: Lee de CALCULOS sección 7 (estados por mes)
+    const formulaEstPagoEvento = `=IFERROR(INDEX(CALCULOS!$B:$M;MATCH(A${row};CALCULOS!$A:$A;0);$N$3);"Pendiente")`;
+    sheet.getRange(row, 10).setFormula(formulaEstPagoEvento);
 
     // CATEGORÍA (col L) - para cálculos de % GASTOS POR CATEGORÍA
     sheet.getRange(row, 12).setValue(categoria);
