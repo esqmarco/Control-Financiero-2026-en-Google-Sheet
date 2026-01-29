@@ -18,6 +18,10 @@ function crearOLimpiarHoja(nombre) {
     ss.deleteSheet(sheet);
   }
   sheet = ss.insertSheet(nombre);
+
+  // Limpiar cualquier validación de datos heredada (Google Sheets a veces las copia)
+  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).clearDataValidations();
+
   return sheet;
 }
 
