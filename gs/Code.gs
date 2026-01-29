@@ -38,6 +38,7 @@ function onOpen() {
     // Crear Hojas Individual
     .addSubMenu(ui.createMenu('📋 Crear Hojas')
       .addItem('⚙️ CONFIG', 'crearHojaCONFIG')
+      .addItem('🧮 CALCULOS', 'crearHojaCALCULOS')
       .addItem('📊 PRESUPUESTO', 'crearHojaPRESUPUESTO')
       .addItem('📝 GASTOS_FIJOS', 'crearHojaGASTOS_FIJOS')
       .addItem('👨‍👩‍👧‍👦 CARGA_FAMILIA', 'crearHojaCARGA_FAMILIA')
@@ -84,6 +85,9 @@ function _crearTodasLasHojas() {
   // Usar console.log para progreso (funciona en editor y en spreadsheet)
   console.log('Creando CONFIG...');
   crearHojaCONFIG();
+
+  console.log('Creando CALCULOS...');
+  crearHojaCALCULOS();
 
   console.log('Creando PRESUPUESTO...');
   crearHojaPRESUPUESTO();
@@ -224,7 +228,8 @@ function ordenarHojas() {
     NOMBRES_HOJAS.CARGA_NT,
     NOMBRES_HOJAS.GASTOS_FIJOS,
     NOMBRES_HOJAS.PRESUPUESTO,
-    NOMBRES_HOJAS.CONFIG
+    NOMBRES_HOJAS.CONFIG,
+    NOMBRES_HOJAS.CALCULOS         // v8.0 - Hoja auxiliar de cálculos (al final)
   ];
 
   orden.forEach((nombre, index) => {
