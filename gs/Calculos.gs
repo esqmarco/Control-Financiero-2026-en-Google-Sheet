@@ -30,9 +30,6 @@ function crearHojaCALCULOS() {
   const sheet = crearOLimpiarHoja('CALCULOS');
   const C = COLORES;
 
-  // Limpiar todas las validaciones de datos heredadas
-  sheet.getRange(1, 1, 500, 14).clearDataValidations();
-
   // ─── HEADER PRINCIPAL ───
   sheet.getRange('A1:N1').merge()
     .setValue('🔢 CÁLCULOS INTERMEDIOS - NO EDITAR')
