@@ -194,22 +194,48 @@ function reinicializarSistema() {
 
     if (confirmacion !== ui.Button.YES) return;
 
-    // Ejecutar con UI disponible
-    _crearTodasLasHojas();
-
+    // v8.1: Mostrar aviso y usar trigger para evitar timeout
     ui.alert(
-      '✅ Sistema Reinicializado',
-      'Todas las hojas han sido recreadas exitosamente.',
+      '⏳ Creando hojas...',
+      'El sistema se creará en segundo plano.\n\n' +
+      'Espera aproximadamente 3 minutos y luego REFRESCA la página (F5).\n\n' +
+      '📋 Se crearán 10 hojas: CONFIG, CALCULOS, PRESUPUESTO, etc.',
       ui.ButtonSet.OK
     );
 
+    // Crear trigger que se ejecuta inmediatamente (nuevo contexto = nuevo límite de 6 min)
+    ScriptApp.newTrigger('_crearTodasLasHojasConNotificacion')
+      .timeBased()
+      .after(1000)  // 1 segundo después
+      .create();
+
   } catch (e) {
     // Si getUi() falla, estamos en el editor de Apps Script
-    // Ejecutar directamente sin confirmación
     console.log('⚠️ Ejecutando desde editor de Apps Script (sin UI)...');
     console.log('Creando todas las hojas...');
     _crearTodasLasHojas();
     console.log('✅ Reinicialización completada exitosamente');
+  }
+}
+
+/**
+ * v8.1: Función que crea hojas y elimina su propio trigger
+ */
+function _crearTodasLasHojasConNotificacion() {
+  try {
+    _crearTodasLasHojas();
+
+    // Eliminar el trigger que nos llamó
+    const triggers = ScriptApp.getProjectTriggers();
+    for (let i = 0; i < triggers.length; i++) {
+      if (triggers[i].getHandlerFunction() === '_crearTodasLasHojasConNotificacion') {
+        ScriptApp.deleteTrigger(triggers[i]);
+      }
+    }
+
+    console.log('✅ Reinicialización completada y trigger eliminado');
+  } catch (e) {
+    console.log('❌ Error en reinicialización:', e.message);
   }
 }
 
