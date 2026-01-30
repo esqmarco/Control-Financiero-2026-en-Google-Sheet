@@ -295,7 +295,11 @@ function obtenerDatosDashboard() {
   }
   console.log('--- Liquidez: Disponible', cajaDisponible, '- Pendientes:', egresosPendientesFam, '---');
 
-  // ═══ BALANCE CRUZADO - Se calcula después de leer CARGA ═══
+  // ═══ v8.3: LECTURA DIRECTA DE CALCULOS (sin recálculos) ═══
+  // CALCULOS ya tiene todas las fórmulas calculadas - solo leer celdas
+
+  var categoriasFamilia = [];
+  var categoriasNT = [];
   var balanceCruzado = {
     prestamoNTMes: 0, prestamoNTAcum: 0, devFamMes: 0, devFamAcum: 0,
     deudaFamMes: 0, deudaFamAcum: 0,
@@ -303,228 +307,111 @@ function obtenerDatosDashboard() {
     deudaNTMes: 0, deudaNTAcum: 0,
     balanceNetoMes: 0, balanceNeto: 0
   };
-  // Variables para acumular préstamos y devoluciones separados
-  var prestamosNT = new Array(12).fill(0);  // NT presta a FAM
-  var devolucionesFam = new Array(12).fill(0);  // FAM devuelve a NT
-  var prestamosFam = new Array(12).fill(0);  // FAM presta a NT
-  var devolucionesNT = new Array(12).fill(0);  // NT devuelve a FAM
-
-  // ═══ CATEGORY BREAKDOWN (v8.2: CALCULOS primero, fallback a MOVIMIENTO) ═══
-  var categoriasFamilia = [];
-  var categoriasNT = [];
+  var flujoMensual = { ntToFam: new Array(12).fill(0), famToNT: new Array(12).fill(0) };
+  var subcategoriasFam = [];
+  var subcategoriasNT = [];
+  var tendencia = {
+    familia: { ingresos: new Array(12).fill(0), egresos: new Array(12).fill(0), ahorro: new Array(12).fill(0), presupIngresos: new Array(12).fill(0), presupEgresos: new Array(12).fill(0) },
+    neurotea: { ingresos: new Array(12).fill(0), egresos: new Array(12).fill(0), presupIngresos: new Array(12).fill(0), presupEgresos: new Array(12).fill(0) }
+  };
 
   if (calculos) {
-    // Usar CALCULOS (más eficiente - datos precalculados)
-    console.log('--- Leyendo categorías desde CALCULOS sección 3 ---');
+    console.log('=== v8.3: Leyendo TODO desde CALCULOS (sin recálculos) ===');
 
-    // FAMILIA: filas 58-62 (5 categorías)
+    // ─── SECCIÓN 1: TOTALES POR ENTIDAD (filas 7-12 FAM, 16-21 NT) ───
+    // Tendencia 12 meses - FAMILIA
+    var dataTotalesFam = calculos.getRange(7, 2, 6, 12).getValues(); // B7:M12
+    for (var m = 0; m < 12; m++) {
+      tendencia.familia.ingresos[m] = Number(dataTotalesFam[0][m]) || 0;  // FAM_INGRESOS
+      tendencia.familia.egresos[m] = Number(dataTotalesFam[1][m]) || 0;   // FAM_EGRESOS_PAGADOS
+      tendencia.familia.ahorro[m] = Number(dataTotalesFam[3][m]) || 0;    // FAM_AHORRO
+    }
+    console.log('  Tendencia FAM cargada - Ingresos[0]:', tendencia.familia.ingresos[0]);
+
+    // Tendencia 12 meses - NEUROTEA
+    var dataTotalesNT = calculos.getRange(16, 2, 5, 12).getValues(); // B16:M20
+    for (var mn = 0; mn < 12; mn++) {
+      tendencia.neurotea.ingresos[mn] = Number(dataTotalesNT[0][mn]) || 0;  // NT_INGRESOS
+      tendencia.neurotea.egresos[mn] = Number(dataTotalesNT[1][mn]) || 0;   // NT_EGRESOS_PAGADOS
+    }
+    console.log('  Tendencia NT cargada - Ingresos[0]:', tendencia.neurotea.ingresos[0]);
+
+    // ─── SECCIÓN 3: CATEGORÍAS EGRESO (filas 58-62 FAM, 66-71 NT) ───
     var dataCategFam = calculos.getRange(58, 1, 5, 14).getValues();
     for (var catF = 0; catF < dataCategFam.length; catF++) {
       var nombreCatF = (dataCategFam[catF][0] || '').toString().trim();
-      if (nombreCatF && nombreCatF !== '── FAMILIA ──') {
+      if (nombreCatF && nombreCatF.indexOf('──') === -1) {
         var valorMes = Number(dataCategFam[catF][mesNum]) || 0;
-        console.log('  FAM categoría:', nombreCatF, '- Mes', mesNum, ':', valorMes);
         categoriasFamilia.push({ nombre: nombreCatF, presupuesto: 0, real: valorMes });
       }
     }
+    console.log('  Categorías FAM:', categoriasFamilia.length);
 
-    // NEUROTEA: filas 66-71 (6 categorías)
     var dataCategNT = calculos.getRange(66, 1, 6, 14).getValues();
     for (var catN = 0; catN < dataCategNT.length; catN++) {
       var nombreCatN = (dataCategNT[catN][0] || '').toString().trim();
-      if (nombreCatN && nombreCatN !== '── NEUROTEA ──') {
+      if (nombreCatN && nombreCatN.indexOf('──') === -1) {
         var valorMesNT = Number(dataCategNT[catN][mesNum]) || 0;
-        console.log('  NT categoría:', nombreCatN, '- Mes', mesNum, ':', valorMesNT);
         categoriasNT.push({ nombre: nombreCatN, presupuesto: 0, real: valorMesNT });
       }
     }
-  } else if (movimiento) {
-    // Fallback: calcular desde MOVIMIENTO (si CALCULOS no existe)
-    console.log('--- Calculando categorías desde MOVIMIENTO (fallback) ---');
+    console.log('  Categorías NT:', categoriasNT.length);
 
-    var categFamObj = {};
-    var categNTObj = {};
+    // ─── SECCIÓN 4: BALANCE CRUZADO (filas 82-88) ───
+    var dataBalance = calculos.getRange(82, 1, 7, 14).getValues();
+    // Fila 82: Préstamos NT → FAM, Fila 83: Devoluciones FAM → NT
+    // Fila 84: DEUDA FAM A NT, Fila 85: Préstamos FAM → NT
+    // Fila 86: Devoluciones NT → FAM, Fila 87: DEUDA NT A FAM, Fila 88: BALANCE NETO
+    balanceCruzado.prestamoNTMes = Number(dataBalance[0][mesNum]) || 0;
+    balanceCruzado.devFamMes = Number(dataBalance[1][mesNum]) || 0;
+    balanceCruzado.deudaFamMes = Number(dataBalance[2][mesNum]) || 0;
+    balanceCruzado.prestamoFamMes = Number(dataBalance[3][mesNum]) || 0;
+    balanceCruzado.devNTMes = Number(dataBalance[4][mesNum]) || 0;
+    balanceCruzado.deudaNTMes = Number(dataBalance[5][mesNum]) || 0;
+    balanceCruzado.balanceNetoMes = Number(dataBalance[6][mesNum]) || 0;
+    // Acumulados (columna N = 14 = índice 13)
+    balanceCruzado.prestamoNTAcum = Number(dataBalance[0][13]) || 0;
+    balanceCruzado.devFamAcum = Number(dataBalance[1][13]) || 0;
+    balanceCruzado.deudaFamAcum = Number(dataBalance[2][13]) || 0;
+    balanceCruzado.prestamoFamAcum = Number(dataBalance[3][13]) || 0;
+    balanceCruzado.devNTAcum = Number(dataBalance[4][13]) || 0;
+    balanceCruzado.deudaNTAcum = Number(dataBalance[5][13]) || 0;
+    balanceCruzado.balanceNeto = Number(dataBalance[6][13]) || 0;
+    // Flujo mensual para gráficos
+    for (var fm = 0; fm < 12; fm++) {
+      flujoMensual.ntToFam[fm] = (Number(dataBalance[0][fm + 1]) || 0) + (Number(dataBalance[4][fm + 1]) || 0);
+      flujoMensual.famToNT[fm] = (Number(dataBalance[1][fm + 1]) || 0) + (Number(dataBalance[3][fm + 1]) || 0);
+    }
+    console.log('  Balance cruzado cargado - Neto acum:', balanceCruzado.balanceNeto);
 
-    // FAMILIA: filas 9-116
-    var dataMovFam = movimiento.getRange('A9:N116').getValues();
-    for (var mf = 0; mf < dataMovFam.length; mf++) {
-      var tipo = (dataMovFam[mf][1] || '').toString().trim();
-      var real = Number(dataMovFam[mf][5]) || 0;
-      var estPago = (dataMovFam[mf][9] || '').toString().trim();
-      var categoria = (dataMovFam[mf][11] || '').toString().trim();
-      var entidad = (dataMovFam[mf][12] || '').toString().trim();
-
-      if (tipo === 'Egreso' && (estPago === 'Pagado' || estPago === 'Ahorrado') &&
-          entidad === 'FAMILIA' && categoria && categoria !== '' && real > 0) {
-        categFamObj[categoria] = (categFamObj[categoria] || 0) + real;
+    // ─── SECCIÓN 5: SUBCATEGORÍAS VARIABLES (filas 103+ FAM, 123+ NT aprox) ───
+    var dataSubcatFam = calculos.getRange(103, 1, 17, 14).getValues();
+    for (var sf = 0; sf < dataSubcatFam.length; sf++) {
+      var nombreSubF = (dataSubcatFam[sf][0] || '').toString().trim();
+      var montoSubF = Number(dataSubcatFam[sf][mesNum]) || 0;
+      if (nombreSubF && nombreSubF.indexOf('──') === -1 && montoSubF > 0) {
+        subcategoriasFam.push({ nombre: nombreSubF, monto: montoSubF });
       }
     }
-    for (var catKeyF in categFamObj) {
-      if (categFamObj.hasOwnProperty(catKeyF)) {
-        categoriasFamilia.push({ nombre: catKeyF, presupuesto: 0, real: categFamObj[catKeyF] });
+    subcategoriasFam.sort(function(a, b) { return b.monto - a.monto; });
+    console.log('  Subcategorías FAM:', subcategoriasFam.length);
+
+    var dataSubcatNT = calculos.getRange(123, 1, 13, 14).getValues();
+    for (var sn = 0; sn < dataSubcatNT.length; sn++) {
+      var nombreSubN = (dataSubcatNT[sn][0] || '').toString().trim();
+      var montoSubN = Number(dataSubcatNT[sn][mesNum]) || 0;
+      if (nombreSubN && nombreSubN.indexOf('──') === -1 && montoSubN > 0) {
+        subcategoriasNT.push({ nombre: nombreSubN, monto: montoSubN });
       }
     }
+    subcategoriasNT.sort(function(a, b) { return b.monto - a.monto; });
+    console.log('  Subcategorías NT:', subcategoriasNT.length);
 
-    // NEUROTEA: filas 122-206
-    var dataMovNT = movimiento.getRange('A122:N206').getValues();
-    for (var mn = 0; mn < dataMovNT.length; mn++) {
-      var tipoNT = (dataMovNT[mn][1] || '').toString().trim();
-      var realNT = Number(dataMovNT[mn][5]) || 0;
-      var estPagoNT = (dataMovNT[mn][9] || '').toString().trim();
-      var categoriaNT = (dataMovNT[mn][11] || '').toString().trim();
-      var entidadNT = (dataMovNT[mn][12] || '').toString().trim();
-
-      if (tipoNT === 'Egreso' && estPagoNT === 'Pagado' &&
-          entidadNT === 'NEUROTEA' && categoriaNT && categoriaNT !== '' && realNT > 0) {
-        categNTObj[categoriaNT] = (categNTObj[categoriaNT] || 0) + realNT;
-      }
-    }
-    for (var catKeyN in categNTObj) {
-      if (categNTObj.hasOwnProperty(catKeyN)) {
-        categoriasNT.push({ nombre: catKeyN, presupuesto: 0, real: categNTObj[catKeyN] });
-      }
-    }
-  }
-  console.log('  FAMILIA categorías:', categoriasFamilia.length, '- NEUROTEA:', categoriasNT.length);
-
-  // ═══ 12-MONTH TREND DATA + SUBCATEGORÍAS + FLUJO CRUZADO ═══
-  var tendencia = {
-    familia: {
-      ingresos: new Array(12).fill(0), egresos: new Array(12).fill(0),
-      ahorro: new Array(12).fill(0),
-      presupIngresos: new Array(12).fill(0), presupEgresos: new Array(12).fill(0)
-    },
-    neurotea: {
-      ingresos: new Array(12).fill(0), egresos: new Array(12).fill(0),
-      presupIngresos: new Array(12).fill(0), presupEgresos: new Array(12).fill(0)
-    }
-  };
-
-  // NEW: Subcategorías variables del mes actual
-  var subcatFamObj = {};
-  var subcatNTObj = {};
-
-  // NEW: Flujo mensual entre entidades (préstamos/devoluciones)
-  var flujoMensual = { ntToFam: new Array(12).fill(0), famToNT: new Array(12).fill(0) };
-
-  // CARGA_FAMILIA monthly sums + subcategorías + flujo
-  if (cargaFam) {
-    var dataCF = cargaFam.getRange('A4:F500').getValues();
-    for (var ci = 0; ci < dataCF.length; ci++) {
-      var fecha = dataCF[ci][0];
-      var tipoC = (dataCF[ci][1] || '').toString();
-      var catC = (dataCF[ci][2] || '').toString();
-      var subcatC = (dataCF[ci][3] || '').toString();
-      var montoC = Number(dataCF[ci][5]) || 0;
-      if (!fecha || montoC === 0) continue;
-      var mesC, yearC;
-      try { mesC = fecha.getMonth(); yearC = fecha.getFullYear(); } catch(e) { continue; }
-      if (yearC !== AÑO) continue;
-
-      // Tendencia mensual
-      if (tipoC === 'Egreso Familiar') tendencia.familia.egresos[mesC] += montoC;
-      else if (tipoC === 'Ahorro') tendencia.familia.ahorro[mesC] += montoC;
-      else if (tipoC) tendencia.familia.ingresos[mesC] += montoC;
-
-      // Subcategorías variables del mes actual
-      if (mesC + 1 === mesNum && tipoC === 'Egreso Familiar' && catC === 'VARIABLES' && subcatC && subcatC !== '-') {
-        subcatFamObj[subcatC] = (subcatFamObj[subcatC] || 0) + montoC;
-      }
-
-      // Flujo cruzado NT→FAM (ingresos en FAM provenientes de NT)
-      if (tipoC === 'Préstamo NeuroTEA') {
-        flujoMensual.ntToFam[mesC] += montoC;
-        prestamosNT[mesC] += montoC;  // NT presta a FAM
-      }
-      if (tipoC === 'Devolución NeuroTEA') {
-        flujoMensual.ntToFam[mesC] += montoC;
-        devolucionesNT[mesC] += montoC;  // NT devuelve a FAM
-      }
-      // Flujo cruzado FAM→NT (egresos de FAM hacia NT)
-      if (subcatC === 'Préstamo Familia → NT') {
-        flujoMensual.famToNT[mesC] += montoC;
-        prestamosFam[mesC] += montoC;  // FAM presta a NT
-      }
-      if (subcatC === 'Devolución Familia → NT') {
-        flujoMensual.famToNT[mesC] += montoC;
-        devolucionesFam[mesC] += montoC;  // FAM devuelve a NT
-      }
-    }
+  } else {
+    console.log('⚠️ CALCULOS no existe - Dashboard sin datos de categorías/tendencias');
   }
 
-  // CARGA_NT monthly sums + subcategorías + flujo
-  if (cargaNT) {
-    var dataCN = cargaNT.getRange('A4:F500').getValues();
-    for (var ni = 0; ni < dataCN.length; ni++) {
-      var fechaN = dataCN[ni][0];
-      var tipoN = (dataCN[ni][1] || '').toString();
-      var catN = (dataCN[ni][2] || '').toString();
-      var subcatN = (dataCN[ni][3] || '').toString();
-      var montoN = Number(dataCN[ni][5]) || 0;
-      if (!fechaN || montoN === 0) continue;
-      var mesN, yearN;
-      try { mesN = fechaN.getMonth(); yearN = fechaN.getFullYear(); } catch(e) { continue; }
-      if (yearN !== AÑO) continue;
-
-      // Tendencia mensual
-      if (tipoN === 'Egreso NT') tendencia.neurotea.egresos[mesN] += montoN;
-      else if (tipoN) tendencia.neurotea.ingresos[mesN] += montoN;
-
-      // Subcategorías variables del mes actual
-      if (mesN + 1 === mesNum && tipoN === 'Egreso NT' && catN === 'VARIABLES' && subcatN && subcatN !== '-') {
-        subcatNTObj[subcatN] = (subcatNTObj[subcatN] || 0) + montoN;
-      }
-
-      // Flujo cruzado FAM→NT (ingresos en NT provenientes de FAM)
-      if (tipoN === 'Préstamo Familia') {
-        flujoMensual.famToNT[mesN] += montoN;
-        prestamosFam[mesN] += montoN;  // FAM presta a NT
-      }
-      if (tipoN === 'Devolución Familia → NT') {
-        flujoMensual.famToNT[mesN] += montoN;
-        devolucionesFam[mesN] += montoN;  // FAM devuelve a NT
-      }
-      // Flujo cruzado NT→FAM (egresos de NT hacia FAM)
-      if (subcatN === 'Préstamo NT → Familia') {
-        flujoMensual.ntToFam[mesN] += montoN;
-        prestamosNT[mesN] += montoN;  // NT presta a FAM
-      }
-      if (subcatN === 'Devolución NT → Familia') {
-        flujoMensual.ntToFam[mesN] += montoN;
-        devolucionesNT[mesN] += montoN;  // NT devuelve a FAM
-      }
-    }
-  }
-
-  // Convertir subcategorías a arrays ordenados
-  var subcategoriasFam = [];
-  for (var keyF in subcatFamObj) {
-    subcategoriasFam.push({ nombre: keyF, monto: subcatFamObj[keyF] });
-  }
-  subcategoriasFam.sort(function(a, b) { return b.monto - a.monto; });
-
-  var subcategoriasNT = [];
-  for (var keyN in subcatNTObj) {
-    subcategoriasNT.push({ nombre: keyN, monto: subcatNTObj[keyN] });
-  }
-  subcategoriasNT.sort(function(a, b) { return b.monto - a.monto; });
-
-  // GASTOS_FIJOS monthly sums (add to egresos)
-  if (gastosFijos) {
-    var dataGF = gastosFijos.getRange('A2:R500').getValues();
-    for (var gi = 0; gi < dataGF.length; gi++) {
-      var entidad = (dataGF[gi][1] || '').toString().trim();
-      if (!dataGF[gi][0] || !entidad) continue;
-      for (var gm = 0; gm < 12; gm++) {
-        var val = Number(dataGF[gi][6 + gm]) || 0;
-        if (val === 0) continue;
-        if (entidad === 'FAMILIA') tendencia.familia.egresos[gm] += val;
-        else if (entidad === 'NEUROTEA') tendencia.neurotea.egresos[gm] += val;
-      }
-    }
-  }
-
-  // PRESUPUESTO total rows (planned values per month)
+  // ─── PRESUPUESTO (leer totales de la hoja PRESUPUESTO) ───
   if (presupuesto) {
     var dataP = presupuesto.getRange('A1:P200').getValues();
     for (var pi = 0; pi < dataP.length; pi++) {
@@ -539,30 +426,8 @@ function obtenerDatosDashboard() {
         for (var pm4 = 0; pm4 < 12; pm4++) tendencia.neurotea.presupEgresos[pm4] = Number(dataP[pi][3 + pm4]) || 0;
       }
     }
+    console.log('  Presupuesto cargado');
   }
-
-  // ═══ CALCULAR BALANCE CRUZADO ═══
-  var mesIdx = mesNum - 1;  // 0-indexed
-  // Del mes actual
-  balanceCruzado.prestamoNTMes = prestamosNT[mesIdx];
-  balanceCruzado.devFamMes = devolucionesFam[mesIdx];
-  balanceCruzado.prestamoFamMes = prestamosFam[mesIdx];
-  balanceCruzado.devNTMes = devolucionesNT[mesIdx];
-  // Acumulados (suma de todos los meses hasta el actual)
-  for (var bc = 0; bc <= mesIdx; bc++) {
-    balanceCruzado.prestamoNTAcum += prestamosNT[bc];
-    balanceCruzado.devFamAcum += devolucionesFam[bc];
-    balanceCruzado.prestamoFamAcum += prestamosFam[bc];
-    balanceCruzado.devNTAcum += devolucionesNT[bc];
-  }
-  // Deudas = Préstamos - Devoluciones
-  balanceCruzado.deudaFamMes = balanceCruzado.prestamoNTMes - balanceCruzado.devFamMes;
-  balanceCruzado.deudaFamAcum = balanceCruzado.prestamoNTAcum - balanceCruzado.devFamAcum;
-  balanceCruzado.deudaNTMes = balanceCruzado.prestamoFamMes - balanceCruzado.devNTMes;
-  balanceCruzado.deudaNTAcum = balanceCruzado.prestamoFamAcum - balanceCruzado.devNTAcum;
-  // Balance Neto = Deuda FAM a NT - Deuda NT a FAM (positivo = FAM debe a NT)
-  balanceCruzado.balanceNetoMes = balanceCruzado.deudaFamMes - balanceCruzado.deudaNTMes;
-  balanceCruzado.balanceNeto = balanceCruzado.deudaFamAcum - balanceCruzado.deudaNTAcum;
 
   // ═══ RETURN COMPLETE DATA ═══
   var disponibleFam = ingresosFamReal - egresosFamReal - ahorroFam - fondoEmergenciaFam;
