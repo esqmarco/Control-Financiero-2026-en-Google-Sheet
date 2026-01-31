@@ -318,9 +318,9 @@ function obtenerDatosDashboard() {
   if (calculos) {
     console.log('=== v8.3: Leyendo TODO desde CALCULOS (sin recálculos) ===');
 
-    // ─── SECCIÓN 1: TOTALES POR ENTIDAD (filas 7-12 FAM, 16-21 NT) ───
+    // ─── SECCIÓN 1: TOTALES POR ENTIDAD (filas 6-11 FAM, 15-19 NT) ───
     // Tendencia 12 meses - FAMILIA
-    var dataTotalesFam = calculos.getRange(7, 2, 6, 12).getValues(); // B7:M12
+    var dataTotalesFam = calculos.getRange(6, 2, 6, 12).getValues(); // B6:M11
     for (var m = 0; m < 12; m++) {
       tendencia.familia.ingresos[m] = Number(dataTotalesFam[0][m]) || 0;  // FAM_INGRESOS
       tendencia.familia.egresos[m] = Number(dataTotalesFam[1][m]) || 0;   // FAM_EGRESOS_PAGADOS
@@ -329,7 +329,7 @@ function obtenerDatosDashboard() {
     console.log('  Tendencia FAM cargada - Ingresos[0]:', tendencia.familia.ingresos[0]);
 
     // Tendencia 12 meses - NEUROTEA
-    var dataTotalesNT = calculos.getRange(16, 2, 5, 12).getValues(); // B16:M20
+    var dataTotalesNT = calculos.getRange(15, 2, 5, 12).getValues(); // B15:M19
     for (var mn = 0; mn < 12; mn++) {
       tendencia.neurotea.ingresos[mn] = Number(dataTotalesNT[0][mn]) || 0;  // NT_INGRESOS
       tendencia.neurotea.egresos[mn] = Number(dataTotalesNT[1][mn]) || 0;   // NT_EGRESOS_PAGADOS

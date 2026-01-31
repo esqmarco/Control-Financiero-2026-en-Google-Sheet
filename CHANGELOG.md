@@ -19,11 +19,12 @@ Todas las versiones notables del sistema.
 
 ### Technical
 - Datos que ahora se leen de CALCULOS:
-  - Sección 1 (filas 7-21): Tendencias 12 meses
-  - Sección 3 (filas 58-71): Categorías de egreso
+  - Sección 1 (filas 6-11 FAM, 15-19 NT): Tendencias 12 meses
+  - Sección 3 (filas 58-62 FAM, 66-71 NT): Categorías de egreso
   - Sección 4 (filas 82-88): Balance cruzado NT↔FAM
-  - Sección 5 (filas 103-135): Subcategorías variables
+  - Sección 5 (filas 103-119 FAM, 123-135 NT): Subcategorías variables
 - WebApp.gs: Reducido de ~300 a ~100 líneas en `obtenerDatosDashboard()`
+- **FIX v8.3.1**: Corregido offset +1 en lectura de Sección 1 (filas 7→6 FAM, 16→15 NT)
 
 ### Documentation
 - Nuevo archivo PRD.md (Product Requirements Document)
