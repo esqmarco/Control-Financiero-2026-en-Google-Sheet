@@ -1824,6 +1824,43 @@ INCORRECTO:
 
 ---
 
+## Bug Fixes [2026-01-31] - v8.4 (SINCRONIZACIÓN EST.PAGO)
+
+### Problema: EST.PAGO no persistía al cambiar de mes
+- **Síntoma**: Al cambiar el mes en MOVIMIENTO, los estados de pago volvían a "Pendiente"
+- **Causa raíz**: La comparación de nombres de conceptos era EXACTA (case-sensitive)
+- **Impacto secundario**: Dashboard mostraba "Sin datos" en gráficos de categorías
+
+### Solución implementada:
+
+1. **Normalización de nombres** (Code.gs, Utils.gs)
+   - Nueva función `normalizarConcepto()`: trim + toLowerCase + colapsar espacios múltiples
+   - Todas las comparaciones de conceptos ahora usan esta normalización
+   - Esto permite match aunque haya diferencias de mayúsculas/espacios
+
+2. **Logging diagnóstico mejorado** (Code.gs)
+   - `cargarEstadosDesdeCálculos()`: Log de conceptos actualizados y no encontrados
+   - `guardarEstadoEnCálculos()`: Log de cada estado guardado
+   - Ver logs en: Extensiones → Apps Script → Ejecuciones
+
+3. **Scope corregido en Utils.gs**
+   - Variables `estadosEnero`, `estadosFebrero` y sus versiones normalizadas
+     movidas FUERA del bloque if(calculos) para acceso correcto en if(movimiento)
+
+### Archivos modificados:
+- Code.gs: `cargarEstadosDesdeCálculos()`, `guardarEstadoEnCálculos()`, nueva `normalizarConcepto()`
+- Utils.gs: `cargarDatosPruebaIntegrales()` reorganizado con normalización
+- Config.gs: VERSION = '8.4'
+
+### Verificación post-fix:
+1. Ejecutar "Cargar Datos Prueba Integrales" desde el menú
+2. En MOVIMIENTO, verificar que algunos gastos tengan EST.PAGO = "Pagado"
+3. Cambiar a Febrero → verificar estados diferentes
+4. Volver a Enero → verificar que estados persisten
+5. Abrir Dashboard → verificar que gráficos de categorías muestran datos
+
+---
+
 ## DOCUMENTACIÓN DEL PROYECTO
 
 ### Archivos de Referencia Obligatorios
@@ -1859,4 +1896,4 @@ INCORRECTO:
 ---
 
 *Última actualización: 2026-01-31*
-*Versión: 8.3 - Dashboard lee de CALCULOS sin recálculos*
+*Versión: 8.4 - Fix sincronización EST.PAGO con normalización de nombres*

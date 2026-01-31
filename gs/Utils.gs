@@ -1257,8 +1257,69 @@ function cargarDatosPrueba() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 6. CARGAR ESTADOS DE PAGO EN CALCULOS SECCIÓN 7 (v8.0)
+  // 6. CARGAR ESTADOS DE PAGO EN CALCULOS SECCIÓN 7 (v8.1)
   // ═══════════════════════════════════════════════════════════════════════════
+
+  // v8.1: Declarar estadosEnero/Febrero ANTES del bloque if para scope correcto
+  // Algunos Pagado, algunos Pendiente para demostrar independencia por mes
+  var estadosEnero = {
+    // FAMILIA - marcar algunos como Pagado
+    'Salario Lili Doméstico': 'Pagado',
+    'Salario Laura Doméstico': 'Pagado',
+    'ANDE Casa': 'Pendiente',
+    'Expensa Casa': 'Pagado',
+    'Préstamo Lizzi': 'Pagado',
+    'Cajubi Marco': 'Pagado',
+    'Mutual Marco': 'Pagado',
+    'Giganet': 'Pagado',
+    'Tigo Familiar': 'Pagado',
+    'Google One': 'Pagado',
+    'ChatGPT': 'Pagado',
+    'Claude Marco': 'Pagado',
+    'Aporte IPS': 'Pagado',
+    // NEUROTEA (nombres de Config.gs)
+    'Alquiler 1 (Principal)': 'Pagado',
+    'Alquiler 2 (Secundario)': 'Pagado',
+    'ANDE clínica': 'Pendiente',
+    'Sueldo Aracely': 'Pagado',
+    'Sueldo Fátima': 'Pagado',
+    'Limpieza NeuroTEA': 'Pagado',
+    'Honorario Contador': 'Pagado',
+    'IPS': 'Pagado',
+    'IVA': 'Pendiente'
+  };
+
+  // Llenar estados para FEBRERO (diferente de enero)
+  var estadosFebrero = {
+    'Salario Lili Doméstico': 'Pagado',
+    'Salario Laura Doméstico': 'Pendiente',
+    'ANDE Casa': 'Pagado',
+    'Expensa Casa': 'Pagado',
+    'Préstamo Lizzi': 'Pendiente',
+    'Cajubi Marco': 'Pagado',
+    'Mutual Marco': 'Pendiente',
+    'Giganet': 'Pagado',
+    'Tigo Familiar': 'Pendiente',
+    'Alquiler 1 (Principal)': 'Pagado',
+    'Alquiler 2 (Secundario)': 'Pagado',
+    'ANDE clínica': 'Pagado',
+    'Sueldo Aracely': 'Pagado',
+    'Sueldo Fátima': 'Pendiente',
+    'Limpieza NeuroTEA': 'Pendiente',
+    'Honorario Contador': 'Pagado',
+    'IPS': 'Pagado',
+    'IVA': 'Pagado'
+  };
+
+  // v8.1: Crear mapas normalizados para búsqueda case-insensitive
+  var estadosEneroNorm = {};
+  var estadosFebreroNorm = {};
+  for (var key in estadosEnero) {
+    estadosEneroNorm[key.toLowerCase().trim()] = estadosEnero[key];
+  }
+  for (var key2 in estadosFebrero) {
+    estadosFebreroNorm[key2.toLowerCase().trim()] = estadosFebrero[key2];
+  }
 
   var calculos = ss.getSheetByName(NOMBRES_HOJAS.CALCULOS);
   if (calculos) {
@@ -1266,7 +1327,7 @@ function cargarDatosPrueba() {
 
     // Leer conceptos de la sección 7 (empieza en fila 167)
     var filaInicioEstados = 167;
-    var datosEstados = calculos.getRange(filaInicioEstados, 1, 100, 1).getValues();
+    var datosEstados = calculos.getRange(filaInicioEstados, 1, 120, 1).getValues();
 
     // Encontrar la última fila con datos en sección 7
     var ultimaFilaEstados = filaInicioEstados;
@@ -1276,73 +1337,22 @@ function cargarDatosPrueba() {
       }
     }
 
-    // Llenar estados de prueba para ENERO (mes 1 = columna B = col 2)
-    // Algunos Pagado, algunos Pendiente para demostrar independencia por mes
-    // v8.2: Nombres actualizados para coincidir con Config.gs
-    var estadosEnero = {
-      // FAMILIA - marcar algunos como Pagado
-      'Salario Lili Doméstico': 'Pagado',
-      'Salario Laura Doméstico': 'Pagado',
-      'ANDE Casa': 'Pendiente',
-      'Expensa Casa': 'Pagado',
-      'Préstamo Lizzi': 'Pagado',
-      'Cajubi Marco': 'Pagado',
-      'Mutual Marco': 'Pagado',
-      'Giganet': 'Pagado',
-      'Tigo Familiar': 'Pagado',
-      'Google One': 'Pagado',
-      'ChatGPT': 'Pagado',
-      'Claude Marco': 'Pagado',
-      'Aporte IPS': 'Pagado',
-      // NEUROTEA (nombres de Config.gs)
-      'Alquiler 1 (Principal)': 'Pagado',
-      'Alquiler 2 (Secundario)': 'Pagado',
-      'ANDE clínica': 'Pendiente',
-      'Sueldo Aracely': 'Pagado',
-      'Sueldo Fátima': 'Pagado',
-      'Limpieza NeuroTEA': 'Pagado',
-      'Honorario Contador': 'Pagado',
-      'IPS': 'Pagado',
-      'IVA': 'Pendiente'
-    };
-
-    // Llenar estados para FEBRERO (mes 2 = columna C = col 3)
-    // Diferente de enero para demostrar independencia
-    var estadosFebrero = {
-      'Salario Lili Doméstico': 'Pagado',
-      'Salario Laura Doméstico': 'Pendiente',
-      'ANDE Casa': 'Pagado',
-      'Expensa Casa': 'Pagado',
-      'Préstamo Lizzi': 'Pendiente',
-      'Cajubi Marco': 'Pagado',
-      'Mutual Marco': 'Pendiente',
-      'Giganet': 'Pagado',
-      'Tigo Familiar': 'Pendiente',
-      // NEUROTEA (nombres de Config.gs)
-      'Alquiler 1 (Principal)': 'Pagado',
-      'Alquiler 2 (Secundario)': 'Pagado',
-      'ANDE clínica': 'Pagado',
-      'Sueldo Aracely': 'Pagado',
-      'Sueldo Fátima': 'Pendiente',
-      'Limpieza NeuroTEA': 'Pendiente',
-      'Honorario Contador': 'Pagado',
-      'IPS': 'Pagado',
-      'IVA': 'Pagado'
-    };
-
     // Aplicar estados a las filas correspondientes
+    var aplicados = 0;
     for (var f = filaInicioEstados; f <= ultimaFilaEstados; f++) {
       var concepto = calculos.getRange(f, 1).getValue().toString().trim();
-      if (concepto && concepto !== '── FAMILIA ──' && concepto !== '── NEUROTEA ──') {
+      var conceptoNorm = concepto.toLowerCase();
+      if (concepto && !concepto.startsWith('──')) {
         // Enero (columna B = 2)
-        if (estadosEnero[concepto]) {
-          calculos.getRange(f, 2).setValue(estadosEnero[concepto]);
+        if (estadosEneroNorm[conceptoNorm]) {
+          calculos.getRange(f, 2).setValue(estadosEneroNorm[conceptoNorm]);
+          aplicados++;
         } else {
           calculos.getRange(f, 2).setValue('Pendiente');
         }
         // Febrero (columna C = 3)
-        if (estadosFebrero[concepto]) {
-          calculos.getRange(f, 3).setValue(estadosFebrero[concepto]);
+        if (estadosFebreroNorm[conceptoNorm]) {
+          calculos.getRange(f, 3).setValue(estadosFebreroNorm[conceptoNorm]);
         } else {
           calculos.getRange(f, 3).setValue('Pendiente');
         }
@@ -1352,7 +1362,7 @@ function cargarDatosPrueba() {
         }
       }
     }
-    console.log('Estados de pago cargados en CALCULOS: ' + (ultimaFilaEstados - filaInicioEstados + 1) + ' conceptos');
+    console.log('Estados de pago cargados en CALCULOS: ' + aplicados + ' conceptos con estados de prueba');
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1364,29 +1374,34 @@ function cargarDatosPrueba() {
     console.log('Actualizando EST.PAGO en MOVIMIENTO...');
 
     // MOVIMIENTO está en ENERO por defecto después de reinicializar
-    // Aplicar estadosEnero a la columna J (EST.PAGO)
+    // Aplicar estadosEnero a la columna J (EST.PAGO) usando normalización
 
     // Leer conceptos de MOVIMIENTO (columna A)
     var datosMovFam = movimiento.getRange('A9:A116').getValues();
     var datosMovNT = movimiento.getRange('A122:A206').getValues();
+    var actualizadosMov = 0;
 
     // Actualizar FAMILIA (filas 9-116)
     for (var mf = 0; mf < datosMovFam.length; mf++) {
       var conceptoMov = (datosMovFam[mf][0] || '').toString().trim();
-      if (conceptoMov && estadosEnero[conceptoMov]) {
-        movimiento.getRange(9 + mf, 10).setValue(estadosEnero[conceptoMov]); // Columna J = 10
+      var conceptoMovNorm = conceptoMov.toLowerCase();
+      if (conceptoMov && estadosEneroNorm[conceptoMovNorm]) {
+        movimiento.getRange(9 + mf, 10).setValue(estadosEneroNorm[conceptoMovNorm]);
+        actualizadosMov++;
       }
     }
 
     // Actualizar NEUROTEA (filas 122-206)
     for (var mn = 0; mn < datosMovNT.length; mn++) {
       var conceptoMovNT = (datosMovNT[mn][0] || '').toString().trim();
-      if (conceptoMovNT && estadosEnero[conceptoMovNT]) {
-        movimiento.getRange(122 + mn, 10).setValue(estadosEnero[conceptoMovNT]); // Columna J = 10
+      var conceptoMovNTNorm = conceptoMovNT.toLowerCase();
+      if (conceptoMovNT && estadosEneroNorm[conceptoMovNTNorm]) {
+        movimiento.getRange(122 + mn, 10).setValue(estadosEneroNorm[conceptoMovNTNorm]);
+        actualizadosMov++;
       }
     }
 
-    console.log('EST.PAGO actualizado en MOVIMIENTO');
+    console.log('EST.PAGO actualizado en MOVIMIENTO: ' + actualizadosMov + ' conceptos');
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
