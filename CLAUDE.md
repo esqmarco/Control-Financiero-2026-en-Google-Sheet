@@ -1861,6 +1861,65 @@ INCORRECTO:
 
 ---
 
+## Bug Fixes [2026-01-31] - v8.4.1 (FÓRMULAS CALCULOS PARA 12 MESES)
+
+### Problema: Gráficos Dashboard mostraban "Sin datos" o datos incorrectos
+- **Síntoma**: Las categorías de gastos mostraban "Sin datos" en Dashboard
+- **Causa raíz**: Las fórmulas en CALCULOS leían EST.PAGO de MOVIMIENTO que solo muestra UN mes
+- **Impacto**: CALCULOS generaba los mismos valores para los 12 meses (el mes seleccionado)
+
+### Funciones corregidas en Calculos.gs:
+
+1. **`formulaSumproductCategoria(categoria, entidad, mes)`**
+   - ANTES: Leía de MOVIMIENTO (un solo mes visible)
+   - AHORA: Lee de GASTOS_FIJOS + verifica estado en CALCULOS Sección 7
+   - Para VARIABLES: Lee de CARGA con filtro MONTH/YEAR
+
+2. **`formulaSumproductEgresosPagados(entidad, mes)`**
+   - ANTES: Leía EST.PAGO de MOVIMIENTO!$J
+   - AHORA: Lee de CALCULOS Sección 7 con INDEX/MATCH
+
+3. **`formulaSumproductEgresosPendientes(entidad, mes)`**
+   - ANTES: Leía EST.PAGO de MOVIMIENTO!$J
+   - AHORA: Lee de CALCULOS Sección 7 con INDEX/MATCH
+
+4. **`formulaEsperadoCuenta(cuenta, entidad, mes, fila)`**
+   - ANTES: Leía gastos fijos pagados de MOVIMIENTO!$N,$J
+   - AHORA: Lee de GASTOS_FIJOS + CALCULOS Sección 7
+
+### Patrón de corrección aplicado:
+```javascript
+// ANTES (incorrecto - MOVIMIENTO solo tiene 1 mes):
+const formulaGastosFijos = `SUMPRODUCT(
+  (MOVIMIENTO!$J$9:$J$116="Pagado")*
+  (MOVIMIENTO!$F$9:$F$116)
+)`;
+
+// AHORA (correcto - CALCULOS tiene los 12 meses):
+const colMesCalc = mes + 1; // B=Enero, C=Febrero, etc.
+const colMesCalcLetter = String.fromCharCode(64 + colMesCalc);
+const rangoEstados = `CALCULOS!$${colMesCalcLetter}$167:$${colMesCalcLetter}$286`;
+const rangoConceptos = 'CALCULOS!$A$167:$A$286';
+
+const formulaGastosFijos = `SUMPRODUCT(
+  (GASTOS_FIJOS!$B$4:$B$200="${entidad}")*
+  (INDEX(${rangoEstados};MATCH(GASTOS_FIJOS!$A$4:$A$200;${rangoConceptos};0))="Pagado")*
+  (GASTOS_FIJOS!$${colMesGFLetter}$4:$${colMesGFLetter}$200)
+)`;
+```
+
+### Archivos modificados:
+- Calculos.gs: 4 funciones de fórmulas SUMPRODUCT
+- Config.gs: VERSION = '8.4.1'
+
+### Verificación post-fix:
+1. Reinicializar sistema
+2. Cargar datos de prueba con gastos en varios meses
+3. Abrir Dashboard → verificar que categorías muestran datos
+4. Verificar que CALCULOS sección 3 tiene valores diferentes por mes
+
+---
+
 ## DOCUMENTACIÓN DEL PROYECTO
 
 ### Archivos de Referencia Obligatorios
@@ -1896,4 +1955,4 @@ INCORRECTO:
 ---
 
 *Última actualización: 2026-01-31*
-*Versión: 8.4 - Fix sincronización EST.PAGO con normalización de nombres*
+*Versión: 8.4.1 - Fórmulas CALCULOS leen EST.PAGO de Sección 7 para los 12 meses*
