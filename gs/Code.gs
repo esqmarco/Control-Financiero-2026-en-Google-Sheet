@@ -508,6 +508,7 @@ function onEdit(e) {
 
 /**
  * Carga los estados de pago desde CALCULOS sección 7 cuando cambia el mes.
+ * v8.1: Agregado logging diagnóstico y normalización mejorada
  * @param {Sheet} movimiento - Hoja MOVIMIENTO
  * @param {string} mesNuevo - Nombre del mes seleccionado (Enero, Febrero, etc.)
  */
@@ -516,69 +517,112 @@ function cargarEstadosDesdeCálculos(movimiento, mesNuevo) {
   const calculos = ss.getSheetByName(NOMBRES_HOJAS.CALCULOS);
 
   if (!calculos) {
-    console.log('Hoja CALCULOS no existe');
+    console.log('❌ Hoja CALCULOS no existe');
     return;
   }
 
   // Obtener número de mes (1-12)
   const mesNum = MESES.indexOf(mesNuevo) + 1;
   if (mesNum < 1 || mesNum > 12) {
-    console.log('Mes no válido:', mesNuevo);
+    console.log('❌ Mes no válido:', mesNuevo);
     return;
   }
 
   ss.toast('Cargando estados de ' + mesNuevo + '...', '📅', 2);
+  console.log('═══ cargarEstadosDesdeCálculos: ' + mesNuevo + ' (mes ' + mesNum + ') ═══');
 
   // Columna del mes en CALCULOS sección 7 (B=1=Enero, C=2=Febrero, etc.)
   const colMes = mesNum + 1; // B=2, C=3, ..., M=13
 
   // Leer todos los conceptos y estados de CALCULOS sección 7 (fila 167+)
-  const datosCalc = calculos.getRange(167, 1, 100, 13).getValues(); // A167:M266
+  // v8.1: Extendido a 120 filas para cubrir FAMILIA + NEUROTEA
+  const datosCalc = calculos.getRange(167, 1, 120, 13).getValues(); // A167:M286
 
-  // Crear mapa concepto → estado
+  // Crear mapa concepto → estado (con normalización)
   const estadosPorConcepto = {};
+  let countConceptos = 0;
   for (let i = 0; i < datosCalc.length; i++) {
-    const concepto = (datosCalc[i][0] || '').toString().trim();
+    const conceptoRaw = (datosCalc[i][0] || '').toString();
+    const concepto = normalizarConcepto(conceptoRaw);
     const estado = (datosCalc[i][mesNum] || 'Pendiente').toString().trim();
-    if (concepto && concepto !== '── FAMILIA ──' && concepto !== '── NEUROTEA ──') {
+
+    if (concepto && concepto !== '── familia ──' && concepto !== '── neurotea ──' && !concepto.startsWith('──')) {
       estadosPorConcepto[concepto] = estado;
+      countConceptos++;
     }
   }
+  console.log('  Conceptos en CALCULOS sección 7: ' + countConceptos);
 
   // Leer conceptos de MOVIMIENTO (columna A) y actualizar EST.PAGO (columna J)
   // FAMILIA: filas 9-116, NEUROTEA: filas 122-206
   const rangos = [
-    { inicio: 9, fin: 116 },    // FAMILIA
-    { inicio: 122, fin: 206 }   // NEUROTEA
+    { nombre: 'FAMILIA', inicio: 9, fin: 116 },
+    { nombre: 'NEUROTEA', inicio: 122, fin: 206 }
   ];
+
+  let actualizados = 0;
+  let noEncontrados = [];
 
   for (const rango of rangos) {
     const conceptosMov = movimiento.getRange(rango.inicio, 1, rango.fin - rango.inicio + 1, 1).getValues();
+    const tiposMov = movimiento.getRange(rango.inicio, 2, rango.fin - rango.inicio + 1, 1).getValues();
 
     for (let i = 0; i < conceptosMov.length; i++) {
-      const concepto = (conceptosMov[i][0] || '').toString().trim();
+      const conceptoRaw = (conceptosMov[i][0] || '').toString();
+      const concepto = normalizarConcepto(conceptoRaw);
+      const tipo = (tiposMov[i][0] || '').toString().trim();
 
-      // Solo actualizar filas de gastos fijos (no headers, subtotales, variables, ahorro)
-      if (concepto && !concepto.startsWith('▶') && !concepto.startsWith('📥') &&
-          !concepto.startsWith('📤') && concepto !== 'Subtotal' &&
-          estadosPorConcepto[concepto]) {
+      // Solo actualizar filas de EGRESOS (no ingresos, ahorro, headers, subtotales)
+      // v8.1: Verificar que sea Egreso para aplicar estado
+      if (concepto && tipo === 'Egreso' &&
+          !concepto.startsWith('▶') && !concepto.startsWith('📥') &&
+          !concepto.startsWith('📤') && !concepto.startsWith('═') &&
+          concepto !== 'subtotal' && !concepto.includes('total')) {
+
         const filaMovimiento = rango.inicio + i;
         const estadoActual = movimiento.getRange(filaMovimiento, 10).getValue();
-        const estadoNuevo = estadosPorConcepto[concepto];
 
-        // Solo actualizar si es diferente (optimización)
-        if (estadoActual !== estadoNuevo) {
-          movimiento.getRange(filaMovimiento, 10).setValue(estadoNuevo);
+        if (estadosPorConcepto[concepto]) {
+          const estadoNuevo = estadosPorConcepto[concepto];
+
+          // Solo actualizar si es diferente (optimización)
+          if (estadoActual !== estadoNuevo) {
+            movimiento.getRange(filaMovimiento, 10).setValue(estadoNuevo);
+            actualizados++;
+          }
+        } else {
+          // v8.1: Log de conceptos no encontrados (solo si no es variable puro)
+          const frec = movimiento.getRange(filaMovimiento, 3).getValue().toString();
+          if (frec !== 'Variable') {
+            noEncontrados.push(conceptoRaw.substring(0, 30));
+          }
         }
       }
     }
   }
 
-  ss.toast('Estados de ' + mesNuevo + ' cargados', '✓', 2);
+  console.log('  Estados actualizados: ' + actualizados);
+  if (noEncontrados.length > 0 && noEncontrados.length <= 10) {
+    console.log('  ⚠️ Conceptos no encontrados en CALCULOS:', noEncontrados.join(', '));
+  } else if (noEncontrados.length > 10) {
+    console.log('  ⚠️ ' + noEncontrados.length + ' conceptos no encontrados (primeros 5):', noEncontrados.slice(0, 5).join(', '));
+  }
+
+  ss.toast('Estados de ' + mesNuevo + ' cargados (' + actualizados + ' actualizados)', '✓', 2);
+}
+
+/**
+ * Normaliza un concepto para comparación (trim, lowercase, eliminar espacios múltiples)
+ * v8.1: Nueva función auxiliar
+ */
+function normalizarConcepto(concepto) {
+  if (!concepto) return '';
+  return concepto.toString().trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 /**
  * Guarda el estado de pago en CALCULOS sección 7 cuando se edita en MOVIMIENTO.
+ * v8.1: Mejorado con normalización y logging
  * @param {Sheet} movimiento - Hoja MOVIMIENTO
  * @param {number} filaMovimiento - Fila editada en MOVIMIENTO
  * @param {string} nuevoEstado - Nuevo valor (Pendiente/Pagado/Cancelado)
@@ -588,15 +632,17 @@ function guardarEstadoEnCálculos(movimiento, filaMovimiento, nuevoEstado) {
   const calculos = ss.getSheetByName(NOMBRES_HOJAS.CALCULOS);
 
   if (!calculos) {
-    console.log('Hoja CALCULOS no existe');
+    console.log('❌ guardarEstadoEnCálculos: Hoja CALCULOS no existe');
     return;
   }
 
   // Obtener el concepto de la fila editada
-  const concepto = movimiento.getRange(filaMovimiento, 1).getValue().toString().trim();
+  const conceptoRaw = movimiento.getRange(filaMovimiento, 1).getValue().toString();
+  const conceptoNorm = normalizarConcepto(conceptoRaw);
 
-  if (!concepto || concepto.startsWith('▶') || concepto.startsWith('📥') ||
-      concepto.startsWith('📤') || concepto === 'Subtotal') {
+  if (!conceptoNorm || conceptoRaw.startsWith('▶') || conceptoRaw.startsWith('📥') ||
+      conceptoRaw.startsWith('📤') || conceptoRaw.startsWith('═') ||
+      conceptoNorm === 'subtotal' || conceptoNorm.includes('total')) {
     return; // No guardar headers ni subtotales
   }
 
@@ -605,7 +651,7 @@ function guardarEstadoEnCálculos(movimiento, filaMovimiento, nuevoEstado) {
   const mesNum = MESES.indexOf(mesActual) + 1;
 
   if (mesNum < 1 || mesNum > 12) {
-    console.log('Mes no válido:', mesActual);
+    console.log('❌ guardarEstadoEnCálculos: Mes no válido:', mesActual);
     return;
   }
 
@@ -613,19 +659,24 @@ function guardarEstadoEnCálculos(movimiento, filaMovimiento, nuevoEstado) {
   const colMes = mesNum + 1;
 
   // Buscar el concepto en CALCULOS sección 7 (fila 167+)
-  const conceptosCalc = calculos.getRange(167, 1, 100, 1).getValues();
+  // v8.1: Extendido a 120 filas
+  const conceptosCalc = calculos.getRange(167, 1, 120, 1).getValues();
 
   for (let i = 0; i < conceptosCalc.length; i++) {
-    const conceptoCalc = (conceptosCalc[i][0] || '').toString().trim();
-    if (conceptoCalc === concepto) {
+    const conceptoCalcNorm = normalizarConcepto(conceptosCalc[i][0]);
+    if (conceptoCalcNorm === conceptoNorm) {
       const filaCalc = 167 + i;
       calculos.getRange(filaCalc, colMes).setValue(nuevoEstado);
-      console.log('Estado guardado:', concepto, '→', nuevoEstado, 'en', mesActual);
+      console.log('✓ Estado guardado:', conceptoRaw, '→', nuevoEstado, 'en', mesActual, '(fila CALCULOS:', filaCalc, ')');
       return;
     }
   }
 
-  console.log('Concepto no encontrado en CALCULOS:', concepto);
+  // v8.1: Solo log si es un gasto fijo (no variable)
+  const frec = movimiento.getRange(filaMovimiento, 3).getValue().toString();
+  if (frec !== 'Variable') {
+    console.log('⚠️ guardarEstadoEnCálculos: Concepto no encontrado en CALCULOS:', conceptoRaw);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
