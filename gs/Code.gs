@@ -479,11 +479,20 @@ function onEdit(e) {
     }
   }
 
-  // ═══ v8.0: Sincronización EST.PAGO con CALCULOS ═══
+  // ═══ v8.5: Sincronización EST.PAGO con CALCULOS (MEJORADA) ═══
   if (nombreHoja === NOMBRES_HOJAS.MOVIMIENTO) {
-    // Cambio de MES (celda B3) → cargar estados desde CALCULOS
+    // Cambio de MES (celda B3) → GUARDAR mes anterior, LUEGO cargar nuevo mes
     if (row === 3 && col === 2) {
-      cargarEstadosDesdeCálculos(sheet, e.value);
+      const mesAnterior = e.oldValue;
+      const mesNuevo = e.value;
+
+      // v8.5: PRIMERO guardar todos los estados del mes anterior
+      if (mesAnterior && mesAnterior !== mesNuevo) {
+        guardarTodosLosEstadosMes(sheet, mesAnterior);
+      }
+
+      // LUEGO cargar estados del nuevo mes
+      cargarEstadosDesdeCálculos(sheet, mesNuevo);
       return;
     }
     // Cambio de EST.PAGO (columna J) → guardar en CALCULOS
@@ -677,6 +686,92 @@ function guardarEstadoEnCálculos(movimiento, filaMovimiento, nuevoEstado) {
   if (frec !== 'Variable') {
     console.log('⚠️ guardarEstadoEnCálculos: Concepto no encontrado en CALCULOS:', conceptoRaw);
   }
+}
+
+/**
+ * v8.5: Guarda TODOS los estados de pago del mes actual en CALCULOS sección 7.
+ * Se ejecuta ANTES de cambiar de mes para no perder cambios.
+ * Usa batch operations para eficiencia.
+ *
+ * @param {Sheet} movimiento - Hoja MOVIMIENTO
+ * @param {string} mes - Nombre del mes a guardar (Enero, Febrero, etc.)
+ */
+function guardarTodosLosEstadosMes(movimiento, mes) {
+  const ss = movimiento.getParent();
+  const calculos = ss.getSheetByName(NOMBRES_HOJAS.CALCULOS);
+
+  if (!calculos) {
+    console.log('❌ guardarTodosLosEstadosMes: Hoja CALCULOS no existe');
+    return;
+  }
+
+  // Obtener número de mes (1-12)
+  const mesNum = MESES.indexOf(mes) + 1;
+  if (mesNum < 1 || mesNum > 12) {
+    console.log('❌ guardarTodosLosEstadosMes: Mes no válido:', mes);
+    return;
+  }
+
+  ss.toast('Guardando estados de ' + mes + '...', '💾', 2);
+  console.log('═══ guardarTodosLosEstadosMes: ' + mes + ' (mes ' + mesNum + ') ═══');
+
+  // Columna del mes en CALCULOS sección 7 (B=Enero=2, C=Febrero=3, etc.)
+  const colMes = mesNum + 1;
+
+  // Leer conceptos de CALCULOS sección 7 y crear mapa normalizado → fila
+  const conceptosCalc = calculos.getRange(167, 1, 120, 1).getValues();
+  const mapaConceptoFila = {};
+
+  for (let i = 0; i < conceptosCalc.length; i++) {
+    const conceptoNorm = normalizarConcepto(conceptosCalc[i][0]);
+    if (conceptoNorm && !conceptoNorm.startsWith('──')) {
+      mapaConceptoFila[conceptoNorm] = 167 + i;
+    }
+  }
+
+  // Rangos de MOVIMIENTO: FAMILIA (9-116) y NEUROTEA (122-206)
+  const rangos = [
+    { nombre: 'FAMILIA', inicio: 9, fin: 116 },
+    { nombre: 'NEUROTEA', inicio: 122, fin: 206 }
+  ];
+
+  let guardados = 0;
+
+  for (const rango of rangos) {
+    const numFilas = rango.fin - rango.inicio + 1;
+
+    // Leer conceptos (A), tipos (B), frecuencias (C) y estados (J) de MOVIMIENTO
+    const conceptosMov = movimiento.getRange(rango.inicio, 1, numFilas, 1).getValues();
+    const tiposMov = movimiento.getRange(rango.inicio, 2, numFilas, 1).getValues();
+    const frecsMov = movimiento.getRange(rango.inicio, 3, numFilas, 1).getValues();
+    const estadosMov = movimiento.getRange(rango.inicio, 10, numFilas, 1).getValues();
+
+    for (let i = 0; i < numFilas; i++) {
+      const conceptoRaw = (conceptosMov[i][0] || '').toString();
+      const tipo = (tiposMov[i][0] || '').toString().trim();
+      const frec = (frecsMov[i][0] || '').toString().trim();
+      const estado = (estadosMov[i][0] || '').toString().trim();
+
+      // Solo guardar gastos fijos (Egreso, no Variable, no headers)
+      if (tipo === 'Egreso' && frec !== 'Variable' &&
+          !conceptoRaw.startsWith('▶') && !conceptoRaw.startsWith('📥') &&
+          !conceptoRaw.startsWith('📤') && !conceptoRaw.startsWith('═') &&
+          !conceptoRaw.toLowerCase().includes('subtotal') &&
+          !conceptoRaw.toLowerCase().includes('total')) {
+
+        const conceptoNorm = normalizarConcepto(conceptoRaw);
+        const filaCalc = mapaConceptoFila[conceptoNorm];
+
+        if (filaCalc && estado) {
+          calculos.getRange(filaCalc, colMes).setValue(estado);
+          guardados++;
+        }
+      }
+    }
+  }
+
+  console.log('  Estados guardados: ' + guardados);
+  ss.toast('Estados de ' + mes + ' guardados (' + guardados + ')', '✓', 2);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
