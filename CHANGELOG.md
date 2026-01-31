@@ -4,6 +4,34 @@ Todas las versiones notables del sistema.
 
 ---
 
+## [8.3] - 2026-01-31
+
+### Changed
+- **Dashboard Web lee directamente de CALCULOS (sin recálculos)**
+  - Eliminado todo el código de recálculo desde CARGA (~200 líneas)
+  - WebApp.gs ahora lee datos precalculados de la hoja CALCULOS
+  - Principio: El Dashboard SOLO LEE celdas, NO recalcula nada
+
+### Fixed
+- **Gráficos de categorías mostraban "Sin datos"**
+  - Causa: Filtros EST.PAGO bugueados en código de recálculo
+  - Fix: Leer directamente de CALCULOS (Sección 3, filas 58-71)
+
+### Technical
+- Datos que ahora se leen de CALCULOS:
+  - Sección 1 (filas 7-21): Tendencias 12 meses
+  - Sección 3 (filas 58-71): Categorías de egreso
+  - Sección 4 (filas 82-88): Balance cruzado NT↔FAM
+  - Sección 5 (filas 103-135): Subcategorías variables
+- WebApp.gs: Reducido de ~300 a ~100 líneas en `obtenerDatosDashboard()`
+
+### Documentation
+- Nuevo archivo PRD.md (Product Requirements Document)
+- Nueva regla `.claude/rules/proceso-cambios.md`
+- Actualizado CLAUDE.md con proceso obligatorio de propuestas
+
+---
+
 ## [7.35] - 2026-01-28
 
 ### Fixed

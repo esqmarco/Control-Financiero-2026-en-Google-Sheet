@@ -1,13 +1,14 @@
 {
   "project": {
     "name": "Control Financiero 2026 - NeuroTEA & Familia",
-    "version": "7.35",
+    "version": "8.3",
     "description": "Sistema de control financiero para clínica NeuroTEA y finanzas familiares en Google Sheets"
   },
   "context": {
     "primaryDoc": "CLAUDE.md",
     "referenceDoc": "PLAN_MAESTRO_Control_Financiero_2026.md",
     "decisionsDoc": "DECISIONES.md",
+    "prdDoc": "PRD.md",
     "codeDir": "gs/",
     "language": "es",
     "platform": "Google Apps Script"
@@ -102,13 +103,29 @@
   },
   "validation": {
     "beforeEdit": [
-      "Leer CLAUDE.md completo",
-      "Verificar DECISIONES.md",
-      "Verificar que el cambio es consistente con PLAN_MAESTRO"
+      "Leer CLAUDE.md (secciones relevantes)",
+      "Leer PRD.md si es cambio arquitectónico",
+      "Verificar DECISIONES.md (no revertir)",
+      "PRESENTAR PROPUESTA al usuario",
+      "ESPERAR APROBACIÓN antes de modificar",
+      "Analizar impacto en TODO el sistema (Backend, Hojas, Frontend)"
     ],
     "afterEdit": [
       "Ejecutar /verificar",
-      "Verificar rangos de filas (FAMILIA: 9-113, NEUROTEA: 119-200)"
+      "Verificar rangos de filas (FAMILIA: 9-116, NEUROTEA: 122-206)",
+      "Actualizar CLAUDE.md si hay cambios significativos",
+      "Actualizar CHANGELOG.md",
+      "Commit con mensaje descriptivo"
+    ],
+    "mandatory": [
+      "SIEMPRE presentar propuesta antes de modificar código",
+      "NUNCA tocar código sin conocer consecuencias en sistema completo",
+      "NADA debe quedar sin revisar"
     ]
+  },
+  "impactAnalysis": {
+    "backend": ["Code.gs", "Config.gs", "Sheets.gs", "Calculos.gs", "Tablero.gs", "WebApp.gs", "Utils.gs"],
+    "sheets": ["CONFIG", "PRESUPUESTO", "GASTOS_FIJOS", "CARGA_FAMILIA", "CARGA_NT", "CALCULOS", "MOVIMIENTO", "TABLERO", "LIQUIDEZ"],
+    "frontend": ["Chart.js gráficos", "HTML/CSS estructura", "DATA.* propiedades"]
   }
 }
