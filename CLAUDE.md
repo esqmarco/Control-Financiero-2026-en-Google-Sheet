@@ -3,6 +3,68 @@
 > **FUENTE DE VERDAD TÉCNICA** - Este archivo debe leerse SIEMPRE antes de modificar código.
 > Para detalles de negocio completos, ver: `PLAN_MAESTRO_Control_Financiero_2026.md`
 > Para decisiones ya aprobadas (NO REVERTIR), ver: `DECISIONES.md`
+> Para especificaciones del producto, ver: `PRD.md`
+
+---
+
+## ⚠️ PROCESO OBLIGATORIO ANTES DE MODIFICAR CÓDIGO
+
+### REGLA 1: SIEMPRE Presentar Propuesta
+```
+ANTES de tocar cualquier archivo de código, DEBO:
+1. Leer la documentación relevante
+2. Analizar el impacto en TODO el sistema
+3. PRESENTAR LA PROPUESTA al usuario
+4. ESPERAR APROBACIÓN antes de modificar
+```
+
+### REGLA 2: Análisis de Impacto Holístico
+```
+Cada cambio DEBE verificar impacto en:
+├── Backend (Apps Script)
+│   ├── Code.gs, Config.gs, Sheets.gs
+│   ├── Calculos.gs, Tablero.gs, WebApp.gs
+│   └── Utils.gs
+├── Hojas de Cálculo
+│   ├── CONFIG, PRESUPUESTO, GASTOS_FIJOS
+│   ├── CARGA_FAMILIA, CARGA_NT
+│   ├── CALCULOS, MOVIMIENTO, TABLERO, LIQUIDEZ
+│   └── Fórmulas y rangos
+└── Frontend (Dashboard)
+    ├── Gráficos Chart.js
+    └── Estructura HTML/CSS
+```
+
+### REGLA 3: Nada Sin Revisar
+```
+NO puedo tocar código sin saber las consecuencias en el sistema completo.
+El sistema es un TODO coherente - un cambio puede afectar múltiples partes.
+```
+
+### Formato de Propuesta Obligatorio
+```markdown
+## PROPUESTA DE CAMBIO
+
+### Problema:
+[Qué problema se resuelve]
+
+### Solución:
+[Qué cambios se harán]
+
+### Archivos afectados:
+- archivo.gs: descripción del cambio
+
+### Análisis de impacto:
+| Componente | Afectado | Descripción |
+|------------|----------|-------------|
+| CALCULOS   | Sí/No    | ...         |
+| TABLERO    | Sí/No    | ...         |
+| WebApp     | Sí/No    | ...         |
+
+### ¿Procedo con el cambio?
+```
+
+> **Ver reglas completas en:** `.claude/rules/proceso-cambios.md`
 
 ---
 
@@ -1723,5 +1785,78 @@ const refReserva = obtenerReferenciaReserva(item.concepto, entidad);
 
 ---
 
-*Última actualización: 2026-01-28*
-*Versión: 7.35 - Fix: TRIM en todas las fórmulas SUMPRODUCT para evitar mismatch de strings*
+## Mejoras [2026-01-31] - v8.3 (ARQUITECTURA)
+
+### Dashboard Web lee directamente de CALCULOS (sin recálculos)
+- **Problema**: WebApp.gs recalculaba datos desde CARGA con filtros EST.PAGO bugueados
+- **Impacto**: Gráficos de categorías mostraban "Sin datos" aunque existían datos reales
+- **Causa raíz**: El código duplicaba lógica ya calculada en CALCULOS con filtros incorrectos
+- **Solución**: Eliminar TODO el código de recálculo (~200 líneas) y leer directamente de CALCULOS
+
+### Datos que ahora se leen de CALCULOS:
+| Sección | Filas | Datos |
+|---------|-------|-------|
+| 1. TOTALES | 7-21 | Tendencias 12 meses (ingresos, egresos, ahorro) |
+| 3. CATEGORÍAS | 58-71 | Gastos por categoría FAM/NT |
+| 4. BALANCE | 82-88 | Préstamos/devoluciones NT↔FAM |
+| 5. SUBCATEGORÍAS | 103-135 | Variables (Supermercado, Combustible, etc.) |
+
+### Código eliminado:
+- Recálculo desde CARGA_FAMILIA (líneas 452-495)
+- Recálculo desde CARGA_NT (líneas 497-539)
+- Recálculo desde GASTOS_FIJOS (líneas 554-567)
+- Filtros EST.PAGO problemáticos (líneas 357-360)
+- Lógica duplicada de balance cruzado (líneas 586-607)
+
+### Principio arquitectónico (v8.3+)
+```
+REGLA: El Dashboard SOLO LEE celdas, NO recalcula nada.
+
+CORRECTO:
+  var datos = calculos.getRange(58, 1, 5, 14).getValues();
+
+INCORRECTO:
+  for (var i = 0; i < dataCarga.length; i++) { // recalcular }
+```
+
+### Archivos modificados:
+- WebApp.gs: Reducido de ~300 a ~100 líneas en obtenerDatosDashboard()
+
+---
+
+## DOCUMENTACIÓN DEL PROYECTO
+
+### Archivos de Referencia Obligatorios
+
+| Archivo | Propósito | Cuándo Leer |
+|---------|-----------|-------------|
+| `CLAUDE.md` | Fuente de verdad técnica | SIEMPRE antes de modificar código |
+| `PRD.md` | Especificaciones del producto | Al entender arquitectura |
+| `PLAN_MAESTRO_*.md` | Detalles de negocio | Para reglas de negocio |
+| `DECISIONES.md` | Decisiones ya tomadas | Para NO revertir decisiones |
+| `CHANGELOG.md` | Historial de cambios | Para ver qué cambió |
+| `.claude/rules/` | Reglas para Claude | Automático |
+
+### Flujo de Trabajo Obligatorio
+
+```
+1. ANTES de modificar código:
+   - Leer CLAUDE.md (secciones relevantes)
+   - Verificar DECISIONES.md
+   - Revisar PRD.md si es cambio arquitectónico
+
+2. DESPUÉS de modificar código:
+   - Ejecutar /verificar
+   - Actualizar CLAUDE.md si hay cambios significativos
+   - Actualizar CHANGELOG.md
+   - Commit con mensaje descriptivo
+
+3. SIEMPRE:
+   - Los documentos deben reflejar el estado actual del código
+   - Si el código cambia, la documentación DEBE actualizarse
+```
+
+---
+
+*Última actualización: 2026-01-31*
+*Versión: 8.3 - Dashboard lee de CALCULOS sin recálculos*
