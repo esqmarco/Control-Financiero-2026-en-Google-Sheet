@@ -533,11 +533,15 @@ function formulaSumproductIngresos(entidad, mes) {
   );0)`.replace(/\n\s*/g, '');
 }
 
+/**
+ * v8.4: CORREGIDO - Ahora lee EST.PAGO de CALCULOS Sección 7 en vez de MOVIMIENTO
+ * MOVIMIENTO solo muestra UN mes, CALCULOS Sección 7 tiene TODOS los meses.
+ */
 function formulaSumproductEgresosPagados(entidad, mes) {
   const hoja = entidad === 'FAMILIA' ? 'CARGA_FAMILIA' : 'CARGA_NT';
   const tipoEgreso = entidad === 'FAMILIA' ? 'Egreso Familiar' : 'Egreso NT';
 
-  // Egresos de CARGA (variables) siempre son "Pagados"
+  // Egresos de CARGA (variables) siempre son "Pagados" (ya pagados al cargarlos)
   const formulaCarga = `SUMPRODUCT(
     (TRIM(${hoja}!$B$4:$B$500)="${tipoEgreso}")*
     (IFERROR(MONTH(${hoja}!$A$4:$A$500);0)=${mes})*
@@ -545,27 +549,51 @@ function formulaSumproductEgresosPagados(entidad, mes) {
     (${hoja}!$F$4:$F$500)
   )`.replace(/\n\s*/g, '');
 
-  // Egresos de GASTOS_FIJOS con estado "Pagado" en CALCULOS
-  const rangoFam = 'FAMILIA:9-116';
-  const rangoNT = 'NEUROTEA:122-206';
-  const rango = entidad === 'FAMILIA' ? '9:116' : '122:206';
+  // Egresos de GASTOS_FIJOS con estado "Pagado" en CALCULOS Sección 7
+  // Columna del mes en GASTOS_FIJOS (G=Enero=7, H=Feb=8, etc.)
+  const colMesGF = mes + 6;
+  const colMesGFLetter = String.fromCharCode(64 + colMesGF);
 
+  // Columna del mes en CALCULOS Sección 7 (B=Enero=2, C=Feb=3, etc.)
+  const colMesCalc = mes + 1;
+  const colMesCalcLetter = String.fromCharCode(64 + colMesCalc);
+
+  // Rangos de CALCULOS Sección 7 (conceptos y estados)
+  const rangoEstados = `CALCULOS!$${colMesCalcLetter}$167:$${colMesCalcLetter}$286`;
+  const rangoConceptosCalc = 'CALCULOS!$A$167:$A$286';
+
+  // GASTOS_FIJOS: usa INDEX/MATCH para obtener EST.PAGO de CALCULOS Sección 7
   const formulaGastosFijos = `SUMPRODUCT(
-    (TRIM(MOVIMIENTO!$M$${rango.split(':')[0]}:$M$${rango.split(':')[1]})="${entidad}")*
-    (TRIM(MOVIMIENTO!$J$${rango.split(':')[0]}:$J$${rango.split(':')[1]})="Pagado")*
-    (MOVIMIENTO!$F$${rango.split(':')[0]}:$F$${rango.split(':')[1]})
+    (TRIM(GASTOS_FIJOS!$B$4:$B$200)="${entidad}")*
+    (INDEX(${rangoEstados};MATCH(TRIM(GASTOS_FIJOS!$A$4:$A$200);${rangoConceptosCalc};0))="Pagado")*
+    (GASTOS_FIJOS!$${colMesGFLetter}$4:$${colMesGFLetter}$200)
   )`.replace(/\n\s*/g, '');
 
   return `IFERROR(${formulaCarga}+${formulaGastosFijos};0)`;
 }
 
+/**
+ * v8.4: CORREGIDO - Ahora lee EST.PAGO de CALCULOS Sección 7 en vez de MOVIMIENTO
+ * Solo GASTOS_FIJOS pueden estar "Pendiente" (CARGA siempre es "Pagado").
+ */
 function formulaSumproductEgresosPendientes(entidad, mes) {
-  const rango = entidad === 'FAMILIA' ? '9:116' : '122:206';
+  // Columna del mes en GASTOS_FIJOS (G=Enero=7, H=Feb=8, etc.)
+  const colMesGF = mes + 6;
+  const colMesGFLetter = String.fromCharCode(64 + colMesGF);
 
+  // Columna del mes en CALCULOS Sección 7 (B=Enero=2, C=Feb=3, etc.)
+  const colMesCalc = mes + 1;
+  const colMesCalcLetter = String.fromCharCode(64 + colMesCalc);
+
+  // Rangos de CALCULOS Sección 7 (conceptos y estados)
+  const rangoEstados = `CALCULOS!$${colMesCalcLetter}$167:$${colMesCalcLetter}$286`;
+  const rangoConceptosCalc = 'CALCULOS!$A$167:$A$286';
+
+  // GASTOS_FIJOS: usa INDEX/MATCH para obtener EST.PAGO de CALCULOS Sección 7
   return `IFERROR(SUMPRODUCT(
-    (TRIM(MOVIMIENTO!$M$${rango.split(':')[0]}:$M$${rango.split(':')[1]})="${entidad}")*
-    (TRIM(MOVIMIENTO!$J$${rango.split(':')[0]}:$J$${rango.split(':')[1]})="Pendiente")*
-    (MOVIMIENTO!$F$${rango.split(':')[0]}:$F$${rango.split(':')[1]})
+    (TRIM(GASTOS_FIJOS!$B$4:$B$200)="${entidad}")*
+    (INDEX(${rangoEstados};MATCH(TRIM(GASTOS_FIJOS!$A$4:$A$200);${rangoConceptosCalc};0))="Pendiente")*
+    (GASTOS_FIJOS!$${colMesGFLetter}$4:$${colMesGFLetter}$200)
   );0)`.replace(/\n\s*/g, '');
 }
 
@@ -626,26 +654,82 @@ function formulaEsperadoCuenta(cuenta, entidad, mes, fila) {
     )`.replace(/\n\s*/g, '');
   }
 
-  // Gastos fijos pagados de esta cuenta (MOVIMIENTO)
-  const rangoMov = entidad === 'FAMILIA' ? '9:116' : '122:206';
+  // Gastos fijos pagados de esta cuenta
+  // v8.4: CORREGIDO - Leer estado de CALCULOS Sección 7 en vez de MOVIMIENTO
+  // GASTOS_FIJOS: A=Concepto, B=Entidad, F=Cuenta, G-R=Montos (ENE-DIC)
+  // CALCULOS Sección 7: A=Concepto, B-M=Estados por mes (filas 167-286)
+
+  // Columna del mes en GASTOS_FIJOS (G=Enero=7, H=Feb=8, etc.)
+  const colMesGF = mes + 6;
+  const colMesGFLetter = String.fromCharCode(64 + colMesGF);
+
+  // Columna del mes en CALCULOS Sección 7 (B=Enero=2, C=Feb=3, etc.)
+  const colMesCalc = mes + 1;
+  const colMesCalcLetter = String.fromCharCode(64 + colMesCalc);
+
+  // Rangos de CALCULOS Sección 7 (conceptos y estados)
+  const rangoEstados = `CALCULOS!$${colMesCalcLetter}$167:$${colMesCalcLetter}$286`;
+  const rangoConceptosCalc = 'CALCULOS!$A$167:$A$286';
+
   const gastosFijos = `SUMPRODUCT(
-    (TRIM(MOVIMIENTO!$N$${rangoMov.split(':')[0]}:$N$${rangoMov.split(':')[1]})="${cuenta}")*
-    (TRIM(MOVIMIENTO!$J$${rangoMov.split(':')[0]}:$J$${rangoMov.split(':')[1]})="Pagado")*
-    (MOVIMIENTO!$F$${rangoMov.split(':')[0]}:$F$${rangoMov.split(':')[1]})
+    (TRIM(GASTOS_FIJOS!$B$4:$B$200)="${entidad}")*
+    (TRIM(GASTOS_FIJOS!$F$4:$F$200)="${cuenta}")*
+    (INDEX(${rangoEstados};MATCH(TRIM(GASTOS_FIJOS!$A$4:$A$200);${rangoConceptosCalc};0))="Pagado")*
+    (GASTOS_FIJOS!$${colMesGFLetter}$4:$${colMesGFLetter}$200)
   )`.replace(/\n\s*/g, '');
 
   return `IFERROR(${saldoInicial}+${ingresos}-${egresos}-${ahorro}-${gastosFijos};0)`;
 }
 
+/**
+ * v8.4: CORREGIDO - Ahora lee de GASTOS_FIJOS + CARGA directamente
+ * Antes leía de MOVIMIENTO que solo tiene datos de UN mes.
+ *
+ * La fórmula suma:
+ * 1. Gastos fijos de esa categoría con estado "Pagado" en CALCULOS sección 7
+ * 2. Variables de CARGA de ese mes (siempre "pagados")
+ */
 function formulaSumproductCategoria(categoria, entidad, mes) {
-  const rangoMov = entidad === 'FAMILIA' ? '9:116' : '122:206';
+  // ═══ GASTOS FIJOS: Leer de GASTOS_FIJOS + verificar estado en CALCULOS sección 7 ═══
+  // GASTOS_FIJOS: A=Concepto, B=Entidad, C=Categoría, G-R=Meses (ENE-DIC)
+  // CALCULOS sección 7: A=Concepto, B-M=Estados por mes (desde fila 167)
 
-  return `IFERROR(SUMPRODUCT(
-    (TRIM(MOVIMIENTO!$L$${rangoMov.split(':')[0]}:$L$${rangoMov.split(':')[1]})="${categoria}")*
-    (TRIM(MOVIMIENTO!$M$${rangoMov.split(':')[0]}:$M$${rangoMov.split(':')[1]})="${entidad}")*
-    (TRIM(MOVIMIENTO!$J$${rangoMov.split(':')[0]}:$J$${rangoMov.split(':')[1]})="Pagado")*
-    (MOVIMIENTO!$F$${rangoMov.split(':')[0]}:$F$${rangoMov.split(':')[1]})
-  );0)`.replace(/\n\s*/g, '');
+  // Columna del mes en GASTOS_FIJOS: G=ENE(1), H=FEB(2), etc.
+  const colMesGF = mes + 6; // G=7, pero mes=1 → col 7
+  const colMesGFLetter = String.fromCharCode(64 + colMesGF); // G, H, I, ...
+
+  // Columna del mes en CALCULOS sección 7: B=ENE(1), C=FEB(2), etc.
+  const colMesCalc = mes + 1; // B=2, C=3, etc.
+  const colMesCalcLetter = String.fromCharCode(64 + colMesCalc);
+
+  // Rango de estados en CALCULOS sección 7 (filas 167-286 aprox)
+  const rangoEstados = `CALCULOS!$${colMesCalcLetter}$167:$${colMesCalcLetter}$286`;
+  const rangoConceptosCalc = 'CALCULOS!$A$167:$A$286';
+
+  // Fórmula para gastos fijos: suma montos donde categoría + entidad + estado="Pagado"
+  const formulaGastosFijos = `SUMPRODUCT(
+    (TRIM(GASTOS_FIJOS!$C$4:$C$200)="${categoria}")*
+    (TRIM(GASTOS_FIJOS!$B$4:$B$200)="${entidad}")*
+    (INDEX(${rangoEstados};MATCH(GASTOS_FIJOS!$A$4:$A$200;${rangoConceptosCalc};0))="Pagado")*
+    (GASTOS_FIJOS!$${colMesGFLetter}$4:$${colMesGFLetter}$200)
+  )`.replace(/\n\s*/g, '');
+
+  // ═══ VARIABLES: Leer de CARGA directamente (siempre "pagados") ═══
+  let formulaVariables = '0';
+  if (categoria === 'VARIABLES') {
+    const hojaCarga = entidad === 'FAMILIA' ? 'CARGA_FAMILIA' : 'CARGA_NT';
+    const tipoEgreso = entidad === 'FAMILIA' ? 'Egreso Familiar' : 'Egreso NT';
+
+    formulaVariables = `SUMPRODUCT(
+      (TRIM(${hojaCarga}!$B$4:$B$500)="${tipoEgreso}")*
+      (TRIM(${hojaCarga}!$C$4:$C$500)="VARIABLES")*
+      (IFERROR(MONTH(${hojaCarga}!$A$4:$A$500);0)=${mes})*
+      (IFERROR(YEAR(${hojaCarga}!$A$4:$A$500);0)=2026)*
+      (${hojaCarga}!$F$4:$F$500)
+    )`.replace(/\n\s*/g, '');
+  }
+
+  return `IFERROR(${formulaGastosFijos}+${formulaVariables};0)`;
 }
 
 function formulaSumproductTipo(tipo, hoja, mes) {
