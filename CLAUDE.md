@@ -1920,6 +1920,57 @@ const formulaGastosFijos = `SUMPRODUCT(
 
 ---
 
+## Bug Fixes [2026-01-31] - v8.5 (PERSISTENCIA EST.PAGO AL CAMBIAR MES)
+
+### Problema: EST.PAGO no persistía al cambiar de mes
+- **Síntoma**: Al cambiar de mes y volver, los estados de pago editados se perdían
+- **Causa raíz**: Al cambiar de mes, solo se CARGABAN los estados del nuevo mes, pero NO se GUARDABAN los del mes anterior
+- **Impacto**: Cualquier cambio manual de EST.PAGO se perdía al navegar entre meses
+
+### Solución implementada:
+
+1. **Nueva función `guardarTodosLosEstadosMes(movimiento, mes)`** (Code.gs)
+   - Guarda TODOS los EST.PAGO actuales de MOVIMIENTO en CALCULOS Sección 7
+   - Usa batch operations (getValues/setValues) para eficiencia
+   - Solo procesa gastos fijos (no variables, no headers)
+   - Se ejecuta UNA vez al cambiar de mes (no en cada edición)
+
+2. **Handler de cambio de mes mejorado** (Code.gs líneas 485-497)
+   - ANTES: Solo llamaba `cargarEstadosDesdeCálculos(mesNuevo)`
+   - AHORA: Primero `guardarTodosLosEstadosMes(mesAnterior)`, luego `cargarEstadosDesdeCálculos(mesNuevo)`
+   - Usa `e.oldValue` para obtener el mes anterior
+
+### Flujo corregido:
+```
+Usuario cambia: Enero → Febrero
+   │
+   ├─→ guardarTodosLosEstadosMes("Enero")     ← NUEVO: Guarda cambios de Enero
+   │      └─→ Recorre MOVIMIENTO filas 9-206
+   │          Guarda cada EST.PAGO en CALCULOS columna B (Enero)
+   │
+   └─→ cargarEstadosDesdeCálculos("Febrero")
+          └─→ Carga estados de CALCULOS columna C (Febrero)
+
+Usuario vuelve: Febrero → Enero
+   │
+   ├─→ guardarTodosLosEstadosMes("Febrero")   ← Guarda cambios de Febrero
+   │
+   └─→ cargarEstadosDesdeCálculos("Enero")
+          └─→ Carga estados guardados previamente ✓
+```
+
+### Archivos modificados:
+- Code.gs: Nueva función `guardarTodosLosEstadosMes()`, handler mejorado en `onEdit()`
+- Config.gs: VERSION = '8.5'
+
+### Verificación post-fix:
+1. Actualizar código en Apps Script
+2. En MOVIMIENTO (Enero), cambiar EST.PAGO de varios conceptos
+3. Cambiar a Febrero
+4. Volver a Enero → los cambios deben persistir
+
+---
+
 ## DOCUMENTACIÓN DEL PROYECTO
 
 ### Archivos de Referencia Obligatorios
@@ -1955,4 +2006,4 @@ const formulaGastosFijos = `SUMPRODUCT(
 ---
 
 *Última actualización: 2026-01-31*
-*Versión: 8.4.1 - Fórmulas CALCULOS leen EST.PAGO de Sección 7 para los 12 meses*
+*Versión: 8.5 - Persistencia EST.PAGO al cambiar de mes (guardar antes de cargar)*
